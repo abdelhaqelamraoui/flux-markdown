@@ -125,6 +125,10 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     // didEndLiveResize for the SAME window.
     private var sawLiveResizeStartForWindow: ObjectIdentifier?
     
+    // MARK: - File Monitoring
+    private var fileMonitor: DispatchSourceFileSystemObject?
+    private var monitoredFileDescriptor: Int32 = -1
+    
     private let logger = OSLog(subsystem: "com.markdownquicklook.app", category: "MarkdownPreview")
     
     private let maxPreviewSizeBytes: UInt64 = 500 * 1024 // 500KB limit
@@ -366,6 +370,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         super.viewWillDisappear()
         logScreenEnvironment(context: "viewWillDisappear")
 
+        stopFileMonitoring()
+
         os_log("📊 [viewWillDisappear] trackingEnabled=%{public}@ didUserResize=%{public}@ currentSize=%{public}@",
                log: logger, type: .default,
                isResizeTrackingEnabled ? "YES" : "NO",
@@ -601,6 +607,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                 if self.isWebViewLoaded {
                     self.renderPendingMarkdown()
                 }
+                
+                self.startFileMonitoring()
             } catch {
                 os_log("🔴 Failed to read file: %{public}@", log: self.logger, type: .error, error.localizedDescription)
             }
@@ -969,7 +977,97 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         return NSScreen.main ?? NSScreen.screens.first
     }
     
+    private func startFileMonitoring() {
+        guard let url = currentURL else {
+            os_log("🟡 Cannot start file monitoring: currentURL is nil", log: logger, type: .debug)
+            return
+        }
+        
+        stopFileMonitoring()
+        
+        let path = url.path
+        let fd = open(path, O_EVTONLY)
+        
+        guard fd >= 0 else {
+            os_log("🔴 Failed to open file for monitoring: %{public}@", log: logger, type: .error, path)
+            return
+        }
+        
+        monitoredFileDescriptor = fd
+        
+        let source = DispatchSource.makeFileSystemObjectSource(
+            fileDescriptor: fd,
+            eventMask: [.write, .delete, .rename],
+            queue: .main
+        )
+        
+        source.setEventHandler { [weak self] in
+            guard let self = self else { return }
+            os_log("🟢 File change detected, reloading content", log: self.logger, type: .default)
+            self.handleFileChange()
+        }
+        
+        source.setCancelHandler { [weak self] in
+            guard let self = self, self.monitoredFileDescriptor >= 0 else { return }
+            close(self.monitoredFileDescriptor)
+            self.monitoredFileDescriptor = -1
+        }
+        
+        source.resume()
+        self.fileMonitor = source
+        
+        os_log("🟢 File monitoring started for: %{public}@", log: logger, type: .default, path)
+    }
+    
+    private func stopFileMonitoring() {
+        guard let monitor = fileMonitor else { return }
+        
+        monitor.cancel()
+        fileMonitor = nil
+        
+        os_log("🔵 File monitoring stopped", log: logger, type: .debug)
+    }
+    
+    private func handleFileChange() {
+        guard let url = currentURL else {
+            os_log("🔴 handleFileChange called but currentURL is nil", log: logger, type: .error)
+            return
+        }
+        
+        do {
+            let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+            let fileSize = attributes[.size] as? UInt64 ?? 0
+            
+            var content: String
+            if fileSize > self.maxPreviewSizeBytes {
+                let fileHandle = try FileHandle(forReadingFrom: url)
+                defer { try? fileHandle.close() }
+                let data = fileHandle.readData(ofLength: Int(self.maxPreviewSizeBytes))
+                if var stringContent = String(data: data, encoding: .utf8) {
+                    if let lastNewline = stringContent.lastIndex(of: "\n") {
+                        stringContent = String(stringContent[...lastNewline])
+                    }
+                    content = stringContent + "\n\n> **Preview truncated.**"
+                } else {
+                    content = "> **Encoding Error**"
+                }
+            } else {
+                content = try String(contentsOf: url, encoding: .utf8)
+            }
+            
+            self.pendingMarkdown = content
+            if self.isWebViewLoaded {
+                self.renderPendingMarkdown()
+            }
+            
+            os_log("🟢 File content reloaded successfully", log: logger, type: .default)
+        } catch {
+            os_log("🔴 Failed to reload file: %{public}@", log: logger, type: .error, error.localizedDescription)
+        }
+    }
+    
     deinit {
+        stopFileMonitoring()
         NotificationCenter.default.removeObserver(self)
         handshakeWorkItem?.cancel()
         saveSizeWorkItem?.cancel()
