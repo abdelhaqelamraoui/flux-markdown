@@ -2,7 +2,7 @@ import SwiftUI
 import Sparkle
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    private var updater: SPUUpdater?
+    var updater: SPUUpdater?
     private var userDriver: SPUStandardUserDriver?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
