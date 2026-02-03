@@ -6,41 +6,41 @@
         <description>Most recent updates to Markdown Preview Enhanced</description>
         <language>zh-CN</language>
         
-        <!-- 
-        ==================================================================================
-        TEMPLATE: Add new releases here
-        ==================================================================================
-        
         <item>
-            <title>Version X.Y.Z</title>
-            <link>https://github.com/xykong/markdown-quicklook/releases/tag/vX.Y.Z</link>
-            <sparkle:version>BUILD_NUMBER</sparkle:version>
-            <sparkle:shortVersionString>X.Y.Z</sparkle:shortVersionString>
+            <title>Version 1.6.90</title>
+            <link>https://github.com/xykong/markdown-quicklook/releases/tag/v1.6.90</link>
+            <sparkle:version>90</sparkle:version>
+            <sparkle:shortVersionString>1.6.90</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
-            <pubDate>Mon, DD MMM YYYY HH:MM:SS +0800</pubDate>
+            <pubDate>Mon, 03 Feb 2026 23:25:00 +0800</pubDate>
             <enclosure 
-                url="https://github.com/xykong/markdown-quicklook/releases/download/vX.Y.Z/MarkdownPreviewEnhanced.dmg"
-                sparkle:edSignature="SIGNATURE_PLACEHOLDER"
-                length="FILE_SIZE_IN_BYTES"
+                url="https://github.com/xykong/markdown-quicklook/releases/download/v1.6.90/MarkdownPreviewEnhanced.dmg"
+                sparkle:edSignature="dJkl2q8746f8GZLBvUFQxGndAtlmWCtnU1QlCkufJt876oNXuwd440TexH1HomcCqxdJCaK8xL2KvORSUAnGCg=="
+                length="7284896"
                 type="application/octet-stream" />
             <description><![CDATA[
-                <h2>新增功能 / What's New</h2>
+                <h2>重要更新 / Major Update</h2>
                 <ul>
-                    <li>Feature description</li>
+                    <li><strong>统一更新策略</strong>: 所有用户（Homebrew 和 DMG）现在都使用 Sparkle 自动更新</li>
+                    <li><strong>菜单按钮</strong>: 所有用户都能看到"检查更新..."按钮（快捷键 ⌘U）</li>
+                    <li><strong>及时更新</strong>: Homebrew 用户可立即获取更新，无需等待 Cask 维护者</li>
                 </ul>
                 
                 <h2>改进 / Improvements</h2>
                 <ul>
-                    <li>Improvement description</li>
+                    <li>删除 82 行代码，简化更新逻辑（45% 代码减少）</li>
+                    <li>遵循业界标准（与 iTerm2、Docker Desktop、VSCode 一致）</li>
+                    <li>更好的用户体验：统一、及时、安全</li>
                 </ul>
                 
-                <h2>修复 / Bug Fixes</h2>
+                <h2>技术细节 / Technical Details</h2>
                 <ul>
-                    <li>Bug fix description</li>
+                    <li>移除所有 Homebrew 检测逻辑</li>
+                    <li>总是初始化 Sparkle 自动更新器</li>
+                    <li>Homebrew Cask 的 <code>auto_updates true</code> 防止冲突</li>
                 </ul>
             ]]></description>
         </item>
-        -->
         
     </channel>
 </rss>
