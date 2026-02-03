@@ -2,34 +2,18 @@ import SwiftUI
 import Sparkle
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var updater: SPUUpdater?
-    private var userDriver: SPUStandardUserDriver?
+    // Use SPUStandardUpdaterController for SwiftUI integration
+    let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        setupUpdateMechanism()
+        print("✅ Sparkle updater controller initialized")
         
         if CommandLine.arguments.contains("--register-only") {
             NSApplication.shared.terminate(nil)
-        }
-    }
-    
-    // MARK: - Update Mechanism
-    
-    private func setupUpdateMechanism() {
-        let hostBundle = Bundle.main
-        userDriver = SPUStandardUserDriver(hostBundle: hostBundle, delegate: nil)
-        updater = SPUUpdater(
-            hostBundle: hostBundle,
-            applicationBundle: hostBundle,
-            userDriver: userDriver!,
-            delegate: nil
-        )
-        
-        do {
-            try updater?.start()
-            print("✅ Sparkle auto-updater initialized successfully")
-        } catch {
-            print("❌ Failed to start Sparkle: \(error.localizedDescription)")
         }
     }
     
@@ -61,7 +45,7 @@ struct MarkdownApp: App {
         }
         .commands {
             CommandGroup(after: .appInfo) {
-                CheckForUpdatesView(updater: appDelegate.updater)
+                CheckForUpdatesView(updaterController: appDelegate.updaterController)
             }
             
             CommandMenu("View") {
@@ -85,11 +69,12 @@ struct MarkdownApp: App {
 }
 
 struct CheckForUpdatesView: View {
-    let updater: SPUUpdater?
+    let updaterController: SPUStandardUpdaterController
     
     var body: some View {
         Button("检查更新...") {
-            updater?.checkForUpdates()
+            print("🔍 [DEBUG] Triggering update check...")
+            NSApp.sendAction(#selector(SPUStandardUpdaterController.checkForUpdates(_:)), to: updaterController, from: nil)
         }
         .keyboardShortcut("u", modifiers: .command)
         Divider()

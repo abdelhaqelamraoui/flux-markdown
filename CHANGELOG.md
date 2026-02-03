@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Fixed
+- **自动更新**: 修复手动检查更新无响应的问题。
+  - 使用 `SPUStandardUpdaterController` 替代手动组装 `SPUUpdater` + `SPUStandardUserDriver`，这是 Sparkle 2.x 推荐的 SwiftUI 集成方式。
+  - 使用 `NSApp.sendAction()` 正确触发更新检查的 AppKit action。
+
 ## [1.6.90] - 2026-02-03
 
 ## [1.5.87] - 2026-02-03
