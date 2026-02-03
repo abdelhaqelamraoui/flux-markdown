@@ -30,6 +30,19 @@
     <key>com.apple.security.files.downloads.read-write</key>
     <true/>
 
+    <!-- Sparkle Installer Support -->
+    <!-- Allow Sparkle installer helper communication -->
+    <key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+    <array>
+        <string>com.xykong.Markdown.Installer</string>
+    </array>
+
+    <!-- Allow Sparkle to write to /Applications for update installation -->
+    <key>com.apple.security.temporary-exception.files.absolute-path.read-write</key>
+    <array>
+        <string>/Applications</string>
+    </array>
+
     <!-- App Groups for sharing settings with QuickLook Extension -->
     <key>com.apple.security.application-groups</key>
     <array>

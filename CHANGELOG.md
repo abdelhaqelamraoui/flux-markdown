@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Fixed
+- **自动更新**: 修复安装新版本时报错 "An error occurred while launching the installer" 的问题。
+  - 添加 `com.apple.security.temporary-exception.mach-lookup.global-name` 权限，允许 Sparkle 安装器与主应用通信。
+  - 添加 `com.apple.security.temporary-exception.files.absolute-path.read-write` 权限，允许 Sparkle 写入 `/Applications` 目录。
+  - 在 Info.plist 中启用 `SUEnableInstallerLauncherService`，支持沙盒应用的安装器启动服务。
+
+### Added
+- **测试工具**: 新增本地更新测试脚本 `scripts/test-update-simple.sh` 和 `scripts/test-update-locally.sh`。
+
 ## [1.6.93] - 2026-02-04
 
 ### Fixed

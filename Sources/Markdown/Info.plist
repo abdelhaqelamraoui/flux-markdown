@@ -74,5 +74,7 @@
 	<integer>86400</integer>
 	<key>SUAllowsAutomaticUpdates</key>
 	<true/>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
 </dict>
 </plist>
