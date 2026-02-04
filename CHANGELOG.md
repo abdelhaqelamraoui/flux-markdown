@@ -3,6 +3,23 @@
 ## [Unreleased]
 _无待发布的变更_
 
+## [1.7.110] - 2026-02-04
+
+### Fixed
+- **APP 模式图片显示**: 修复双击打开 APP 时本地图片无法显示的问题。
+  - **根本原因**: 主 APP 缺少图片收集逻辑,且 macOS App Sandbox 限制了文件访问权限
+  - **解决方案**:
+    1. 在 `MarkdownWebView.swift` 中添加 `collectImageData()` 方法(与 QuickLook Extension 保持一致)
+    2. 在 `executeRender()` 中调用图片收集并转换为 base64 data URLs
+    3. 临时禁用 App Sandbox 以允许读取 Markdown 文件同目录下的图片
+  - **支持特性**:
+    - ✅ 相对路径图片 (`./image.png`, `../image.png`)
+    - ✅ 绝对路径图片 (`/path/to/image.png`)
+    - ✅ `file://` 协议图片
+    - ✅ 多种图片格式 (PNG, JPEG, GIF, SVG, WebP, ICO, BMP)
+    - ✅ 图片带标题 (`![alt](url "title")`)
+    - ✅ 特殊字符路径 (URL 编码自动处理)
+
 ## [1.7.109] - 2026-02-04
 
 ### Fixed
