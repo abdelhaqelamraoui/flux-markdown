@@ -1,7 +1,27 @@
 # Changelog
 
 ## [Unreleased]
-_无待发布的变更_
+### Added
+- **双模式显示 (Preview/Source Toggle)**: 实现预览模式与源码模式的快速切换功能。
+  - **QuickLook 预览**:
+    - 右上角新增源码/预览切换按钮 (文档图标 ↔ 眼睛图标)
+    - 源码模式使用 `highlight.js` 实现 Markdown 语法高亮
+    - 显示原始 Markdown 源码,支持选择和复制
+    - 快捷键 `Cmd+Shift+M` 快速切换模式
+    - 切换模式时保持当前滚动位置
+  - **主应用**:
+    - 添加与 QuickLook 一致的浮动按钮组 (源码 + 主题切换)
+    - View 菜单中新增 "Show Source/Show Preview" 选项
+    - 支持键盘快捷键 `Cmd+Shift+M` 切换
+  - **用户体验优化**:
+    - 源码视图留白最小化 (外层 padding: 0px, 代码块 padding: 6px)
+    - 表格内容 TOC 按钮下移 40px (top: 20px → 60px),避免与功能按钮重叠
+    - 等宽字体显示源码,适配浅色/深色主题
+  - **技术实现**:
+    - 新增 `ViewMode` 枚举管理当前显示模式
+    - 新增 `window.renderSource()` 函数渲染带语法高亮的源码
+    - 新增 `source-view.css` 样式文件
+
 
 ## [1.11.130] - 2026-02-11
 
