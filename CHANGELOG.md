@@ -1,5 +1,8 @@
 ## [Unreleased]
-_无待发布的变更_
+
+### Fixed
+- **Quick Look full-screen scrollbar gestures**: Prevented Quick Look's double-click interception from blocking WebKit's native pan recognizer when dragging the full-screen document scrollbar.
+  - Three-finger scrollbar drags can now yield to native WebKit scrolling without leaving subsequent trackpad scrolling unresponsive.
 
 ## [1.34.475] - 2026-08-14
 
