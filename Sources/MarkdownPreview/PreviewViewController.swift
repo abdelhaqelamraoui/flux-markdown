@@ -4,6 +4,15 @@ import os.log
 import WebKit
 import SwiftUI
 
+final class QuickLookDoubleClickGestureRecognizer: NSClickGestureRecognizer {
+    override func canPrevent(_ preventedGestureRecognizer: NSGestureRecognizer) -> Bool {
+        if preventedGestureRecognizer is NSPanGestureRecognizer {
+            return false
+        }
+        return super.canPrevent(preventedGestureRecognizer)
+    }
+}
+
 // Subclass WKWebView to intercept mouse events and prevent them from bubbling up 
 // to the QuickLook host, which would otherwise trigger "Open with default app".
 class InteractiveWebView: NativeMagnifyingWebView {
@@ -371,7 +380,10 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             webView.loadHTMLString("<h1>Error: index.html not found</h1>", baseURL: nil)
         }
 
-        let doubleClickGesture = NSClickGestureRecognizer(target: self, action: #selector(handleDoubleClick(_:)))
+        let doubleClickGesture = QuickLookDoubleClickGestureRecognizer(
+            target: self,
+            action: #selector(handleDoubleClick(_:))
+        )
         doubleClickGesture.numberOfClicksRequired = 2
         doubleClickGesture.delaysPrimaryMouseButtonEvents = false
         webView.addGestureRecognizer(doubleClickGesture)
