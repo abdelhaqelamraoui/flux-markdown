@@ -16,11 +16,15 @@ The host app SHALL persist changes to all settings-panel preferences and toolbar
 - **THEN** it records a baseline, migration event, or external observation respectively and never falsely labels them as user actions
 
 ### Requirement: Bounded reliable local history
-The application SHALL retain at most 200 setting events and 20 startup snapshots from the past seven days, capped at 256 KiB, in a private local store written only by the host app. History failures SHALL NOT prevent changing settings and SHALL be disclosed in diagnostics. Clearing history SHALL NOT change settings.
+The application SHALL retain the latest 200 setting events and 20 startup snapshots without time-based expiration, capped at 256 KiB, in a private local store written only by the host app. Timestamps SHALL support ordering and environment correlation, not expiration. History failures SHALL NOT prevent changing settings and SHALL be disclosed in diagnostics. Clearing history SHALL NOT change settings.
 
 #### Scenario: Retention limits
-- **WHEN** history exceeds an age, count, or size limit
+- **WHEN** history exceeds a count or size limit
 - **THEN** the oldest records are pruned and current settings remain intact
+
+#### Scenario: Infrequent changes across months or years
+- **WHEN** retained records span months or years and remain within count and size limits
+- **THEN** they remain available after restart and in diagnostic reports regardless of their age
 
 #### Scenario: History failure or clearing
 - **WHEN** history is corrupted or cannot be written, or the user clears history
