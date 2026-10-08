@@ -29,6 +29,7 @@ public enum LocalizationManager {
     /// SwiftUI's `Settings` scene, and Sparkle.
     public private(set) static var launchPreference: String = "system"
     private static var didBootstrap = false
+    public private(set) static var activeLanguage: String?
 
     /// Install the bundle subclass, persist `AppleLanguages` so AppKit /
     /// SwiftUI / Sparkle pick up the chosen language on this process run, and
@@ -64,9 +65,11 @@ public enum LocalizationManager {
         guard let dir = lprojName(for: preference),
               let path = Bundle.main.path(forResource: dir, ofType: "lproj"),
               let bundle = Bundle(path: path) else {
+            activeLanguage = nil
             SwizzleBundleStorage.activeBundle = nil
             return
         }
+        activeLanguage = dir
         SwizzleBundleStorage.activeBundle = bundle
     }
 }

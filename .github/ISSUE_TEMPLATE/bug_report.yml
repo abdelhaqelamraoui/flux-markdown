@@ -23,6 +23,7 @@ body:
     attributes:
       label: macOS Version
       options:
+        - macOS 27
         - macOS 26 Tahoe
         - macOS 15 Sequoia
         - macOS 14 Sonoma
@@ -64,5 +65,22 @@ body:
       label: Sample Markdown (if applicable)
       description: Paste minimal Markdown that triggers the issue
       render: markdown
+    validations:
+      required: false
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics and recent settings changes
+      description: Use Help → Report an Issue in FluxMarkdown to prepare this report. Review it before posting; issues are public. You can also attach a saved report here.
+      render: text
+    validations:
+      required: false
+
+  - type: input
+    id: system-build
+    attributes:
+      label: macOS build (optional)
+      placeholder: "e.g. 26A434"
     validations:
       required: false

@@ -92,3 +92,29 @@
 /* === Toast Messages === */
 "QuickLook preview does not support link navigation" = "QuickLook 预览模式不支持链接跳转";
 "Double-click .md file to open in main app for full functionality" = "请双击 .md 文件用主应用打开以使用完整功能";
+
+/* === Feedback and diagnostics === */
+"Suggest a Feature…" = "建议新功能…";
+"Review your report before continuing. The summary will be sent to GitHub; submitted issues are public." = "继续前请检查报告。摘要将发送到 GitHub；提交的问题会公开显示。";
+"What happened? Include steps to reproduce and what you expected." = "发生了什么？请描述复现步骤和预期结果。";
+"Problem description" = "问题描述";
+"Include diagnostics and recent settings changes" = "附带诊断信息和最近的设置变化";
+"Stored locally: the latest 200 settings changes, without time expiration. Document contents and file paths are excluded." = "本地保留最近 200 条设置变化，不按时间过期。诊断信息不包含文档内容和文件路径。";
+"Diagnostic report" = "诊断报告";
+"Clear Settings History…" = "清空设置历史…";
+"Copy Report" = "复制报告";
+"Save Report…" = "保存报告…";
+"Report copied." = "报告已复制。";
+"You submit the issue on GitHub. A GitHub account is required." = "请在 GitHub 页面提交问题，需要 GitHub 账号。";
+"Cancel" = "取消";
+"Continue on GitHub…" = "继续前往 GitHub…";
+"Clear Settings History?" = "清空设置历史？";
+"This removes recorded changes and startup snapshots. Your current settings stay unchanged." = "这会删除设置变化记录和启动快照，当前设置保持不变。";
+"Clear" = "清空";
+"Settings history cleared." = "设置历史已清空。";
+"Report saved." = "报告已保存。";
+"Could not save the report. You can copy it instead." = "无法保存报告，请使用复制报告。";
+"GitHub opened with a shortened summary. Copy or save the full report if needed." = "已打开 GitHub，摘要因长度限制有所缩减。需要时可复制或保存完整报告。";
+"GitHub opened. Review the form and submit when ready." = "已打开 GitHub，请检查表单后提交。";
+"Could not open the browser. Copy the report or save it and try again." = "无法打开浏览器，请复制或保存报告后重试。";
+"Copy Link" = "复制链接";

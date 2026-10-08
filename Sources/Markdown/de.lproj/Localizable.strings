@@ -92,3 +92,29 @@
 /* === Toast Messages === */
 "QuickLook preview does not support link navigation" = "Die QuickLook-Vorschau unterstützt keine Link-Navigation";
 "Double-click .md file to open in main app for full functionality" = "Doppelklicke die .md-Datei, um sie in der Hauptanwendung mit vollem Funktionsumfang zu öffnen";
+
+/* === Feedback and diagnostics === */
+"Suggest a Feature…" = "Funktion vorschlagen…";
+"Review your report before continuing. The summary will be sent to GitHub; submitted issues are public." = "Prüfen Sie den Bericht. Die Zusammenfassung wird an GitHub gesendet; eingereichte Meldungen sind öffentlich.";
+"What happened? Include steps to reproduce and what you expected." = "Was ist passiert? Beschreiben Sie die Schritte und das erwartete Ergebnis.";
+"Problem description" = "Problembeschreibung";
+"Include diagnostics and recent settings changes" = "Diagnose und letzte Einstellungsänderungen beifügen";
+"Stored locally: the latest 200 settings changes, without time expiration. Document contents and file paths are excluded." = "Die letzten 200 Einstellungsänderungen werden lokal ohne Zeitlimit gespeichert. Dokumentinhalte und Dateipfade sind ausgeschlossen.";
+"Diagnostic report" = "Diagnosebericht";
+"Clear Settings History…" = "Einstellungsverlauf löschen…";
+"Copy Report" = "Bericht kopieren";
+"Save Report…" = "Bericht speichern…";
+"Report copied." = "Bericht kopiert.";
+"You submit the issue on GitHub. A GitHub account is required." = "Die Meldung wird auf GitHub eingereicht. Ein GitHub-Konto ist erforderlich.";
+"Cancel" = "Abbrechen";
+"Continue on GitHub…" = "Weiter zu GitHub…";
+"Clear Settings History?" = "Einstellungsverlauf löschen?";
+"This removes recorded changes and startup snapshots. Your current settings stay unchanged." = "Änderungen und Startaufzeichnungen werden gelöscht. Ihre aktuellen Einstellungen bleiben erhalten.";
+"Clear" = "Löschen";
+"Settings history cleared." = "Einstellungsverlauf gelöscht.";
+"Report saved." = "Bericht gespeichert.";
+"Could not save the report. You can copy it instead." = "Der Bericht konnte nicht gespeichert werden. Sie können ihn kopieren.";
+"GitHub opened with a shortened summary. Copy or save the full report if needed." = "GitHub wurde mit einer gekürzten Zusammenfassung geöffnet. Den vollständigen Bericht können Sie kopieren oder speichern.";
+"GitHub opened. Review the form and submit when ready." = "GitHub wurde geöffnet. Prüfen Sie das Formular vor dem Absenden.";
+"Could not open the browser. Copy the report or save it and try again." = "Der Browser konnte nicht geöffnet werden. Kopieren oder speichern Sie den Bericht und versuchen Sie es erneut.";
+"Copy Link" = "Link kopieren";

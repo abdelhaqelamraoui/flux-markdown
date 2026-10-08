@@ -81,12 +81,12 @@ public class SharedPreferenceStore {
     /// Migrates preferences from the legacy App Group UserDefaults to this file-based store.
     /// Safe to call multiple times — runs only once per installation.
     /// Should be called from the main app's init path (not the extension).
-    public func migrateFromAppGroupIfNeeded() {
+    public func migrateFromAppGroupIfNeeded(legacyDefaults: UserDefaults? = nil, onMigration: ((String, Any) -> Void)? = nil) {
         queue.sync {
             guard canWrite else { return }
             guard cache[Self.migrationDoneKey] == nil else { return }
 
-            guard let legacyDefaults = UserDefaults(suiteName: Self.legacyAppGroupIdentifier) else {
+            guard let legacyDefaults = legacyDefaults ?? UserDefaults(suiteName: Self.legacyAppGroupIdentifier) else {
                 cache[Self.migrationDoneKey] = true
                 _synchronizeUnsafe()
                 return
@@ -108,6 +108,7 @@ public class SharedPreferenceStore {
             for key in keysToMigrate {
                 if cache[key] == nil, let value = legacyDefaults.object(forKey: key) {
                     cache[key] = value
+                    onMigration?(key, value)
                     migrated += 1
                 }
             }
@@ -215,6 +216,10 @@ public class SharedPreferenceStore {
               "falling back to homeDirectoryForCurrentUser. " +
               "Preference sharing between main app and extension may not work.")
         return FileManager.default.homeDirectoryForCurrentUser
+    }
+
+    static func applicationSupportDirectory() -> URL {
+        realHomeDirectory().appendingPathComponent("Library/Application Support/FluxMarkdown", isDirectory: true)
     }
 
     private static func defaultFileURL() -> URL {

@@ -9,7 +9,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         userDriverDelegate: nil
     )
 
+    private var preferenceObservationTimer: Timer?
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        AppearancePreference.shared.observePreferenceChanges()
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        preferenceObservationTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
+            AppearancePreference.shared.observePreferenceChanges()
+        }
         print("✅ Sparkle updater controller initialized")
 
         if CommandLine.arguments.contains("--register-only") {
@@ -137,8 +146,11 @@ struct MarkdownApp: App {
                 }
                 
                 Button(NSLocalizedString("Report an Issue", comment: "Report issue menu item")) {
-                    if let url = URL(string: "https://github.com/xykong/flux-markdown/issues") {
-                        NSWorkspace.shared.open(url)
+                    FeedbackWindowController.shared.show()
+                }
+                Button(NSLocalizedString("Suggest a Feature…", comment: "Feature feedback menu")) {
+                    if !NSWorkspace.shared.open(FeedbackIssueLink.feature) {
+                        FeedbackWindowController.shared.showFeatureFallback()
                     }
                 }
                 
@@ -180,7 +192,7 @@ struct MarkdownApp: App {
                 Menu(NSLocalizedString("Appearance", comment: "Appearance submenu")) {
                     ForEach(AppearanceMode.allCases) { mode in
                         Button(action: {
-                            preference.currentMode = mode
+                            preference.setAppearance(mode, source: .toolbar)
                         }) {
                             HStack {
                                 Text(mode.displayName)
@@ -310,9 +322,9 @@ private struct DocumentPreviewScene: View {
                     appearance: preference.currentMode.nsAppearance
                 ) {
                     switch preference.currentMode {
-                    case .system: preference.currentMode = .light
-                    case .light:  preference.currentMode = .dark
-                    case .dark:   preference.currentMode = .system
+                    case .system: preference.setAppearance(.light, source: .toolbar)
+                    case .light:  preference.setAppearance(.dark, source: .toolbar)
+                    case .dark:   preference.setAppearance(.system, source: .toolbar)
                     }
                 }
             }
