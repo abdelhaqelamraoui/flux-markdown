@@ -90,4 +90,18 @@ final class QuickLookSearchTests: XCTestCase {
         wait(for: [focused], timeout: 2)
     }
 
+    func testStandardFindMenuActionUsesTheSameSearchBridge() {
+        let (controller, webView) = controller()
+        controller.isWebViewLoaded = true
+        controller.isSearchReady = true
+        let item = NSMenuItem(title: "Find", action: nil, keyEquivalent: "f")
+        item.tag = NSTextFinder.Action.showFindInterface.rawValue
+        controller.performTextFinderAction(item)
+        XCTAssertEqual(webView.scripts.count, 1)
+        var webViewCalls = 0
+        webView.searchShortcutHandler = { webViewCalls += 1 }
+        webView.performTextFinderAction(item)
+        XCTAssertEqual(webViewCalls, 1)
+    }
+
 }
