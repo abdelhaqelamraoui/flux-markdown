@@ -34,3 +34,22 @@
 ## 再次出现时的处理
 
 打开应用设置（`⌘,`）→ 外观 → 语言 → 系统默认，然后按提示重启应用。应同时检查共享 `uiLanguage` 和应用域 `AppleLanguages`；只删除后者会在下次启动时被显式语言偏好重新写入。
+
+## 升级关联与 API 调查
+
+- 本机当前系统：macOS `27.0.1`，build `26A434`。用户确认异常在系统升级后出现；没有升级前的语言偏好快照，不能确定写入时间。
+- 应用语言控制逻辑由提交 `0e247bd`（2026-04-28，#34）引入。启动时 `bootstrap` 读取共享偏好并写入应用域 `AppleLanguages`，随后通过替换 `Bundle.main` 类型直接路由到指定语言资源。
+- 默认值为 `system`。当前仓库中设置界面的德语按钮会写入 `de`；旧 App Group 迁移也可能复制已有的 `uiLanguage`。未发现根据操作系统版本自动选择德语的分支。
+- `uiLanguage` 是应用自定义的共享 plist 字段。仅发生系统语言解析错误或应用域 `AppleLanguages` 改变，不能直接解释这个字段为何也为 `de`。仍需考虑旧偏好恢复/迁移、应用写入或外部修改；现有证据不能确定是哪一种，也不证明用户误操作。
+- 本次调查没有找到 Apple 确认的、与 macOS 27.0.1 和本项目配置一致的 API 回归。
+
+### 官方资料与相似报告
+
+- [Apple：User Defaults 的域和搜索顺序](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/UserDefaults/AboutPreferenceDomains/AboutPreferenceDomains.html)：应用域优先于全局域，`AppleLanguages` 存储首选语言。这能解释应用显式覆盖中文系统语言的行为。
+- [Apple：Mac 系统语言与单个应用语言](https://support.apple.com/guide/mac-help/change-the-system-language-mh26684/27/mac/27)：单个应用可以使用不同于系统的语言，变更后可能需要退出再打开。
+- [Apple：语言与地区设置](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPInternational/SpecifyingPreferences/SpecifyingPreferences.html)：Mac 应用的语言变更在重启应用后生效。
+- [用户报告：macOS Tahoe, often text in another language](https://www.reddit.com/r/mac/comments/1qxk0vk/macos_tahoe_often_text_in_another_language/)：报告人设置荷兰语/英语，却在 iMovie 中看到德语、App Store 中看到其他语言。属于相似症状的个案，帖子没有确认原因，系统版本也与本机不同。
+
+### 代码层面的后续方向
+
+若继续定位复发，应记录语言偏好写入来源，以及启动时的共享偏好、应用域覆盖和 Bundle 解析结果，并补充显式语言与系统默认切换的重启回归测试。当前运行时替换 Bundle 类型及启动时写入语言偏好的实现也需要纳入系统升级兼容性测试。不能在缺少复现依据时自动清除所有非系统语言偏好，这会覆盖用户合法的语言选择。
