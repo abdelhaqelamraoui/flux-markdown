@@ -118,3 +118,9 @@
 "GitHub opened. Review the form and submit when ready." = "已打开 GitHub，请检查表单后提交。";
 "Could not open the browser. Copy the report or save it and try again." = "无法打开浏览器，请复制或保存报告后重试。";
 "Copy Link" = "复制链接";
+
+/* QuickLook recovery */
+"Repair Quick Look…" = "修复 Quick Look 预览…";
+"Quick Look registration repaired" = "Quick Look 注册已修复";
+"Quick Look repair failed" = "Quick Look 修复失败";
+"Try selecting the file in Finder and pressing Space. Your default editor was preserved." = "请在访达中选中文件并按空格重试，原有默认编辑器已保留。";

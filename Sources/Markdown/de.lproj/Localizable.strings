@@ -118,3 +118,9 @@
 "GitHub opened. Review the form and submit when ready." = "GitHub wurde geöffnet. Prüfen Sie das Formular vor dem Absenden.";
 "Could not open the browser. Copy the report or save it and try again." = "Der Browser konnte nicht geöffnet werden. Kopieren oder speichern Sie den Bericht und versuchen Sie es erneut.";
 "Copy Link" = "Link kopieren";
+
+/* QuickLook recovery */
+"Repair Quick Look…" = "Quick Look reparieren…";
+"Quick Look registration repaired" = "Quick-Look-Registrierung repariert";
+"Quick Look repair failed" = "Quick-Look-Reparatur fehlgeschlagen";
+"Try selecting the file in Finder and pressing Space. Your default editor was preserved." = "Wählen Sie die Datei im Finder und drücken Sie die Leertaste. Ihr Standardeditor wurde beibehalten.";

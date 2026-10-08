@@ -50,8 +50,24 @@ if [ "$CURRENT_VERSION" = "$VERSION" ] && [ "$CURRENT_SHA256" = "$SHA256" ]; the
 fi
 
 echo "🔧 Updating tap cask file..."
-sed -i '' "s/version \".*\"/version \"$VERSION\"/" "$CASK_FILE"
-sed -i '' "s/sha256 \".*\"/sha256 \"$SHA256\"/" "$CASK_FILE"
+if ! hdiutil imageinfo "$DMG_PATH" >/dev/null 2>&1; then
+    echo "Invalid DMG; refusing cask update" >&2; exit 1
+fi
+verify_mount=$(mktemp -d)
+hdiutil attach "$DMG_PATH" -mountpoint "$verify_mount" -nobrowse -readonly -quiet
+trap 'hdiutil detach "$verify_mount" -quiet >/dev/null 2>&1 || true; rmdir "$verify_mount" 2>/dev/null || true' EXIT
+if [ ! -x "$verify_mount/install-flux-markdown.sh" ]; then
+    echo "DMG lacks the vendor installer; refusing migration" >&2; exit 1
+fi
+hdiutil detach "$verify_mount" -quiet
+rmdir "$verify_mount"
+trap - EXIT
+python3 - "$VERSION" "$SHA256" "$CASK_FILE" <<'PY_CASK'
+import pathlib,sys
+version,checksum,target=sys.argv[1:]
+template=pathlib.Path('scripts/homebrew/flux-markdown-installer.rb.in').read_text()
+pathlib.Path(target).write_text(template.replace('@VERSION@',version).replace('@SHA256@',checksum))
+PY_CASK
 echo "✅ Tap cask updated: $CASK_FILE"
 
 if [ -f "$OFFICIAL_CASK_FILE" ]; then
