@@ -136,90 +136,36 @@ macOS App Sandbox 会限制文件访问权限。如果 Markdown 文件引用了�
 
 ## Plain Text Preview Even Though Extension Is Registered
 
-### Issue
-`pluginkit -m -A -D -p com.apple.quicklook.preview | grep -i markdownquicklook` 能看到：
+扩展已注册、已启用，仍显示纯文本时，需要区分两个情况：Finder 没有调用我们的扩展，或扩展启动/渲染失败。`pluginkit` 的启用状态不能证明它就是本次选中的预览提供者。
+
+“Open with Visual Studio Code”是打开文件的操作按钮，不能单凭它认定 VS Code 提供了预览。可以保留 VS Code 作为编辑器；不要把修改默认打开应用当成已确认的修复。
+
+### 先收集只读诊断
+
+在仓库根目录执行：
 
 ```bash
-com.markdownquicklook.app.MarkdownPreview(1.0)
+./scripts/diagnose-quicklook.sh
+# 可选：查询某个文件的 Spotlight UTI；使用完整路径。
+./scripts/diagnose-quicklook.sh --file "/absolute/path/to/example.md"
 ```
 
-说明 Quick Look 扩展已经被系统识别并注册。但在 Finder 中选中 `.md` 文件按空格时，
-Quick Look 仍然只显示**纯文本内容**，没有任何 Markdown 渲染效果（看起来就像普通的
-文本预览一样）。
+脚本输出系统/应用版本、签名检查、扩展注册数量与启用状态、保存的 QuickLook 顺序和可取得的默认应用/文件 UTI。它不读取文档内容，不输出文件路径，也不修改注册、缓存、默认应用或偏好。`unavailable` 表示该项未能取得，不代表扩展故障。
 
-### Root Cause：Host App 不是 Markdown UTI 的默认 Owner
+多个注册可能来自旧安装、开发构建或其他位置，数量本身不证明冲突。开发版使用 ad-hoc 签名时，Gatekeeper 的拒绝也不能单独确定 QuickLook 失效原因。
 
-macOS 在选择 Quick Look Preview Extension 时，会优先考虑**默认处理该 UTI 的应用**。
+当前 `Info.plist` 已声明 `LSHandlerRank=Owner` 和 `net.daringfireball.markdown`。Owner 是文件处理角色声明，不是“Finder 一定使用这个预览器”的保证；已有诊断不能据此再次宣称问题已解决。
 
-如果我们的宿主应用 `FluxMarkdown.app` 仅仅把自己声明为 `Alternate` 处理程序
-（即 `LSHandlerRank = Alternate`），系统会继续优先使用内置的 Markdown/Plain Text 预览
-器，从而完全绕过 `com.markdownquicklook.app.MarkdownPreview` 扩展——这就导致 Quick Look
-看起来“只有纯文本”，好像插件失效了一样。
+### 再确认是否调用扩展
 
-**本仓库中已通过以下方式修复：**
-
-在 `Sources/Markdown/Info.plist` 中，将 `CFBundleDocumentTypes` 的
-`LSHandlerRank` 调整为：
-
-```xml
-<key>LSHandlerRank</key>
-<string>Owner</string>
+```bash
+log stream --style compact --predicate 'process == "MarkdownPreview"'
 ```
 
-并在注释中明确说明：我们故意将宿主应用设置为 Markdown UTI 的默认 Owner，以便
-Quick Look 在预览 `.md` 文件时能实际使用我们的 Preview Extension。
+在 Finder 中对测试文件按空格：
 
-### Fix Steps（如何让你的本地环境生效）
+- 完全没有本次预览的扩展启动/准备记录：优先调查系统选择、注册副本、UTI 与扩展启用状态。
+- 有 `preparePreviewOfFile`，但没有 `Renderer Handshake Received`：优先调查扩展启动、资源加载和 WebKit 错误。
+- 有握手且完成渲染：继续确认显示的窗口、文件及发生故障的具体内容，不再把注册作为唯一方向。
 
-1. **更新代码**（如果你是从旧版本升级上来）：
-   - 确认本地 `Sources/Markdown/Info.plist` 中的 `LSHandlerRank` 已是 `Owner`。
-
-2. **重新生成并构建工程**：
-
-   ```bash
-   make app
-   ```
-
-   这一步会：
-   - 构建 `web-renderer`（生成 `dist/index.html` + `dist/bundle.js`）
-   - 生成并构建 Xcode 工程与宿主 App + Extension
-
-3. **运行宿主 App 以注册扩展**：
-
-   ```bash
-   open ~/Library/Developer/Xcode/DerivedData/FluxMarkdown-*/Build/Products/Debug/FluxMarkdown.app
-   ```
-
-   或者在 Xcode 中选择 **Markdown** scheme，按 `Cmd+R` 运行。
-
-4. **刷新 Quick Look 缓存**：
-
-   ```bash
-   qlmanage -r
-   qlmanage -r cache
-   killall Finder
-   ```
-
-5. **再次测试 `.md` 预览**：
-    - 在 Finder 中选中 `Tests/fixtures/feature-validation.md`（见 `docs/testing/TESTING.md` 中的示例）
-   - 按空格触发 Quick Look
-   - 预期行为：
-     - 标题、副标题、代码块、数学公式、Mermaid 图表、任务列表都以富文本形式渲染
-     - 不再是简单的纯文本显示
-
-6. **可选：使用系统日志确认扩展已被调用**：
-
-   ```bash
-   log stream --style compact --predicate 'process == "MarkdownPreview"'
-   ```
-
-   然后在 Finder 中对 `.md` 文件按空格预览，日志中应该能看到类似：
-
-   ```text
-   MarkdownPreview: viewDidLoad called
-   MarkdownPreview: preparePreviewOfFile called for: /path/to/file.md
-   ```
-
-   这说明：
-   - Quick Look 已经不再使用系统内置的纯文本预览器
-   - 我们的 `PreviewViewController` 和内置的 Web 渲染器已经实际参与渲染流程
+原始系统日志可能包含文件路径，请只分享与故障有关的行，并移除个人路径和文件名。先保存故障时诊断，再考虑重装或清缓存，以免丢失复现现场。
