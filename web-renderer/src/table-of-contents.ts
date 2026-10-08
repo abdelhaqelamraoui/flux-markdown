@@ -37,6 +37,11 @@ export class TableOfContents {
     private container: HTMLElement;
     private isVisible: boolean = false;
     private activeId: string | null = null;
+    private userVisibility: boolean | null = null;
+    private hasHeadings = false;
+    private observer: IntersectionObserver | null = null;
+    private observeTimer: ReturnType<typeof setTimeout> | null = null;
+    private readonly resizeHandler = () => this.updateLayout();
 
     constructor(containerId: string) {
         const element = document.getElementById(containerId);
@@ -46,6 +51,7 @@ export class TableOfContents {
         this.container = element;
         this.setupToggleButton();
         this.setupIntersectionObserver();
+        window.addEventListener('resize', this.resizeHandler);
     }
 
     private setupToggleButton(): void {
@@ -82,7 +88,8 @@ export class TableOfContents {
             });
         };
 
-        setTimeout(observeHeadings, 100);
+        this.observer = observer;
+        this.observeTimer = setTimeout(observeHeadings, 100);
     }
 
     private setActiveItem(id: string): void {
@@ -100,7 +107,9 @@ export class TableOfContents {
     }
 
     public render(headings: HeadingNode[]): void {
+        this.hasHeadings = headings.length > 0;
         if (headings.length === 0) {
+            this.updateLayout();
             this.container.style.display = 'none';
             return;
         }
@@ -127,6 +136,10 @@ export class TableOfContents {
         }
 
         this.attachClickHandlers();
+        this.observer?.disconnect();
+        document.querySelectorAll('#markdown-preview h1[id], #markdown-preview h2[id], #markdown-preview h3[id], #markdown-preview h4[id], #markdown-preview h5[id], #markdown-preview h6[id]')
+            .forEach(heading => this.observer?.observe(heading));
+        this.updateLayout();
     }
 
     private renderList(headings: HeadingNode[]): HTMLElement {
@@ -176,27 +189,25 @@ export class TableOfContents {
         });
     }
 
-    public toggle(): void {
-        this.isVisible = !this.isVisible;
-        const nav = this.container.querySelector('.toc-nav');
-        if (nav) {
-            nav.classList.toggle('visible', this.isVisible);
-        }
+    public updateLayout(): void {
+        const compact = document.documentElement.dataset.context === 'finder';
+        const wide = window.innerWidth >= 900 && !compact;
+        this.isVisible = this.hasHeadings && !compact && (this.userVisibility ?? wide);
+        const docked = wide && this.isVisible;
+        document.documentElement.dataset.tocDocked = String(docked);
+        document.documentElement.dataset.tocAvailable = String(this.hasHeadings && !compact);
+        this.container.dataset.layout = docked ? 'sidebar' : 'overlay';
+        this.container.style.display = this.hasHeadings && !compact ? 'block' : 'none';
+        this.container.querySelector('.toc-nav')?.classList.toggle('visible', this.isVisible);
+        this.container.querySelector('.toc-toggle')?.setAttribute('aria-expanded', String(this.isVisible));
     }
 
-    public show(): void {
-        this.isVisible = true;
-        const nav = this.container.querySelector('.toc-nav');
-        if (nav) {
-            nav.classList.add('visible');
-        }
-    }
-
-    public hide(): void {
-        this.isVisible = false;
-        const nav = this.container.querySelector('.toc-nav');
-        if (nav) {
-            nav.classList.remove('visible');
-        }
+    public toggle(): void { this.userVisibility = !this.isVisible; this.updateLayout(); }
+    public show(): void { this.userVisibility = true; this.updateLayout(); }
+    public hide(): void { this.userVisibility = false; this.updateLayout(); }
+    public dispose(): void {
+        window.removeEventListener('resize', this.resizeHandler);
+        this.observer?.disconnect();
+        if (this.observeTimer) clearTimeout(this.observeTimer);
     }
 }

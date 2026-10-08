@@ -268,6 +268,7 @@ import sup from 'markdown-it-sup';
 import anchor from 'markdown-it-anchor';
 import githubAlerts from 'markdown-it-github-alerts';
 
+import { findSourceLineTarget, DocumentPosition } from './position-navigation';
 import { extractOutline } from './outline';
 import { TableOfContents } from './table-of-contents';
 import { SearchEngine } from './search';
@@ -287,7 +288,7 @@ function extractFrontMatter(text: string): { yaml: string | null; body: string }
         return { yaml: null, body: text };
     }
     const yaml = text.slice(3, endIndex).trim();
-    const body = text.slice(endIndex + 4).trimStart();
+    const body = text.slice(endIndex + 4).replace(/^(?:[ \t]*\r?\n)+/, '');
     return { yaml, body };
 }
 
@@ -319,6 +320,31 @@ function renderFrontMatterHtml(yamlStr: string): string {
         return yamlObjectToTable(parsed as Record<string, unknown>);
     } catch {
         return `<pre class="hljs"><code class="language-yaml">${escapeHtml(yamlStr)}</code></pre>`;
+    }
+}
+
+const sourceWrappedRules = new WeakSet<object>();
+function installSourceRuleWrappers(instance: MarkdownIt): void {
+
+    for (const name of Object.keys(instance.renderer.rules)) {
+        const original = instance.renderer.rules[name];
+        if (!original || sourceWrappedRules.has(original)) continue;
+        const wrapped: typeof original = (tokens, index, options, env, renderer) => {
+            const html = original(tokens, index, options, env, renderer);
+            const token = tokens[index];
+            if (!token.block || !token.map || token.nesting < 0 || name === 'inline' || /^<[a-z][\w-]*[^>]*data-source-line=/i.test(html)) return html;
+            return html.replace(/^<([a-z][\w-]*)(?=[\s>])/i,
+                `<$1 data-source-line="${token.map[0] + 1}" data-source-line-end="${token.map[1]}"`);
+        };
+        sourceWrappedRules.add(wrapped);
+        instance.renderer.rules[name] = wrapped;
+    }
+}
+
+function copySourceRange(from: HTMLElement, to: HTMLElement): void {
+    for (const attribute of ['data-source-line', 'data-source-line-end']) {
+        const value = from.getAttribute(attribute);
+        if (value !== null) to.setAttribute(attribute, value);
     }
 }
 
@@ -383,6 +409,12 @@ function buildMd(): MarkdownIt {
         return defaultImageRender(tokens, idx, options, env, self);
     };
 
+    instance.core.ruler.push('original-source-lines', state => {
+        const offset = Number(state.env.sourceLineOffset || 0);
+        for (const token of state.tokens) {
+            if (token.map) token.map = [token.map[0] + offset, token.map[1] + offset];
+        }
+    });
     const defaultRenderToken = instance.renderer.renderToken.bind(instance.renderer);
     instance.renderer.renderToken = function(tokens: any[], idx: number, options: any): string {
         const token = tokens[idx];
@@ -528,6 +560,7 @@ function addLineNumbersToCodeBlocks(container: HTMLElement): void {
 
 declare global {
     interface Window {
+        navigateDocumentPosition: (position: DocumentPosition) => boolean;
         renderMarkdown: (text: string, options?: RenderOptions) => Promise<void>;
         renderSource: (text: string, theme: string, prevContent?: string) => void;
         clearDiffMarks: () => void;
@@ -575,6 +608,7 @@ async function renderVegaDiagrams(container: HTMLElement, theme: string): Promis
             const wrapper = document.createElement('div');
             wrapper.className = 'vega-diagram';
             wrapper.innerHTML = svgStr;
+            copySourceRange(pre, wrapper);
             pre.replaceWith(wrapper);
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err);
@@ -619,6 +653,7 @@ async function renderGraphvizDiagrams(container: HTMLElement): Promise<void> {
             const wrapper = document.createElement('div');
             wrapper.className = 'graphviz-diagram';
             wrapper.innerHTML = svgStr;
+            copySourceRange(pre, wrapper);
             pre.replaceWith(wrapper);
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : String(err);
@@ -775,7 +810,8 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
     document.documentElement.setAttribute('data-theme', currentTheme);
 
     try {
-        if (!toc) {
+        if (!toc || !document.getElementById('toc-container')?.contains(document.querySelector('.toc-toggle'))) {
+            toc?.dispose();
             try { toc = new TableOfContents('toc-container'); } catch (e) {
                 logToSwift("JS Warning: TOC initialization failed: " + e);
             }
@@ -804,7 +840,8 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
             }
         }
         const { yaml, body } = extractFrontMatter(text);
-        const frontMatterHtml = yaml ? renderFrontMatterHtml(yaml) : '';
+        const sourceLineOffset = text.slice(0, text.length - body.length).split('\n').length - 1;
+        const frontMatterHtml = yaml ? `<div data-source-line="1" data-source-line-end="${sourceLineOffset}">${renderFrontMatterHtml(yaml)}</div>` : '';
 
         const enableEmoji = options.enableEmoji !== false;
         if (enableEmoji && !emojiEnabled) {
@@ -841,9 +878,10 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
         lastShowLineNumbers = showLineNumbers;
 
         const outline = extractOutline(md, renderBody);
-        if (toc) toc.render(outline);
 
-        let html = md.render(renderBody, { baseUrl: options.baseUrl, imageData: options.imageData, renderVersion: options.renderVersion });
+
+        installSourceRuleWrappers(md);
+        let html = md.render(renderBody, { baseUrl: options.baseUrl, imageData: options.imageData, renderVersion: options.renderVersion, sourceLineOffset });
 
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = frontMatterHtml + html;
@@ -860,12 +898,14 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
                 div.classList.add('mermaid');
                 div.textContent = block.textContent || '';
                 div.id = `mermaid-${index}`;
+                copySourceRange(pre, div);
                 pre.replaceWith(div);
             }
         });
 
         logToSwift(`[renderMarkdown:${callId}] UPDATING DOM innerHTML`);
         outputDiv.innerHTML = tempDiv.innerHTML;
+        if (toc) toc.render(outline);
         prepareRenderedImages(outputDiv, options);
         logToSwift(`[renderMarkdown:${callId}] DOM UPDATED successfully`);
 
@@ -874,8 +914,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
         }
 
         if (options.prevContent && options.prevContent.length > 0) {
-            const prevBody = extractFrontMatter(options.prevContent).body;
-            const diffs = computeLineDiff(prevBody, renderBody);
+            const diffs = computeLineDiff(options.prevContent, text);
             diffAnimator.annotateRenderDOM(outputDiv, diffs);
         }
 
@@ -991,6 +1030,7 @@ window.renderSource = function(text: string, theme: string, prevContent?: string
     }
 
     outputDiv.classList.add('source-mode');
+    toc?.render([]);
 
     try {
         const oldText = (prevContent && prevContent.length > 0) ? prevContent : '';
@@ -1257,3 +1297,14 @@ window.addEventListener('afterprint', () => {
 });
 
 logToSwift("rendererReady");
+
+
+window.navigateDocumentPosition = function(position: DocumentPosition): boolean {
+    const root = document.getElementById('markdown-preview');
+    if (!root) return false;
+    const target = position.line !== undefined ? findSourceLineTarget(root, position.line)
+        : position.anchor ? findElementByAnchor(position.anchor) : null;
+    if (!target || !root.contains(target)) return false;
+    target.scrollIntoView({behavior:'auto',block:'start'});
+    return true;
+};
