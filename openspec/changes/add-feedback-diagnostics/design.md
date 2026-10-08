@@ -29,7 +29,7 @@
 ### 用户反馈流程
 
 - 保留已有“报告问题”名称，点击后进入本地诊断预览，可编辑报告、取消包含诊断、复制或保存 Markdown 文件；说明继续后摘要会传给 GitHub，最终 Issue 内容公开。
-- 继续后打开 `/issues/new?template=bug_report.yml`，预填版本和新增的 `diagnostics` 字段。使用 URLComponents 编码并按编码后字节数控制长度：URL 超过 6000 字节时缩减最旧事件并标注摘要省略条数，完整报告仍可复制/保存；最小摘要仍超限则打开无诊断预填的表单并提供复制操作。
+- 继续后打开 `/issues/new?template=bug_report.yml`，预填版本和新增的 `diagnostics` 字段。使用 URLComponents 编码并按编码后字节数控制长度：URL 超过 6000 字节时优先保留当前环境和最新设置变化，按行缩减启动快照及旧事件并标注省略行数，完整报告仍可复制/保存；最小摘要仍超限则打开无诊断预填的表单并提供复制操作。
 - 6000 字节是本项目的保守策略，不是 GitHub 声明的硬限制。首次发布须实际验证浏览器和 GitHub 表单预填。
 - GitHub 表单字段 `id` 支持 URL 预填，依据 [GitHub 官方 schema 文档](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-githubs-form-schema)。不假定可以通过 URL 自动上传文件附件。
 - “建议新功能…”直接打开 `feature_request.yml`。更新 Bug 模板的系统版本选项，支持 macOS 27 和自由补充系统 build。

@@ -92,3 +92,29 @@
 /* === Toast Messages === */
 "QuickLook preview does not support link navigation" = "L’aperçu QuickLook ne prend pas en charge la navigation par liens";
 "Double-click .md file to open in main app for full functionality" = "Double-cliquez sur le fichier .md pour l’ouvrir dans l’application principale et accéder à toutes les fonctionnalités";
+
+/* === Feedback and diagnostics === */
+"Suggest a Feature…" = "Proposer une fonctionnalité…";
+"Review your report before continuing. The summary will be sent to GitHub; submitted issues are public." = "Vérifiez le rapport avant de continuer. Le résumé sera envoyé à GitHub ; les signalements publiés sont publics.";
+"What happened? Include steps to reproduce and what you expected." = "Que s’est-il passé ? Indiquez les étapes et le résultat attendu.";
+"Problem description" = "Description du problème";
+"Include diagnostics and recent settings changes" = "Inclure le diagnostic et les derniers changements de réglages";
+"Stored locally: the latest 200 settings changes, without time expiration. Document contents and file paths are excluded." = "Les 200 derniers changements de réglages sont conservés localement sans expiration. Le contenu des documents et les chemins de fichiers sont exclus.";
+"Diagnostic report" = "Rapport de diagnostic";
+"Clear Settings History…" = "Effacer l’historique des réglages…";
+"Copy Report" = "Copier le rapport";
+"Save Report…" = "Enregistrer le rapport…";
+"Report copied." = "Rapport copié.";
+"You submit the issue on GitHub. A GitHub account is required." = "Le signalement se fait sur GitHub. Un compte GitHub est nécessaire.";
+"Cancel" = "Annuler";
+"Continue on GitHub…" = "Continuer sur GitHub…";
+"Clear Settings History?" = "Effacer l’historique des réglages ?";
+"This removes recorded changes and startup snapshots. Your current settings stay unchanged." = "Les changements et les instantanés de démarrage seront effacés. Les réglages actuels sont conservés.";
+"Clear" = "Effacer";
+"Settings history cleared." = "Historique des réglages effacé.";
+"Report saved." = "Rapport enregistré.";
+"Could not save the report. You can copy it instead." = "Impossible d’enregistrer le rapport. Vous pouvez le copier.";
+"GitHub opened with a shortened summary. Copy or save the full report if needed." = "GitHub est ouvert avec un résumé abrégé. Vous pouvez copier ou enregistrer le rapport complet.";
+"GitHub opened. Review the form and submit when ready." = "GitHub est ouvert. Vérifiez le formulaire avant de l’envoyer.";
+"Could not open the browser. Copy the report or save it and try again." = "Impossible d’ouvrir le navigateur. Copiez ou enregistrez le rapport et réessayez.";
+"Copy Link" = "Copier le lien";
