@@ -54,7 +54,7 @@ class InteractiveWebView: NativeMagnifyingWebView {
     
     override func becomeFirstResponder() -> Bool {
         os_log("🔵 WebView becomeFirstResponder called", log: logger, type: .debug)
-        return true
+        return super.becomeFirstResponder()
     }
     
     override func keyDown(with event: NSEvent) {
@@ -499,8 +499,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         updatePreviewMode()
         
         DispatchQueue.main.async { [weak self] in
-            self?.view.window?.makeFirstResponder(self)
-            os_log("🔵 Attempted to make view controller first responder",
+            self?.view.window?.makeFirstResponder(self?.webView)
+            os_log("🔵 Attempted to make WebView first responder",
                    log: self?.logger ?? .default, type: .default)
         }
     }
@@ -1052,6 +1052,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
 
     private func requestSearch() {
+        os_log("QuickLook find requested (renderer=%d, search=%d)", log: logger, type: .default,
+               isWebViewLoaded, isSearchReady)
         pendingSearchRequest = true
         completePendingSearchRequest()
     }

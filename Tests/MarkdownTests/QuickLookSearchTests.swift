@@ -76,4 +76,18 @@ final class QuickLookSearchTests: XCTestCase {
         XCTAssertNil(controller.handleMonitoredKeyDownEvent(event(window: window.windowNumber)))
         XCTAssertEqual(webView.scripts.count, 1)
     }
+    func testPreviewAppearanceKeepsWebViewAsFirstResponder() {
+        let (controller, webView) = controller()
+        let window = NSWindow(contentRect: controller.view.bounds, styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = controller.view
+        defer { window.orderOut(nil) }
+        controller.viewDidAppear()
+        let focused = expectation(description: "preview focus applied")
+        DispatchQueue.main.async {
+            XCTAssertTrue(window.firstResponder === webView)
+            focused.fulfill()
+        }
+        wait(for: [focused], timeout: 2)
+    }
+
 }
