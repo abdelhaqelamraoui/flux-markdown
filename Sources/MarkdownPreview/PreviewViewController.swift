@@ -14,6 +14,10 @@ final class QuickLookDoubleClickGestureRecognizer: NSClickGestureRecognizer {
 }
 
 enum QuickLookFindShortcut {
+    static func isShowFindAction(_ sender: Any?) -> Bool {
+        let tag = (sender as? NSMenuItem)?.tag ?? (sender as? NSControl)?.tag
+        return tag == NSTextFinder.Action.showFindInterface.rawValue
+    }
     static func matches(_ event: NSEvent) -> Bool {
         let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
             .subtracting([.capsLock, .numericPad, .function])
@@ -25,6 +29,14 @@ enum QuickLookFindShortcut {
 // to the QuickLook host, which would otherwise trigger "Open with default app".
 class InteractiveWebView: NativeMagnifyingWebView {
     var searchShortcutHandler: (() -> Void)?
+
+    override func performTextFinderAction(_ sender: Any?) {
+        if QuickLookFindShortcut.isShowFindAction(sender), let searchShortcutHandler {
+            searchShortcutHandler()
+            return
+        }
+        super.performTextFinderAction(sender)
+    }
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         if QuickLookFindShortcut.matches(event), let searchShortcutHandler {
@@ -1116,6 +1128,11 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         return event
     }
     
+    public override func performTextFinderAction(_ sender: Any?) {
+        if QuickLookFindShortcut.isShowFindAction(sender) { requestSearch(); return }
+        super.performTextFinderAction(sender)
+    }
+
     public override func performKeyEquivalent(with event: NSEvent) -> Bool {
         os_log("🔵 performKeyEquivalent called: key=%{public}@ modifiers=%{public}@", 
                log: logger, type: .debug,
