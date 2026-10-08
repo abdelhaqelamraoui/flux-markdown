@@ -1213,7 +1213,7 @@ function applyZoomLevel(level: number) {
 
 document.addEventListener('keydown', (e: KeyboardEvent) => {
     if (e.metaKey || e.ctrlKey) {
-        if (e.key === 'f') { e.preventDefault(); window.toggleSearch(); }
+        if (e.key.toLowerCase() === 'f' && !e.shiftKey && !e.altKey) { e.preventDefault(); window.showSearch(); }
         else if (e.key === '+' || e.key === '=') { e.preventDefault(); applyZoomLevel(currentZoomLevel + 0.1); }
         else if (e.key === '-' || e.key === '_') { e.preventDefault(); applyZoomLevel(currentZoomLevel - 0.1); }
         else if (e.key === '0') { e.preventDefault(); applyZoomLevel(1.0); }
@@ -1237,7 +1237,14 @@ window.adjustFontSize = function(delta: number) {
     }
 };
 
-window.showSearch = function() { if (searchUI) searchUI.show(); };
+window.showSearch = function() {
+    // Source mode can be the first render after the handshake.
+    if (!searchEngine || !searchUI) {
+        searchEngine = new SearchEngine();
+        searchUI = new SearchUI('search-container', searchEngine);
+    }
+    searchUI.show();
+};
 window.hideSearch = function() { if (searchUI) searchUI.hide(); };
 window.toggleSearch = function() { if (searchUI) searchUI.toggle(); };
 

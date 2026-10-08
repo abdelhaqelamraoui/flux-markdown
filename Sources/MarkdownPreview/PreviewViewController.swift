@@ -13,9 +13,27 @@ final class QuickLookDoubleClickGestureRecognizer: NSClickGestureRecognizer {
     }
 }
 
+enum QuickLookFindShortcut {
+    static func matches(_ event: NSEvent) -> Bool {
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            .subtracting([.capsLock, .numericPad, .function])
+        return modifiers == .command && event.charactersIgnoringModifiers?.lowercased() == "f"
+    }
+}
+
 // Subclass WKWebView to intercept mouse events and prevent them from bubbling up 
 // to the QuickLook host, which would otherwise trigger "Open with default app".
 class InteractiveWebView: NativeMagnifyingWebView {
+    var searchShortcutHandler: (() -> Void)?
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if QuickLookFindShortcut.matches(event), let searchShortcutHandler {
+            searchShortcutHandler()
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+
     private let logger = OSLog(subsystem: "com.markdownquicklook.app", category: "InteractiveWebView")
 
     override func mouseDown(with event: NSEvent) {
@@ -80,6 +98,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     private var prevMarkdown: String? = nil
     var currentURL: URL?
     var isWebViewLoaded = false
+    var isSearchReady = false
+    private var pendingSearchRequest = false
     var currentZoomLevel: Double = 1.0
     var currentViewMode: ViewMode = .preview
     var rendererBundleSchemeHandler: RendererBundleSchemeHandler?
@@ -318,7 +338,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         
         keyDownEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             os_log("🔵 Local event monitor triggered", log: self?.logger ?? .default, type: .debug)
-            return self?.handleKeyDownEvent(event) ?? event
+            guard let self else { return event }
+            return self.handleMonitoredKeyDownEvent(event)
         }
         os_log("🔵 Registered local key event monitor", log: logger, type: .default)
         
@@ -356,6 +377,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         
         os_log("🔵 initializing InteractiveWebView instance...", log: logger, type: .default)
         webView = InteractiveWebView(frame: self.view.bounds, configuration: webConfiguration)
+        webView.searchShortcutHandler = { [weak self] in self?.requestSearch() }
         webView.autoresizingMask = [.width, .height]
         webView.navigationDelegate = self
         self.view.addSubview(webView)
@@ -988,6 +1010,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                 os_log("🔴 JS Execution Error (renderSource): %{public}@", log: self.logger, type: .error, innerError.localizedDescription)
             } else if let res = innerResult as? String {
                 os_log("🔵 JS Execution Result (renderSource): %{public}@", log: self.logger, type: .debug, res)
+                self.isSearchReady = true
+                self.completePendingSearchRequest()
             }
             
         }
@@ -1021,7 +1045,33 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         }
     }
     
+    /// The process can host multiple remote views; do not steal another window's keys.
+    func handleMonitoredKeyDownEvent(_ event: NSEvent) -> NSEvent? {
+        guard let window = view.window, event.windowNumber == window.windowNumber else { return event }
+        return handleKeyDownEvent(event)
+    }
+
+    private func requestSearch() {
+        pendingSearchRequest = true
+        completePendingSearchRequest()
+    }
+
+    func completePendingSearchRequest() {
+        guard pendingSearchRequest, isWebViewLoaded, isSearchReady, let webView else { return }
+        pendingSearchRequest = false
+        webView.evaluateJavaScript("window.showSearch && window.showSearch();") { [weak self] _, error in
+            if let error {
+                os_log("Search bridge failed: %{public}@", log: self?.logger ?? .default,
+                       type: .error, error.localizedDescription)
+            }
+        }
+    }
+
     private func handleKeyDownEvent(_ event: NSEvent) -> NSEvent? {
+        if QuickLookFindShortcut.matches(event) {
+            requestSearch()
+            return nil
+        }
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         
         os_log("🔵 handleKeyDownEvent: key=%{public}@ flags=%{public}@", 
@@ -1286,6 +1336,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                         os_log("🔴 JS Execution Error (renderMarkdown): %{public}@", log: self.logger, type: .error, error.localizedDescription)
                     case .success(let value):
                         os_log("🔵 renderMarkdown completed successfully, result: %{public}@", log: self.logger, type: .debug, String(describing: value))
+                        self.isSearchReady = true
+                        self.completePendingSearchRequest()
                     }
                     
                     if let url = self.currentURL,
@@ -1316,12 +1368,14 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         // This handles browser-initiated reloads (e.g., right-click > Reload)
         // where didStartProvisionalNavigation may not be called.
         isWebViewLoaded = false
+        isSearchReady = false
         startHandshakeTimeout()
     }
 
     public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         os_log("🔵 WebView didStartProvisionalNavigation (resetting state)", log: logger, type: .debug)
         isWebViewLoaded = false
+        isSearchReady = false
         cancelHandshakeTimeout()
     }
     

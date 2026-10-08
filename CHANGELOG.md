@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Fixed
+- **Quick Look search** (#54): Route Command-F through native preview responders, focus the search field, preserve handled events, and defer early requests until the document is rendered. Repeated shortcuts keep search open.
 - **Bare URL links** (#51): Recognize plain HTTP/HTTPS references as clickable links in the app and Quick Look while preserving code literals and explicit Markdown links.
 - **Quick Look full-screen scrollbar gestures**: Prevented Quick Look's double-click interception from blocking WebKit's native pan recognizer when dragging the full-screen document scrollbar.
   - Three-finger scrollbar drags can now yield to native WebKit scrolling without leaving subsequent trackpad scrolling unresponsive.
