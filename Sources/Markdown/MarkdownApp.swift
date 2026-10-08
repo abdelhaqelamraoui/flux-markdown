@@ -44,18 +44,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         print("🔵 Received URL: \(urlString)")
 
-        if url.scheme == "markdownpreview",
-           let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-           let path = components.queryItems?.first(where: { $0.name == "path" })?.value {
-            let fileURL = URL(fileURLWithPath: path)
-            print("🔵 Opening file: \(fileURL.path)")
-            NSDocumentController.shared.openDocument(withContentsOf: fileURL, display: true) { _, _, error in
-                if let error = error {
-                    print("❌ Failed to open document: \(error.localizedDescription)")
-                } else {
-                    print("✅ Successfully opened document")
-                }
+        guard let request = DocumentOpenRequest(url: url) else { return }
+        let id = request.position.map { DocumentPositionStore.shared.set($0, for: request.fileURL) }
+        NSDocumentController.shared.openDocument(withContentsOf: request.fileURL, display: true) { _, _, error in
+            if error != nil {
+                if let id { DocumentPositionStore.shared.discard(for: request.fileURL, id: id) }
+                return
             }
+            NotificationCenter.default.post(name: DocumentPositionStore.notification, object: request.fileURL)
         }
     }
 

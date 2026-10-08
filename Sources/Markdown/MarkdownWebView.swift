@@ -130,13 +130,18 @@ struct MarkdownWebView: NSViewRepresentable {
         private var lastCollapseBlockquotesByDefault: Bool = false
         private var lastShowLineNumbers: Bool = true
         private var lastRenderedContent: String = ""
+        private var lastRenderedFileURL: URL?
         private var pollingTimer: Timer?
         private let pollingInterval: TimeInterval = 2.0
         private var hasAppliedInitialZoomReset: Bool = false
         private let renderVersion = RenderVersionCounter()
+        private var navigationRenderVersion = 0
+        private var renderingPositionContent = false
 
         override init() {
             super.init()
+            NotificationCenter.default.addObserver(self, selector: #selector(handlePositionRequest),
+                                                   name: DocumentPositionStore.notification, object: nil)
             NotificationCenter.default.addObserver(
                 self,
                 selector: #selector(handleToggleSearch),
@@ -198,6 +203,25 @@ struct MarkdownWebView: NSViewRepresentable {
             stopFileMonitoring()
         }
         
+        @objc private func handlePositionRequest(_ notification: Notification) {
+            guard let url = notification.object as? URL, let currentFileURL,
+                  url.standardizedFileURL.resolvingSymlinksInPath() == currentFileURL.standardizedFileURL.resolvingSymlinksInPath(),
+                  isWebViewLoaded, !renderingPositionContent, let webView = currentWebView else { return }
+            applyPendingPosition(in: webView, for: currentFileURL)
+        }
+
+        private func applyPendingPosition(in webView: WKWebView, for fileURL: URL) {
+            let position = DocumentPositionStore.shared.consume(for: fileURL)
+                ?? PendingAnchorStore.shared.consume(for: fileURL.path).map { DocumentPosition.anchor($0) }
+            guard let position else { return }
+            webView.callAsyncJavaScript("return window.navigateDocumentPosition(target);",
+                                       arguments: ["target": position.arguments], in: nil, in: .page) { [weak self] result in
+                if case .failure(let error) = result {
+                    os_log("Position navigation failed: %{public}@", log: self?.logger ?? .default, type: .error, error.localizedDescription)
+                }
+            }
+        }
+
         @objc func handleToggleSearch() {
             guard let webView = currentWebView,
                   webView.window?.isKeyWindow == true else { return }
@@ -332,6 +356,7 @@ struct MarkdownWebView: NSViewRepresentable {
             lastCodeHighlightTheme = codeHighlightTheme
 
             if fileURL != currentFileURL {
+                navigationRenderVersion += 1
                 currentFileURL = fileURL
                 startFileMonitoring()
                 webView.pageZoom = AppearancePreference.shared.zoomLevel
@@ -370,7 +395,7 @@ struct MarkdownWebView: NSViewRepresentable {
         }
 
         private func executeRender(webView: WKWebView, content: String, fileURL: URL?, viewMode: ViewMode, appearanceMode: AppearanceMode, baseFontSize: Double, enableMermaid: Bool, enableKatex: Bool, enableEmoji: Bool, enableTypst: Bool, codeHighlightTheme: String, collapseBlockquotesByDefault: Bool, showLineNumbers: Bool = false) {
-            let onlyThemeChanged = (content == lastRenderedContent) && (viewMode == .preview) && (viewMode == lastViewMode) && (collapseBlockquotesByDefault == lastCollapseBlockquotesByDefault) && (showLineNumbers == lastShowLineNumbers)
+            let onlyThemeChanged = (fileURL == lastRenderedFileURL) && (content == lastRenderedContent) && (viewMode == .preview) && (viewMode == lastViewMode) && (collapseBlockquotesByDefault == lastCollapseBlockquotesByDefault) && (showLineNumbers == lastShowLineNumbers)
             if onlyThemeChanged {
                 os_log("🔵 FAST PATH: only theme changed, viewMode=%{public}@ lastViewMode=%{public}@", log: logger, type: .debug, String(describing: viewMode), String(describing: lastViewMode))
                 let theme: String
@@ -392,6 +417,7 @@ struct MarkdownWebView: NSViewRepresentable {
             // Capture previous content for diff animation before overwriting
             let previousContent = lastRenderedContent
             lastRenderedContent = content
+            lastRenderedFileURL = fileURL
             lastViewMode = viewMode
             lastCollapseBlockquotesByDefault = collapseBlockquotesByDefault
             lastShowLineNumbers = showLineNumbers
@@ -464,20 +490,20 @@ struct MarkdownWebView: NSViewRepresentable {
             }
             
             webView.evaluateJavaScript("window.clearDiffMarks && window.clearDiffMarks();", completionHandler: nil)
-            webView.evaluateJavaScript(js) { [weak self] _, error in
-                if let error = error {
-                    os_log("JS Error: %{public}@", log: self?.logger ?? .default, type: .error, error.localizedDescription)
+            navigationRenderVersion += 1
+            let generation = navigationRenderVersion
+            renderingPositionContent = true
+            webView.callAsyncJavaScript("return " + js, arguments: [:], in: nil, in: .page) { [weak self] result in
+                guard let self, generation == self.navigationRenderVersion,
+                      self.currentFileURL == fileURL else { return }
+                self.renderingPositionContent = false
+                if case .failure(let error) = result {
+                    os_log("JS render failed: %{public}@", log: self.logger, type: .error, error.localizedDescription)
+                    return
                 }
-                // After render completes, scroll to any pending anchor for this file
-                if let fileURL = fileURL,
-                   let anchor = PendingAnchorStore.shared.consume(for: fileURL.path),
-                   viewMode == .preview {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                        self?.scrollToAnchor(anchor, in: webView)
-                    }
+                if let fileURL { self.applyPendingPosition(in: webView, for: fileURL) }
             }
         }
-    }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             os_log("WebView didFinish navigation", log: logger, type: .debug)

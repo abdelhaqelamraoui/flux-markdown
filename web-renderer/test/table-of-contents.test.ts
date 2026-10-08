@@ -16,6 +16,7 @@ describe('TableOfContents', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        Object.defineProperty(window, 'innerWidth', {configurable:true,value:700});
         document.body.innerHTML = '<div id="toc-container"></div>';
         container = document.getElementById('toc-container')!;
         toc = new TableOfContents('toc-container');
