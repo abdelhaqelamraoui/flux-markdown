@@ -46,3 +46,16 @@ until the user continues to GitHub. No Issue has been marked done for unshipped 
 
 The current SDK requires a build-time macOS 12 override; Big Sur compatibility is
 not verified and production deployment settings are unchanged.
+
+
+## Candidate artifact
+
+Installed development version: `1.34.475-dev-20261009-031127`.
+
+DMG: `build/artifacts/FluxMarkdown-Acceptance.dmg`
+
+SHA-256: `93721f03536cf492322bb050870cafc4f1b8017728286bb23cec00fcf90492bf`
+
+The compressed image verifies successfully and contains the signed development app
+and vendor installer. It has not been published, notarized, or promoted into the
+production tap. Native end-to-end checks remain blocked by the locked console.

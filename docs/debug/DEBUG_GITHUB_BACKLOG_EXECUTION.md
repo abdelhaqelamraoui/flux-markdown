@@ -67,3 +67,24 @@ verified implementation, and a published version users can install. Duplicates
 inherit the same verified fix. Requests needing external evidence remain explicitly
 pending; proposals and diagnostic scripts alone do not satisfy the corresponding
 fix. Feature implementation follows the repository's proposal review requirement.
+
+
+## Implementation round — 2026-10-09
+
+The user explicitly authorized all existing plans to be implemented before their
+acceptance. Positional navigation and responsive contents are implemented; PR #56
+is integrated locally with its author preserved and extra regression coverage.
+Standard Find menu bridging, per-type editor preservation, headless recovery and
+transactional vendor placement/rollback are implemented. Production cask promotion
+is guarded by DMG helper presence and stays deferred until release.
+
+314 renderer tests, 62 related native tests and four vendor transaction tests pass.
+Actual installation preserved current handlers. Browser geometry/source navigation
+checks pass. Native UI/Finder verification is currently blocked: IOConsoleLocked
+and CGSSessionScreenIsLocked are true; no app windows are accessible. A scratch
+Homebrew Loader test stopped at the trust gate without changing policy.
+
+This is an implemented candidate, not evidence that every issue has been resolved
+in its reporter environment. The remaining runtime matrix is documented in
+docs/testing/ACCEPTANCE_ALL_ISSUES.md. User acceptance is not requested until
+the blocked native checks have been completed or their scope explicitly addressed.
