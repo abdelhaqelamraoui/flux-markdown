@@ -190,6 +190,13 @@ export class TableOfContents {
     }
 
     public updateLayout(): void {
+        const wasDocked = document.documentElement.dataset.tocDocked === 'true';
+        const preview = document.getElementById('markdown-preview');
+        const bounds = preview?.getBoundingClientRect();
+        const hit = bounds && typeof document.elementFromPoint === 'function'
+            ? document.elementFromPoint(bounds.left + bounds.width / 2, Math.min(100, window.innerHeight / 2)) : null;
+        const anchor = hit?.closest<HTMLElement>('#markdown-preview > *');
+        const previousTop = anchor?.getBoundingClientRect().top;
         const compact = document.documentElement.dataset.context === 'finder';
         const wide = window.innerWidth >= 900 && !compact;
         this.isVisible = this.hasHeadings && !compact && (this.userVisibility ?? wide);
@@ -200,6 +207,13 @@ export class TableOfContents {
         this.container.style.display = this.hasHeadings && !compact ? 'block' : 'none';
         this.container.querySelector('.toc-nav')?.classList.toggle('visible', this.isVisible);
         this.container.querySelector('.toc-toggle')?.setAttribute('aria-expanded', String(this.isVisible));
+        if (wasDocked !== docked && anchor && previousTop !== undefined) {
+            Promise.resolve().then(() => {
+                if (!anchor.isConnected) return;
+                const delta = anchor.getBoundingClientRect().top - previousTop;
+                if (Math.abs(delta) > 1) window.scrollBy(0, delta);
+            });
+        }
     }
 
     public toggle(): void { this.userVisibility = !this.isVisible; this.updateLayout(); }

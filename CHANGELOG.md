@@ -1,6 +1,15 @@
 ## [Unreleased]
 
+### Added
+- **Positioned document links** (#52): Open source lines or heading fragments through markdownpreview URLs, including already-open documents and original line numbers after front matter.
+- **Contents sidebar** (#50): Dock contents beside wide previews, preserve visibility choices, and use a collapsible layout in narrow windows.
+- **Quick Look recovery** (#49): Add a registration/priority repair action that preserves existing Markdown editor handlers and reports failures.
+- **Feedback diagnostics**: Keep the latest 200 settings changes without time expiration and prepare reviewable bug reports.
+
+
 ### Fixed
+- **YAML date values** (PR #56): Display dates in metadata fields, arrays and nested values.
+- **Homebrew installation** (#53/#55): Prepare a vendor installer with checked registration and rollback, replacing deprecated flight hooks when the new package is published.
 - **Quick Look search** (#54): Route Command-F through native preview responders, focus the search field, preserve handled events, and defer early requests until the document is rendered. Repeated shortcuts keep search open.
 - **Bare URL links** (#51): Recognize plain HTTP/HTTPS references as clickable links in the app and Quick Look while preserving code literals and explicit Markdown links.
 - **Quick Look full-screen scrollbar gestures**: Prevented Quick Look's double-click interception from blocking WebKit's native pan recognizer when dragging the full-screen document scrollbar.

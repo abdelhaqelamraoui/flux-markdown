@@ -832,11 +832,17 @@ struct MarkdownWebView: NSViewRepresentable {
             os_log("🔵 Opening local file: %{public}@ anchor: %{public}@ (href: %{public}@)",
                    log: logger, type: .default, targetURL.path, fragment ?? "(none)", href)
             
-            if let anchor = fragment, !anchor.isEmpty {
-                PendingAnchorStore.shared.set(anchor: anchor, for: targetURL.path)
-            }
-            
-            NSWorkspace.shared.open(targetURL)
+            let markdownExtensions: Set<String> = ["md", "mdx", "markdown", "mdown", "mkd", "mkdn", "mkdown", "mdwn", "rmd", "qmd", "mdoc", "mdc", "mmd", "livemd"]
+            if markdownExtensions.contains(targetURL.pathExtension.lowercased()) {
+                let id = fragment.flatMap { $0.isEmpty ? nil : DocumentPositionStore.shared.set(.anchor($0), for: targetURL) }
+                NSDocumentController.shared.openDocument(withContentsOf: targetURL, display: true) { _, _, error in
+                    if error != nil {
+                        if let id { DocumentPositionStore.shared.discard(for: targetURL, id: id) }
+                    } else {
+                        NotificationCenter.default.post(name: DocumentPositionStore.notification, object: targetURL)
+                    }
+                }
+            } else { NSWorkspace.shared.open(targetURL) }
         }
         
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {

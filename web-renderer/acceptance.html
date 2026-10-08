@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FluxMarkdown acceptance harness</title>
+<style>body{margin:0;padding:20px}.markdown-body{padding:45px;box-sizing:border-box}#validation-controls{position:fixed;top:0;left:0;z-index:10000;background:white;color:black;font:12px sans-serif;padding:5px}#validation-controls textarea{display:block;width:500px;height:120px}</style></head>
+<body><details id="validation-controls"><summary>Validation controls</summary><label>Markdown input<textarea id="input">---
+date: 2024-01-01
+---
+
+# Acceptance
+
+Alpha appears twice. Alpha.
+
+https://caddyserver.com/docs/
+
+## Last section
+
+Last paragraph.</textarea></label><label>Context<select id="context"><option>app</option><option>quicklook</option><option>finder</option></select></label><button id="render">Render</button><label>Source line<input id="line" value="11" type="number"></label><button id="navigate">Navigate</button><button id="export">Export</button><output id="status">Waiting</output></details>
+<div id="toc-container"></div><div id="search-container"></div><div id="collapse-btn-container"></div><div id="markdown-preview" class="markdown-body"></div><div id="loading-status"></div>
+<script type="module">
+import './src/index.ts';
+const input=document.getElementById('input'),status=document.getElementById('status');
+async function render(){await window.renderMarkdown(input.value,{context:document.getElementById('context').value,showLineNumbers:false});status.textContent='Rendered';document.getElementById('validation-controls').open=false;}
+document.getElementById('render').onclick=render;
+document.getElementById('navigate').onclick=()=>{status.textContent=window.navigateDocumentPosition({line:Number(document.getElementById('line').value)})?'Navigated':'No target';document.getElementById('validation-controls').open=false;};
+document.getElementById('export').onclick=()=>{let preview=document.getElementById('export-preview');if(!preview){preview=document.createElement('iframe');preview.id='export-preview';preview.title='Exported document';preview.style.cssText='position:fixed;inset:30px 0 0;width:100%;height:calc(100vh - 30px);border:0;background:white;z-index:9000';document.body.appendChild(preview);}preview.srcdoc=window.exportHTML();status.textContent='Exported';};
+render();
+</script></body></html>
