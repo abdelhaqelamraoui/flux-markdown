@@ -118,3 +118,9 @@
 "GitHub opened. Review the form and submit when ready." = "GitHub opened. Review the form and submit when ready.";
 "Could not open the browser. Copy the report or save it and try again." = "Could not open the browser. Copy the report or save it and try again.";
 "Copy Link" = "Copy Link";
+
+/* QuickLook recovery */
+"Repair Quick Look…" = "Repair Quick Look…";
+"Quick Look registration repaired" = "Quick Look registration repaired";
+"Quick Look repair failed" = "Quick Look repair failed";
+"Try selecting the file in Finder and pressing Space. Your default editor was preserved." = "Try selecting the file in Finder and pressing Space. Your default editor was preserved.";

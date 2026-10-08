@@ -141,6 +141,9 @@ struct MarkdownApp: App {
                     }
                 }
                 
+                Button(NSLocalizedString("Repair Quick Look…", comment: "QuickLook recovery menu")) {
+                    QuickLookRepairController.shared.show()
+                }
                 Button(NSLocalizedString("Report an Issue", comment: "Report issue menu item")) {
                     FeedbackWindowController.shared.show()
                 }

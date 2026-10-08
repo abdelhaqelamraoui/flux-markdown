@@ -59,6 +59,8 @@ rm -f "$OUTPUT_DIR/$DMG_NAME"
 TMP_DIR=$(mktemp -d)
 echo "📂 Preparing DMG content in $TMP_DIR..."
 cp -R "$APP_PATH" "$TMP_DIR/"
+cp scripts/install-flux-markdown.sh "$TMP_DIR/install-flux-markdown.sh"
+chmod +x "$TMP_DIR/install-flux-markdown.sh"
 # 4.5. Pre-seed the background directory with Retina asset for Finder
 mkdir -p "$TMP_DIR/.background"
 cp assets/dmg/background@2x.png "$TMP_DIR/.background/background@2x.png"
