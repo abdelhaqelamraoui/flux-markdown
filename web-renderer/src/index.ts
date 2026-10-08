@@ -326,7 +326,7 @@ function buildMd(): MarkdownIt {
     const instance = new MarkdownIt({
         html: true,
         breaks: false,
-        linkify: false,
+        linkify: true,
         typographer: true,
         highlight: function (str: string, lang: string): string {
             const resolvedLang = resolveLanguage(lang);
