@@ -41,3 +41,29 @@ PR #56 diff was inspected: the Date-object conversion addresses the YAML date-on
 Its array renderer also changes nested-object/null handling, so date arrays, nested values,
 nulls and escaping should be covered before release. The PR was not merged or declared
 validated; tests quoted by its author are not a substitute for local review validation.
+
+## Full backlog objective — 2026-10-09
+
+The user clarified the goal: resolve every open issue, including the two feature
+requests. Refresh confirms seven open issues (#49–#55), six distinct work items,
+and pending PR #56. Public release remains v1.34.475. Triage and proposals are
+not implementation completion; locally passing tests are not release completion.
+
+### Remaining work
+
+- [ ] #54: complete real Finder keyboard/focus acceptance, investigate any remaining failure.
+- [ ] #49: reproduce provider fallback on the affected environment, obtain targeted reporter evidence, implement and verify the identified fix.
+- [ ] #53/#55: define a supported installation/registration path, validate compatible Homebrew versions and real clean-install/upgrade/reinstall behavior, then migrate the tap safely.
+- [ ] #52: review the existing positional-navigation proposal, implement URL targets and original source mapping, and verify already-open and concurrent documents.
+- [ ] #50: review the existing sidebar proposal, implement responsive nonoverlapping contents, and verify QuickLook, full screen, print and export.
+- [ ] PR #56: validate YAML date and recursive array behavior before integration.
+- [ ] Publish verified fixes/features with app/extension packaging, Sparkle and Homebrew validation. Resolve the current SDK/deployment-target validation constraint without silently changing supported macOS versions.
+- [ ] After confirmed release, reply in each issue's language with the exact version and update instructions, and add done. Leave closing to the reporter.
+
+### Completion criteria
+
+Every distinct issue has a reproduced or otherwise demonstrated cause/requirement,
+verified implementation, and a published version users can install. Duplicates
+inherit the same verified fix. Requests needing external evidence remain explicitly
+pending; proposals and diagnostic scripts alone do not satisfy the corresponding
+fix. Feature implementation follows the repository's proposal review requirement.
