@@ -98,3 +98,6 @@ docs/superpowers/
 README*.pdf
 playground.html
 playground.ts
+
+# Local Vite acceptance-preview cache
+.vite/

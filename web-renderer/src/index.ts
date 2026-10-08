@@ -134,6 +134,7 @@ import './styles/help-overlay.css';
 import './styles/blockquote-collapse.css';
 import './styles/diff-animations.css';
 import './styles/line-numbers.css';
+import './styles/position-navigation.css';
 import './styles/finder-pane.css';
 import './styles/typst.css';
 
@@ -1039,6 +1040,15 @@ window.renderSource = function(text: string, theme: string, prevContent?: string
         const diffs = computeLineDiff(oldText, text);
         outputDiv.innerHTML = diffAnimator.buildSourceHTML(diffs, theme);
         diffAnimator.attachSourceMarkListeners(outputDiv);
+        const sourceTokens = md.parse(extractFrontMatter(text).body, {});
+        const prefix = extractFrontMatter(text);
+        const offset = text.slice(0, text.length - prefix.body.length).split('\n').length - 1;
+        for (const token of sourceTokens) {
+            if (token.type !== 'heading_open' || !token.map) continue;
+            const id = token.attrGet('id');
+            const row = outputDiv.querySelector<HTMLElement>(`[data-source-line="${token.map[0] + offset + 1}"]`);
+            if (row && id) row.id = id;
+        }
         logToSwift(`[Source View] Rendered ${text.length} characters with theme: ${theme}`);
     } catch (e) {
         logToSwift("JS Error during source rendering: " + e);
