@@ -65,7 +65,9 @@ tested manually and confirmed Cmd+F opens Finder search. This is a failed runtim
 test; #54 remains unresolved. A native magnifying-glass search button and AppKit
 key equivalent have been added, with eight search and twelve toolbar regressions
 passing, but the native button is a fallback and does not establish a Finder
-shortcut fix. Clicking content before Cmd+F is the pending diagnostic comparison.
+shortcut fix. The reporter confirmed that clicking content before Cmd+F still opens
+Finder search. An optional Accessibility-authorized shortcut helper is proposed in
+`openspec/changes/add-quicklook-shortcut-helper/`; it is not implemented or enabled.
 The supported modern
 default-editor setter did not complete within eight seconds even while unlocked;
 the previous editor values were restored and read back. VS Code preservation

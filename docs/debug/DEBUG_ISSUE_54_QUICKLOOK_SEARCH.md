@@ -35,7 +35,23 @@ forwarding Finder's Find command into a remote extension view.
 Installed button candidate: `1.34.475-dev-20261009-112059`. Runtime automation still
 refuses the preview's coordinate input with `window_not_focused`; a separate qlmanage
 preview could not expose its AX window. These are recorded as unverified runtime
-checks, not passes. The reporter's click-content-then-Cmd+F result is pending.
+checks, not passes. The reporter confirmed clicking content once before Cmd+F also
+opens Finder search. The click-focus workaround therefore fails in the actual host.
+
+### Helper proposal
+
+Further research found the Peek developer's primary FAQ explicitly describing an
+Accessibility-authorized helper to intercept shortcuts and deliver them into its
+Quick Look extension: https://www.bigzlabs.com/peek.html . This is evidence for a
+possible architecture, not proof that our target attribution/tap will work.
+
+The proposal `openspec/changes/add-quicklook-shortcut-helper/` is strictly validated.
+It defaults off, retains the no-permission search button, restricts eligible input
+to Cmd+F in a verified active FluxMarkdown preview, and stops on invalidation.
+Remote AX attribution and safe event consumption are explicit feasibility gates.
+It introduces a separate process and Accessibility permission, so implementation
+waits for proposal approval per OpenSpec. No interception or permission change has
+been performed. #54 is still unresolved.
 
 Issue: https://github.com/xykong/flux-markdown/issues/54
 Baseline: `3911a15`, release `v1.34.475`.
