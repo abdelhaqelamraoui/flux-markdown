@@ -27,6 +27,9 @@ jobs:
       - name: Check internal Markdown links
         run: bash scripts/check-links.sh
 
+      - name: Test Feishu notification payloads
+        run: node --test scripts/tests/feishu-notify.test.cjs
+
       - name: Install renderer dependencies
         working-directory: web-renderer
         run: npm ci
