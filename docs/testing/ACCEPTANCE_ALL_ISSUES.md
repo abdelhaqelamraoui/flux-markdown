@@ -31,10 +31,18 @@ available. These are explicitly pending:
    context, preserving editor choice and real extension behavior (#53/#55).
 4. Concurrent-file URL navigation.
 5. Native sidebar layout at narrow sizes, theme/zoom and printing.
-6. Automatically dismiss the originating Finder preview after search handoff. Both
-   extension completion and closing the remote view-service window left the outer
-   panel visible. The experiments were rolled back; one-click search remains stable.
-   See DEBUG_SEARCH_PREVIEW_DISMISSAL.md.
+The user accepted retaining the Finder preview after search handoff. Automatic
+dismissal is no longer an acceptance requirement; the failed experiments remain
+recorded in DEBUG_SEARCH_PREVIEW_DISMISSAL.md.
+
+Search handoff now carries the preview's display ID and AppKit frame to the main
+app. The app prefers that display and preserves size/position within its visible
+area, including already-open documents. Full-screen windows remain full screen.
+The 60 related native regressions pass, and installed Release cold/warm URI
+requests produced matching external-display window geometry. The complete
+preview-button-to-position runtime check remains pending because automation cannot
+read the remote preview reliably on the above-primary display. See
+DEBUG_SEARCH_WINDOW_PLACEMENT.md.
 
 The unlocked console verified Chinese native controls, YAML date display, docked
 900-point sidebar without covering the document, and a settled 1920-point full
@@ -120,11 +128,11 @@ not verified and production deployment settings are unchanged.
 
 ## Candidate artifact
 
-Installed development version: `1.34.475-dev-20261009-130822` (Release configuration).
+Installed development version: `1.34.475-dev-20261010-002450` (Release configuration).
 
 DMG: `build/artifacts/FluxMarkdown-Acceptance.dmg`
 
-SHA-256: `858acfb894d5763707e807ff4727beaac830bc02765513ae39c0b0d65d7b5c97`.
+SHA-256: `fea3a3287c46caa9d52afc333b5bb1732817658e2759bdbb91385ecb2fafe010`.
 
 The compressed image verifies successfully and contains the signed development app
 and vendor installer. It has not been published, notarized, or promoted into the

@@ -211,6 +211,7 @@ struct MarkdownWebView: NSViewRepresentable {
         }
 
         private func applyPendingPosition(in webView: WKWebView, for fileURL: URL) {
+            if let window = webView.window { WindowAccessor.applyPendingSearchPlacement(to: window, for: fileURL) }
             let position = DocumentPositionStore.shared.consume(for: fileURL)
                 ?? PendingAnchorStore.shared.consume(for: fileURL.path).map { DocumentPosition.anchor($0) }
             if let position {

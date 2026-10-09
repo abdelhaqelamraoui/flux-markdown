@@ -1083,8 +1083,13 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
 
     func completePendingSearchRequest() {
+        let placement: SearchWindowPlacement?
+        if let window = view.window, let screen = window.screen,
+           let id = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber {
+            placement = SearchWindowPlacement(frame: window.frame, displayID: id.uint32Value)
+        } else { placement = nil }
         guard pendingSearchRequest, let currentURL,
-              let url = DocumentOpenRequest.searchURL(for: currentURL) else { return }
+              let url = DocumentOpenRequest.searchURL(for: currentURL, placement: placement) else { return }
         pendingSearchRequest = false
         searchDocumentOpener(url) { [weak self] succeeded in
             guard let self, !succeeded else { return }

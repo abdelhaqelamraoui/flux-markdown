@@ -76,6 +76,7 @@ targets:
       - Sources/SearchLauncher
       - Sources/Shared/SearchLaunchProtocol.swift
       - Sources/Shared/DocumentPosition.swift
+      - Sources/Shared/SearchWindowPlacement.swift
     settings:
       base:
         PRODUCT_NAME: FluxMarkdownSearchLauncher
