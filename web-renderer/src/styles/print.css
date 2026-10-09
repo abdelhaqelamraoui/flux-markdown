@@ -96,6 +96,7 @@
     page-break-before: always;
   }
 
+  #reading-controls,
   #toc-container,
   #search-container,
   #outline-panel,

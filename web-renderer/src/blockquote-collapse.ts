@@ -1,3 +1,5 @@
+import { readingLabels, updateReadingControlsLayout } from './reading-controls';
+
 export class BlockquoteCollapse {
     private container: HTMLElement;
     private preview: HTMLElement;
@@ -21,13 +23,10 @@ export class BlockquoteCollapse {
 
     private createButton(): HTMLButtonElement {
         const button = document.createElement('button');
-        button.className = 'blockquote-collapse-toggle';
-        button.setAttribute('aria-label', 'Collapse blockquotes');
-        button.innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path d="M3 5h14v1.5H3V5zm2 4h10v1.5H5V9zm2 4h6v1.5H7V13z"/>
-            </svg>
-        `;
+        button.type = 'button';
+        button.className = 'blockquote-collapse-toggle reading-tool-button';
+        button.setAttribute('aria-label', readingLabels().collapse);
+        button.textContent = readingLabels().collapse;
         button.addEventListener('click', () => this.toggle());
         return button;
     }
@@ -52,11 +51,13 @@ export class BlockquoteCollapse {
 
     private collapseAll(): void {
         this.targets().forEach(el => {
+            if (el.previousElementSibling?.classList.contains('blockquote-placeholder')) return;
             const placeholder = this.createPlaceholder(el);
             el.before(placeholder);
             el.style.display = 'none';
         });
-        this.button.setAttribute('aria-label', 'Expand blockquotes');
+        this.button.setAttribute('aria-label', readingLabels().expand);
+        this.button.textContent = readingLabels().expand;
         this.button.classList.add('active');
     }
 
@@ -65,7 +66,8 @@ export class BlockquoteCollapse {
         this.targets().forEach(el => {
             el.style.display = '';
         });
-        this.button.setAttribute('aria-label', 'Collapse blockquotes');
+        this.button.setAttribute('aria-label', readingLabels().collapse);
+        this.button.textContent = readingLabels().collapse;
         this.button.classList.remove('active');
     }
 
@@ -80,10 +82,13 @@ export class BlockquoteCollapse {
     }
 
     private applyState(): void {
+        this.container.hidden = this.targets().length === 0 || document.documentElement.dataset.context === 'finder';
+        this.button.setAttribute('aria-expanded', String(!this.collapsed));
         if (this.collapsed) {
             this.collapseAll();
         } else {
             this.expandAll();
         }
+        updateReadingControlsLayout();
     }
 }

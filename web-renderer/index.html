@@ -99,10 +99,17 @@
 </head>
 <body>
     <div id="loading-status">Loading renderer...</div>
-    <div id="toc-container"></div>
-    <div id="search-container"></div>
-    <div id="collapse-btn-container"></div>
-    <div id="markdown-preview" class="markdown-body"></div>
+    <div id="reading-controls" hidden>
+        <div id="reading-toolbar" role="group" aria-label="Reading controls">
+            <div id="collapse-btn-container" hidden></div>
+            <div id="toc-button-container" hidden></div>
+        </div>
+        <div id="search-container"></div>
+    </div>
+    <div id="reading-layout">
+        <div id="markdown-preview" class="markdown-body"></div>
+        <div id="toc-container"></div>
+    </div>
     <div id="link-status-bar" aria-hidden="true"></div>
     <script type="module" src="/src/index.ts"></script>
 </body>

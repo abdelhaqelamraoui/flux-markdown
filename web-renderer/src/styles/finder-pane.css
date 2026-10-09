@@ -10,6 +10,7 @@
  */
 
 /* ── Hide overlay UI ────────────────────────────────────── */
+[data-context="finder"] #reading-controls,
 [data-context="finder"] #toc-container,
 [data-context="finder"] #search-container,
 [data-context="finder"] #collapse-btn-container,
@@ -110,3 +111,5 @@
 [data-context="finder"] .markdown-body hr {
     margin: 0.4em 0;
 }
+
+[data-context="finder"] #reading-layout { display: block !important; }

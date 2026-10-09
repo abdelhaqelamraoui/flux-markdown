@@ -11,8 +11,20 @@
 - [ ] 2.5 App/QuickLook 全屏、主题、缩放和截图验证
 - [ ] 2.6 用户说明、CHANGELOG 和发布后 issue 回复
 
-## 3. 2026-10-10 design refinement (implementation pending)
+## 3. 2026-10-10 design refinement (implemented; platform acceptance pending)
 - [x] 3.1 整理原始诉求与附议，完成工具区、侧栏和响应式交互设计。
-- [ ] 3.2 分离停靠偏好和浮层状态，补齐转换测试与关闭交互。
-- [ ] 3.3 工具区预留布局空间，目录/引用块按钮统一入口并适配搜索栏。
+- [x] 3.2 分离停靠偏好和浮层状态，补齐转换测试与关闭交互。
+- [x] 3.3 工具区预留布局空间，目录/引用块按钮统一入口并适配搜索栏。
 - [ ] 3.4 按完整设计完成活动项、焦点和真实窗口验收。
+
+### Verification notes — 2026-10-10
+
+The state transitions, reserved controls, navigation and output behavior are implemented.
+Browser acceptance covers 520/760/899/900/901/1100 CSS px, reduced overlap, independent
+preferences, current headings, dark appearance, 100–200% zoom, HTML export, print and
+compact Finder context. Native Release app docking and the visibility button were
+verified. Native app full-screen layout was also verified after the fixed-panel refinement.
+Native narrow-window/QuickLook coverage is still pending: the GUI
+provider could not resize the test window, and qlmanage accessibility observation
+returned permission_denied. These gaps do not become checked release-acceptance tasks.
+See docs/debug/DEBUG_ISSUE_50_CONTENTS_SIDEBAR.md for exact evidence and limits.

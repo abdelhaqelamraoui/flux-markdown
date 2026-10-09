@@ -272,6 +272,7 @@ import githubAlerts from 'markdown-it-github-alerts';
 import { findSourceLineTarget, DocumentPosition } from './position-navigation';
 import { extractOutline } from './outline';
 import { TableOfContents } from './table-of-contents';
+import { ReadingControls, updateReadingControlsLayout } from './reading-controls';
 import { SearchEngine } from './search';
 import { SearchUI } from './search-ui';
 import { HelpOverlay } from './help-overlay';
@@ -439,6 +440,7 @@ function rebuildMd(): void {
 }
 
 let toc: TableOfContents | null = null;
+let readingControls: ReadingControls | null = null;
 let searchEngine: SearchEngine | null = null;
 let searchUI: SearchUI | null = null;
 let helpOverlay: HelpOverlay | null = null;
@@ -702,6 +704,12 @@ window.exportHTML = function(): string {
     // Ensure we clone the content so we don't modify the active DOM
     const clone = previewDiv ? (previewDiv.cloneNode(true) as HTMLElement) : document.createElement('div');
     
+    clone.querySelectorAll<HTMLElement>('.blockquote-placeholder').forEach(placeholder => {
+        const quote = placeholder.nextElementSibling as HTMLElement | null;
+        if (quote?.matches('blockquote, .markdown-alert')) quote.style.display = '';
+        placeholder.remove();
+    });
+
     // Force all relative image srcs to be absolute file:// or local-md:// URIs
     // so Swift can easily find and replace them with base64 data URIs
     const images = clone.querySelectorAll('img');
@@ -813,7 +821,12 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
     document.documentElement.setAttribute('data-theme', currentTheme);
 
     try {
-        if (!toc || !document.getElementById('toc-container')?.contains(document.querySelector('.toc-toggle'))) {
+        const controlsElement = document.getElementById('reading-controls');
+        if (controlsElement && !readingControls?.isMounted()) {
+            readingControls?.dispose();
+            readingControls = new ReadingControls(controlsElement);
+        }
+        if (!toc || !toc.isMounted()) {
             toc?.dispose();
             try { toc = new TableOfContents('toc-container'); } catch (e) {
                 logToSwift("JS Warning: TOC initialization failed: " + e);
@@ -1040,6 +1053,8 @@ window.renderSource = function(text: string, theme: string, prevContent?: string
         const diffs = computeLineDiff(oldText, text);
         outputDiv.innerHTML = diffAnimator.buildSourceHTML(diffs, theme);
         diffAnimator.attachSourceMarkListeners(outputDiv);
+        blockquoteCollapse?.setInitialState(false);
+        updateReadingControlsLayout();
         const sourceTokens = md.parse(extractFrontMatter(text).body, {});
         const prefix = extractFrontMatter(text);
         const offset = text.slice(0, text.length - prefix.body.length).split('\n').length - 1;
@@ -1141,7 +1156,7 @@ function findElementByAnchor(anchorId: string): HTMLElement | null {
 function handleAnchorClick(e: Event) {
     const target = e.target as HTMLElement;
     const anchor = target.closest('a');
-    if (!anchor) return;
+    if (!anchor || anchor.closest('#toc-container .toc-nav')) return;
     const href = anchor.getAttribute('href');
     if (!href) return;
 

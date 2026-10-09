@@ -147,3 +147,15 @@ Accessibility helpers or authenticated remote-target refinements for this shortc
 Earlier failed shortcut tests remain historical evidence, not unfinished acceptance
 gates. #54 may only receive a released-alternative explanation after the retained
 route is shipped; do not describe it as working inside the preview.
+
+## #50 refined implementation — 2026-10-10
+
+The approved right sidebar/top-controls design is implemented, including measured
+search height, independent docked preference and temporary overlay state, chapter
+tracking, close-after-narrow-navigation, localized controls and clean output.
+332 renderer tests pass. Browser geometry and output checks cover six widths and
+100–200% zoom. Native app wide docking/toggle, full-screen layout and Release signatures are verified;
+native narrow-window and expanded QuickLook checks remain pending due to the
+GUI observation/resize limits documented in DEBUG_ISSUE_50_CONTENTS_SIDEBAR.md.
+The new installed development candidate is `1.34.475-dev-20261010-012536`; it is not
+an updated public release or a replacement for the earlier DMG's recorded checksum.
