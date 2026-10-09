@@ -21,15 +21,50 @@ reporter-environment failure has been reproduced.
 
 ## Still needed before declaring all issues resolved
 
-The local console is locked, so native Finder UI cannot be reliably exercised.
-The original #49 Sequoia environment is not available. These are explicitly pending:
+The user unlocked the console on October 9. Native application verification now
+works after restarting the candidate. The original #49 Sequoia environment is not
+available. These are explicitly pending:
 
 1. Finder Space → Cmd+F, type Alpha, repeat Find, Escape, and full screen (#54).
 2. Finder rendered previews while VS Code remains default editor (#49).
 3. Homebrew clean install/reinstall/upgrade of the new payload in a trusted test
    context, preserving editor choice and real extension behavior (#53/#55).
-4. Native App URL navigation for new/already-open/concurrent files and fullscreen.
-5. Native sidebar layout at narrow/wide sizes, theme/zoom, print/PDF/HTML export.
+4. Concurrent-file URL navigation.
+5. Native sidebar layout at narrow sizes, theme/zoom and printing.
+
+The unlocked console verified Chinese native controls, YAML date display, docked
+900-point sidebar without covering the document, and a settled 1920-point full
+screen layout. Application Cmd+F, Alpha match count 1/2, repeat Find retaining the
+query, and Escape were verified. Search initially overlapped the native toolbar;
+the follow-up stylesheet fix moved it below the toolbar and before the sidebar.
+
+Native HTML export saved `/tmp/flux-unlocked-export.html`; the document contains all
+forty sections and the metadata date, and excludes search/contents markup. Opening
+the exported file in Chrome verified full-width readable content without a sidebar
+or a reserved sidebar gap.
+
+Cold-start URL navigation initially lost the launch event. Registering the Apple
+Event handler in `applicationWillFinishLaunching` fixed this: source line 166
+opened at Section 20, with a successful native navigation result and screenshot.
+Already-running application navigation also reached its target.
+Fragment `#section-40` visibly reached Section 40 in the final candidate. The three
+DocumentPosition and six QuickLookSearch native regressions passed again after
+the launch-handler change (nine tests, zero failures).
+
+Native PDF export produced an unencrypted 21-page A4 document; text extraction
+contains all forty headings and the date and no contents sidebar. The first rendered
+page shows readable full-width text without toolbar/contents controls. All 21 pages
+were rendered and reviewed as a contact sheet. Section 2 is left as an orphan
+heading at the end of page 1, so pagination polish remains a recorded follow-up;
+the existing print CSS already requests `page-break-after: avoid`.
+
+Finder Space produced candidate-version rendered content in the accessibility
+tree. The automation provider binds that remote panel to the underlying Finder
+CG window, so its screenshot/keyboard recipient can be wrong. Cmd+F in Finder
+is still unproven; synthetic input success is not a pass. The supported modern
+default-editor setter did not complete within eight seconds even while unlocked;
+the previous editor values were restored and read back. VS Code preservation
+therefore remains unproven.
 
 ## Fixture and commands (after remaining automated/runtime work is complete)
 
@@ -50,12 +85,12 @@ not verified and production deployment settings are unchanged.
 
 ## Candidate artifact
 
-Installed development version: `1.34.475-dev-20261009-031127`.
+Installed development version: `1.34.475-dev-20261009-102822`.
 
 DMG: `build/artifacts/FluxMarkdown-Acceptance.dmg`
 
-SHA-256: `93721f03536cf492322bb050870cafc4f1b8017728286bb23cec00fcf90492bf`
+SHA-256: `750713d0b8c287958eb8864154ac8435992de295a982bb25dd19337289a6080e`.
 
 The compressed image verifies successfully and contains the signed development app
 and vendor installer. It has not been published, notarized, or promoted into the
-production tap. Native end-to-end checks remain blocked by the locked console.
+production tap. Remaining runtime checks are listed above; the console is unlocked.

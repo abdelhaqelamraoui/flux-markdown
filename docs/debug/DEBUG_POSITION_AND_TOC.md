@@ -47,3 +47,20 @@ rerendering kept contents closed. Width 700 fell back to overlay. Original line 
 placed it about 60 px below the viewport top. Beyond-end navigation showed the final
 content. Finder context hid the panel and cleared reserved width. A browser download
 attempt timed out; no export-download pass is claimed. Automated export tests pass.
+# Unlocked-console follow-up
+
+The application successfully navigated an already-open file in the first candidate.
+After rebuilding the search layout, a new-window URL request rendered the document
+but remained at its beginning. This is not counted as a pass. Inspect the native
+event, renderer readiness, consumption and result without logging the document path
+or search text. Acceptance requires both new and existing windows to visibly reach
+the original requested line, and a later render must not reset that position.
+
+The cold-start failure was reproduced with no URL-handler event logged. The Apple
+Event handler was registered in `applicationDidFinishLaunching`, after the initial
+URL could be delivered. Moving registration to `applicationWillFinishLaunching`
+produced an explicit-position event on cold start, deferred navigation until the
+renderer completed, and a successful target result. The real screenshot then showed
+Section 20 (original source line 166) below the native toolbar. Existing-process
+navigation also logged a successful target. Request/result logs contain no file
+path or fragment text; temporary readiness instrumentation was removed.

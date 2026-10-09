@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import Sparkle
+import os.log
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     let updaterController = SPUStandardUpdaterController(
@@ -15,6 +16,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         AppearancePreference.shared.observePreferenceChanges()
     }
 
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // Register before launch events are delivered, including a URL that
+        // starts the application rather than targeting an existing process.
+        NSAppleEventManager.shared().setEventHandler(
+            self,
+            andSelector: #selector(handleURLEvent(_:withReplyEvent:)),
+            forEventClass: AEEventClass(kInternetEventClass),
+            andEventID: AEEventID(kAEGetURL)
+        )
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         preferenceObservationTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
             AppearancePreference.shared.observePreferenceChanges()
@@ -24,13 +36,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if CommandLine.arguments.contains("--register-only") {
             NSApplication.shared.terminate(nil)
         }
-
-        NSAppleEventManager.shared().setEventHandler(
-            self,
-            andSelector: #selector(handleURLEvent(_:withReplyEvent:)),
-            forEventClass: AEEventClass(kInternetEventClass),
-            andEventID: AEEventID(kAEGetURL)
-        )
 
         UpdateRestorationManager.shared.restoreLastOpenedFile()
     }
@@ -42,9 +47,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        print("🔵 Received URL: \(urlString)")
-
         guard let request = DocumentOpenRequest(url: url) else { return }
+        os_log("Document URL request received; position=%{public}@", type: .info, request.position == nil ? "none" : "explicit")
         let id = request.position.map { DocumentPositionStore.shared.set($0, for: request.fileURL) }
         NSDocumentController.shared.openDocument(withContentsOf: request.fileURL, display: true) { _, _, error in
             if error != nil {
