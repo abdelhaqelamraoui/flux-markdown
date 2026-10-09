@@ -1,5 +1,18 @@
 # Issue #54: Cmd+F in QuickLook
 
+## Search-input correction
+
+The reporter also found the new native search button's HTML input could not receive
+typing. The system log explicitly warned that Quick Look extension views must not
+claim first responder. Removed explicit preview focus claims and the inline search
+request. Searching now targets the main app via an explicit file-scoped `find=1`
+request when the platform permits launch. In this macOS runtime, NSWorkspace and
+host-open APIs refused automatic launch (-54/false), so the button displays clear
+localized Open With → FluxMarkdown → Cmd+F guidance instead of an unusable input.
+Actual host Open With plus main-app keyboard typing verified Alpha with 1/2; this
+does not fix Finder Cmd+F or establish an automatic launch path. See
+DEBUG_QUICKLOOK_SEARCH_INPUT.md for tests and candidate evidence.
+
 ## Reporter verification — October 9
 
 The user manually tested the installed acceptance candidate and confirmed that

@@ -3,10 +3,12 @@ import Foundation
 enum DocumentPosition: Equatable {
     case line(Int)
     case anchor(String)
+    case search
     var arguments: [String: Any] {
         switch self {
         case .line(let line): return ["line": min(line, 9_007_199_254_740_991)]
         case .anchor(let anchor): return ["anchor": anchor]
+        case .search: return ["find": true]
         }
     }
 }
@@ -14,6 +16,16 @@ enum DocumentPosition: Equatable {
 struct DocumentOpenRequest {
     let fileURL: URL
     let position: DocumentPosition?
+    let wantsSearch: Bool
+
+    static func searchURL(for fileURL: URL) -> URL? {
+        guard fileURL.isFileURL, fileURL.path.hasPrefix("/"), !fileURL.path.contains("\0") else { return nil }
+        var components = URLComponents()
+        components.scheme = "markdownpreview"
+        components.host = "open"
+        components.queryItems = [URLQueryItem(name: "path", value: fileURL.path), URLQueryItem(name: "find", value: "1")]
+        return components.url
+    }
     init?(url: URL) {
         guard url.scheme?.lowercased() == "markdownpreview",
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return nil }
@@ -21,6 +33,8 @@ struct DocumentOpenRequest {
         guard paths.count == 1, let path = paths.first?.value,
               path.hasPrefix("/"), !path.contains("\0") else { return nil }
         fileURL = URL(fileURLWithPath: path).standardizedFileURL
+        let searches = components.queryItems?.filter { $0.name == "find" } ?? []
+        wantsSearch = searches.count == 1 && searches.first?.value == "1"
         let lines = components.queryItems?.filter { $0.name == "line" } ?? []
         if lines.count == 1, let value = lines.first?.value, !value.isEmpty,
            value.utf8.allSatisfy({ (48...57).contains($0) }), let line = Int(value), line > 0 {
@@ -35,6 +49,7 @@ struct DocumentOpenRequest {
 /// older opens from removing a newer request for the same document.
 final class DocumentPositionStore {
     static let shared = DocumentPositionStore()
+    static let searchRequests = DocumentPositionStore()
     static let notification = Notification.Name("FluxMarkdown.documentPositionRequested")
     private var requests: [String: (UUID, DocumentPosition)] = [:]
     private var order: [String] = []

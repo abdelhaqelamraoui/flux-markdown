@@ -213,14 +213,24 @@ struct MarkdownWebView: NSViewRepresentable {
         private func applyPendingPosition(in webView: WKWebView, for fileURL: URL) {
             let position = DocumentPositionStore.shared.consume(for: fileURL)
                 ?? PendingAnchorStore.shared.consume(for: fileURL.path).map { DocumentPosition.anchor($0) }
-            guard let position else { return }
-            webView.callAsyncJavaScript("return window.navigateDocumentPosition(target);",
-                                       arguments: ["target": position.arguments], in: nil, in: .page) { [weak self] result in
-                if case .failure(let error) = result {
-                    os_log("Position navigation failed: %{public}@", log: self?.logger ?? .default, type: .error, error.localizedDescription)
+            if let position {
+                webView.callAsyncJavaScript("return window.navigateDocumentPosition(target);",
+                                           arguments: ["target": position.arguments], in: nil, in: .page) { [weak self] result in
+                    if case .failure(let error) = result {
+                        os_log("Position navigation failed: %{public}@", log: self?.logger ?? .default, type: .error, error.localizedDescription)
+                    }
+                    if case .success(let value) = result {
+                        os_log("Position navigation found target=%{public}d", log: self?.logger ?? .default, type: .info, (value as? Bool) == true ? 1 : 0)
+                    }
                 }
-                if case .success(let value) = result {
-                    os_log("Position navigation found target=%{public}d", log: self?.logger ?? .default, type: .info, (value as? Bool) == true ? 1 : 0)
+            }
+            if DocumentPositionStore.searchRequests.consume(for: fileURL) != nil {
+                webView.window?.makeFirstResponder(webView)
+                webView.evaluateJavaScript("window.showSearch && window.showSearch();") { [weak self] _, error in
+                    if let error {
+                        os_log("Document search failed: %{public}@", log: self?.logger ?? .default,
+                               type: .error, error.localizedDescription)
+                    }
                 }
             }
         }

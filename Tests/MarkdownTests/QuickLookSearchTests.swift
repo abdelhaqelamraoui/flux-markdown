@@ -4,6 +4,7 @@ import XCTest
 
 @MainActor
 final class QuickLookSearchTests: XCTestCase {
+    private final class OpenRecorder { var urls: [URL] = [] }
     private final class RecordingWebView: InteractiveWebView {
         var scripts: [String] = []
         override func evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, Error?) -> Void)? = nil) {
@@ -19,24 +20,27 @@ final class QuickLookSearchTests: XCTestCase {
                         isARepeat: false, keyCode: 3)!
     }
 
-    private func controller() -> (PreviewViewController, RecordingWebView) {
+    private func controller() -> (PreviewViewController, RecordingWebView, OpenRecorder) {
         let controller = PreviewViewController(nibName: nil, bundle: nil)
         controller.view = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         let webView = RecordingWebView(frame: controller.view.bounds, configuration: WKWebViewConfiguration())
         controller.webView = webView
         controller.view.addSubview(webView)
-        return (controller, webView)
+        let opened = OpenRecorder()
+        controller.currentURL = URL(fileURLWithPath: "/tmp/test.md")
+        controller.searchDocumentOpener = { url, completion in opened.urls.append(url); completion(true) }
+        return (controller, webView, opened)
     }
 
     func testControllerFindOpensSearchIdempotently() {
-        let (controller, webView) = controller()
+        let (controller, webView, opened) = controller()
         controller.isWebViewLoaded = true
         controller.isSearchReady = true
         XCTAssertTrue(controller.performKeyEquivalent(with: event()))
         XCTAssertTrue(controller.performKeyEquivalent(with: event("F", flags: [.command, .capsLock])))
-        XCTAssertEqual(webView.scripts.count, 2)
-        XCTAssertTrue(webView.scripts.allSatisfy { $0.contains("window.showSearch") })
-        XCTAssertFalse(webView.scripts.contains { $0.contains("toggleSearch") })
+        XCTAssertEqual(opened.urls.count, 2)
+        XCTAssertTrue(opened.urls.allSatisfy { DocumentOpenRequest(url: $0)?.wantsSearch == true })
+        XCTAssertTrue(webView.scripts.isEmpty)
     }
 
     func testWebViewHandlesFindWithoutRelyingOnDOMDelivery() {
@@ -51,22 +55,24 @@ final class QuickLookSearchTests: XCTestCase {
     }
 
 
-    func testEarlyRequestWaitsUntilRendererIsReady() {
-        let (controller, webView) = controller()
+    func testEarlyRequestWaitsForFileAndDoesNotDependOnPreviewRenderer() {
+        let (controller, webView, opened) = controller()
+        controller.currentURL = nil
         XCTAssertTrue(controller.performKeyEquivalent(with: event()))
         XCTAssertTrue(webView.scripts.isEmpty)
         controller.isWebViewLoaded = true
         controller.completePendingSearchRequest()
-        XCTAssertTrue(webView.scripts.isEmpty, "The handshake alone does not create the search UI")
-        controller.isSearchReady = true
+        XCTAssertTrue(opened.urls.isEmpty)
+        controller.currentURL = URL(fileURLWithPath: "/tmp/test.md")
         controller.completePendingSearchRequest()
-        XCTAssertEqual(webView.scripts.count, 1)
+        XCTAssertEqual(opened.urls.count, 1)
         controller.completePendingSearchRequest()
-        XCTAssertEqual(webView.scripts.count, 1)
+        XCTAssertEqual(opened.urls.count, 1)
+        XCTAssertTrue(webView.scripts.isEmpty)
     }
 
     func testLocalMonitorConsumesOwnEventAndLeavesOtherWindowsAlone() {
-        let (controller, webView) = controller()
+        let (controller, webView, opened) = controller()
         controller.isWebViewLoaded = true
         controller.isSearchReady = true
         let window = NSWindow(contentRect: controller.view.bounds, styleMask: [.titled], backing: .buffered, defer: false)
@@ -75,30 +81,59 @@ final class QuickLookSearchTests: XCTestCase {
         XCTAssertNotNil(controller.handleMonitoredKeyDownEvent(event(window: window.windowNumber + 100)))
         XCTAssertTrue(webView.scripts.isEmpty)
         XCTAssertNil(controller.handleMonitoredKeyDownEvent(event(window: window.windowNumber)))
-        XCTAssertEqual(webView.scripts.count, 1)
+        XCTAssertEqual(opened.urls.count, 1)
+        XCTAssertTrue(webView.scripts.isEmpty)
     }
-    func testPreviewAppearanceKeepsWebViewAsFirstResponder() {
-        let (controller, webView) = controller()
+    func testPreviewAppearanceDoesNotClaimFirstResponder() {
+        let (controller, webView, _) = controller()
         let window = NSWindow(contentRect: controller.view.bounds, styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView = controller.view
         defer { window.orderOut(nil) }
         controller.viewDidAppear()
         let focused = expectation(description: "preview focus applied")
         DispatchQueue.main.async {
-            XCTAssertTrue(window.firstResponder === webView)
+            XCTAssertFalse(window.firstResponder === webView)
+            XCTAssertFalse(webView.acceptsFirstResponder)
+            XCTAssertFalse(controller.acceptsFirstResponder)
             focused.fulfill()
         }
         wait(for: [focused], timeout: 2)
     }
 
+    func testPreviewFindHandsOffToAppWithoutOpeningAnUnusableHTMLField() throws {
+        let (controller, webView, _) = controller()
+        let file = URL(fileURLWithPath: "/tmp/中文 note & test.md")
+        controller.currentURL = file
+        var opened: [URL] = []
+        controller.searchDocumentOpener = { url, completion in opened.append(url); completion(true) }
+        controller.makeSearchButton().performClick(nil)
+        XCTAssertEqual(opened.count, 1, "Native app handoff does not depend on preview renderer readiness")
+        let request = try XCTUnwrap(DocumentOpenRequest(url: try XCTUnwrap(opened.first)))
+        XCTAssertEqual(request.fileURL, file)
+        XCTAssertTrue(request.wantsSearch)
+        XCTAssertTrue(webView.scripts.isEmpty)
+    }
+
+    func testDeniedAppLaunchShowsGuidanceAndNeverOpensAnUnusableInput() {
+        let (controller, webView, _) = controller()
+        var failures = 0
+        controller.searchDocumentOpener = { _, completion in completion(false) }
+        controller.searchLaunchFailureHandler = { failures += 1 }
+        controller.makeSearchButton().performClick(nil)
+        XCTAssertEqual(failures, 1)
+        XCTAssertTrue(webView.scripts.isEmpty)
+        XCTAssertFalse(webView.acceptsFirstResponder)
+    }
+
     func testStandardFindMenuActionUsesTheSameSearchBridge() {
-        let (controller, webView) = controller()
+        let (controller, webView, opened) = controller()
         controller.isWebViewLoaded = true
         controller.isSearchReady = true
         let item = NSMenuItem(title: "Find", action: nil, keyEquivalent: "f")
         item.tag = NSTextFinder.Action.showFindInterface.rawValue
         controller.performTextFinderAction(item)
-        XCTAssertEqual(webView.scripts.count, 1)
+        XCTAssertEqual(opened.urls.count, 1)
+        XCTAssertTrue(webView.scripts.isEmpty)
         var webViewCalls = 0
         webView.searchShortcutHandler = { webViewCalls += 1 }
         webView.performTextFinderAction(item)
@@ -106,28 +141,29 @@ final class QuickLookSearchTests: XCTestCase {
     }
 
     func testNativeFindButtonWorksWithoutReceivingAKeyboardEvent() {
-        let (controller, webView) = controller()
+        let (controller, webView, opened) = controller()
         let button = controller.makeSearchButton()
         button.performClick(nil)
         XCTAssertTrue(webView.scripts.isEmpty)
         controller.isWebViewLoaded = true
         controller.isSearchReady = true
         controller.completePendingSearchRequest()
-        XCTAssertEqual(webView.scripts.count, 1)
+        XCTAssertEqual(opened.urls.count, 1)
         button.performClick(nil)
-        XCTAssertEqual(webView.scripts.count, 2)
-        XCTAssertTrue(webView.scripts.allSatisfy { $0.contains("window.showSearch") })
+        XCTAssertEqual(opened.urls.count, 2)
+        XCTAssertTrue(webView.scripts.isEmpty)
     }
 
     func testNativeFindButtonKeyEquivalentUsesTheSameAction() {
-        let (controller, webView) = controller()
+        let (controller, webView, opened) = controller()
         controller.isWebViewLoaded = true
         controller.isSearchReady = true
         let button = controller.makeSearchButton()
         XCTAssertTrue(button.performKeyEquivalent(with: event()))
-        XCTAssertEqual(webView.scripts.count, 1)
+        XCTAssertEqual(opened.urls.count, 1)
         XCTAssertFalse(button.performKeyEquivalent(with: event(flags: [.command, .shift])))
-        XCTAssertEqual(webView.scripts.count, 1)
+        XCTAssertEqual(opened.urls.count, 1)
+        XCTAssertTrue(webView.scripts.isEmpty)
     }
 
 }

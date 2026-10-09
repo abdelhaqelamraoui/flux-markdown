@@ -110,3 +110,12 @@ Quick Look testing. #54 is a real failed acceptance test, not only an automation
 limitation. Added a native search button as a direct fallback; 20 native search and
 toolbar tests pass, while the Finder shortcut remains unresolved. See
 DEBUG_ISSUE_54_QUICKLOOK_SEARCH.md for the diagnostic comparison and API evidence.
+
+The reporter subsequently confirmed that the button's inline field could not accept
+typing. The OS explicitly warns that Quick Look extension views must not claim first
+responder. Removed explicit claims and the unusable input path. On this machine,
+automatic opening from the extension was also refused by NSWorkspace (-54) and the
+host-open API. The localized button now gives Open With → FluxMarkdown → Cmd+F
+guidance on refusal. Actual system Open With and main-app keyboard input verified
+Alpha with 1/2; app cold-start/repeated `find=1` and Escape also passed. 26 relevant
+native regressions pass. Inline search and Finder Cmd+F remain unresolved.

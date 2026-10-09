@@ -50,9 +50,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let request = DocumentOpenRequest(url: url) else { return }
         os_log("Document URL request received; position=%{public}@", type: .info, request.position == nil ? "none" : "explicit")
         let id = request.position.map { DocumentPositionStore.shared.set($0, for: request.fileURL) }
+        let searchID = request.wantsSearch ? DocumentPositionStore.searchRequests.set(.search, for: request.fileURL) : nil
         NSDocumentController.shared.openDocument(withContentsOf: request.fileURL, display: true) { _, _, error in
             if error != nil {
                 if let id { DocumentPositionStore.shared.discard(for: request.fileURL, id: id) }
+                if let searchID { DocumentPositionStore.searchRequests.discard(for: request.fileURL, id: searchID) }
                 return
             }
             NotificationCenter.default.post(name: DocumentPositionStore.notification, object: request.fileURL)

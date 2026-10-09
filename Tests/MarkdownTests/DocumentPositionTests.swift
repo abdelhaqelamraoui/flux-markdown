@@ -1,6 +1,18 @@
 import XCTest
 
 final class DocumentPositionTests: XCTestCase {
+    func testSearchHandoffIsEncodedAndExplicit() throws {
+        let file = URL(fileURLWithPath: "/tmp/中文 note & test.md")
+        let url = try XCTUnwrap(DocumentOpenRequest.searchURL(for: file))
+        let request = try XCTUnwrap(DocumentOpenRequest(url: url))
+        XCTAssertEqual(request.fileURL, file)
+        XCTAssertTrue(request.wantsSearch)
+        for flag in ["", "0", "true", "1&find=1"] {
+            let request = try XCTUnwrap(DocumentOpenRequest(url: URL(string: "markdownpreview://open?path=/tmp/a.md&find=\(flag)")!))
+            XCTAssertFalse(request.wantsSearch)
+        }
+        XCTAssertNil(DocumentOpenRequest.searchURL(for: URL(string: "https://example.com/a.md")!))
+    }
     func testURLTargetPrecedenceValidationAndEncodedPath() throws {
         let request = try XCTUnwrap(DocumentOpenRequest(url: URL(string: "markdownpreview://open?path=%2Ftmp%2F%E4%B8%AD%E6%96%87%20note.md&line=213#heading")!))
         XCTAssertEqual(request.fileURL.path, "/tmp/中文 note.md")
