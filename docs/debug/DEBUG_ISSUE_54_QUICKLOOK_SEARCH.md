@@ -1,5 +1,42 @@
 # Issue #54: Cmd+F in QuickLook
 
+## Reporter verification — October 9
+
+The user manually tested the installed acceptance candidate and confirmed that
+Cmd+F opens Finder search instead of search in the preview, matching the old
+behavior. This is a real failed end-to-end acceptance test. The earlier automation
+window-binding issue does not explain the manual result. Existing unit tests only
+prove handling after an event/action reaches the extension process; they do not
+prove Finder forwards that command. #54 remains unresolved.
+
+Next distinguish command interception from missing focus by clicking document
+content before Cmd+F. Independently provide a native search control with an AppKit
+key equivalent and the same deferred/idempotent bridge. The button must work without
+receiving any keyboard event; it must not advertise a guaranteed Finder shortcut.
+No global key listener, event tap, host injection or new permission is introduced.
+
+### Button follow-up
+
+A magnifying-glass native toolbar button now calls the same deferred, idempotent
+search bridge. Its AppKit key equivalent accepts exactly Cmd+F, excluding Cmd+Shift+F.
+The latter regression initially failed because NSButton accepts additional modifier
+keys; a per-button matcher fixes that without changing other toolbar controls.
+Eight search tests and twelve native toolbar tests pass (20 total). No arbitrary
+typed characters are logged by the preview key handlers.
+
+The WebView already reports `needsPanelToBecomeKey = true`; changing that property
+would not address the host-routing failure. Apple documents that local event monitors
+only observe events delivered to their own application:
+https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/EventOverview/MonitoringEvents/MonitoringEvents.html
+This explains the limit of the existing local monitor, but is not proof that no
+supported Quick Look shortcut route exists. No public API found so far guarantees
+forwarding Finder's Find command into a remote extension view.
+
+Installed button candidate: `1.34.475-dev-20261009-112059`. Runtime automation still
+refuses the preview's coordinate input with `window_not_focused`; a separate qlmanage
+preview could not expose its AX window. These are recorded as unverified runtime
+checks, not passes. The reporter's click-content-then-Cmd+F result is pending.
+
 Issue: https://github.com/xykong/flux-markdown/issues/54
 Baseline: `3911a15`, release `v1.34.475`.
 The renderer has a search UI and a DOM key listener. The native QuickLook

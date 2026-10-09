@@ -45,7 +45,7 @@ final class ToolbarButtonHitAreaTests: XCTestCase {
 
         XCTAssertEqual(
             quickLookSource.components(separatedBy: "CircularToolbarButton.make(").count - 1,
-            7,
+            8,
             "Every QuickLook toolbar control should be created through the shared native circular button factory."
         )
         XCTAssertFalse(
