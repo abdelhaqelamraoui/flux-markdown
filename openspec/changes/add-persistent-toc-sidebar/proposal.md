@@ -25,3 +25,10 @@
 ## Refinement — 2026-10-10
 
 用户请求进一步设计 #50 解决方案。本轮细化右侧固定宽度、顶部工具区、宽窄窗口状态规则和验收标准，详见 [完整方案](../../../docs/design/DESIGN_ISSUE_50_CONTENTS_SIDEBAR.md)。设计更新不代表新增交互已在产品实现。
+
+## Approved side-selection refinement — 2026-10-10
+
+The user explicitly requested a left/right directory option and same-side entrance.
+Default remains right. The right entrance sits beside native tools with 12 CSS px
+separation; choosing left moves the directory and its entrance together to the left.
+Persist the enum in the existing shared preferences; no new permission/store is added.

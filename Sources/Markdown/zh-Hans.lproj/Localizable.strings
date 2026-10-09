@@ -124,3 +124,11 @@
 "Quick Look registration repaired" = "Quick Look 注册已修复";
 "Quick Look repair failed" = "Quick Look 修复失败";
 "Try selecting the file in Finder and pressing Space. Your default editor was preserved." = "请在访达中选中文件并按空格重试，原有默认编辑器已保留。";
+
+"Contents Position" = "目录位置";
+
+"Left" = "左侧";
+
+"Right" = "右侧";
+
+"Keep contents and its button on the same side" = "目录与按钮始终保持同侧";

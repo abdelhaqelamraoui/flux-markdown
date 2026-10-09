@@ -158,6 +158,28 @@ struct AppearanceSettingsView: View {
             )
             .noFocusRing()
 
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(NSLocalizedString("Contents Position", comment: "Contents position setting"))
+                        .font(.headline)
+                    Text(NSLocalizedString("Keep contents and its button on the same side", comment: "Contents position hint"))
+                        .font(.caption).foregroundColor(.secondary)
+                }
+                Spacer()
+                Picker(NSLocalizedString("Contents Position", comment: "Contents position setting"),
+                       selection: Binding(get: { preference.contentsSide }, set: { preference.contentsSide = $0 })) {
+                    ForEach(ContentsSidebarSide.allCases) { side in
+                        Text(side.displayName).tag(side)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(SegmentedPickerStyle())
+                .frame(width: 180)
+            }
+            .padding(12)
+            .background(Color(NSColor.controlBackgroundColor))
+            .cornerRadius(8)
+
             SettingsSectionHeader(
                 title: NSLocalizedString("Language", comment: "Language section title"),
                 description: NSLocalizedString("Interface language for the entire app", comment: "Language section description")

@@ -1,2 +1,10 @@
 "Search in FluxMarkdown" = "在 FluxMarkdown 中搜索";
 "Double-click the file, then press ⌘F to search." = "双击打开文件后，按 ⌘F 搜索。";
+
+"Contents Position" = "目录位置";
+
+"Left" = "左侧";
+
+"Right" = "右侧";
+
+"Keep contents and its button on the same side" = "目录与按钮始终保持同侧";

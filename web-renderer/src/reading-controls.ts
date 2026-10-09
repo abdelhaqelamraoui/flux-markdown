@@ -26,9 +26,9 @@ export function updateReadingControlsLayout(): void {
     controls.hidden = !visible;
     root.dataset.readingControls = String(visible);
     const slots = toolbar ? Array.from(toolbar.children).filter(e => !(e as HTMLElement).hidden) : [];
-    const naturalWidth = slots.reduce((width, slot) => width + slot.getBoundingClientRect().width, 0) + Math.max(0, slots.length - 1) * 6;
+    const naturalWidth = slots.reduce((width, slot) => width + slot.getBoundingClientRect().width, 0) + Math.max(0, slots.length - 1) * 12;
     // Reserve the existing native controls on the right; only wrap when necessary.
-    const nativeWidth = root.dataset.context === 'app' ? 300 : 340;
+    const nativeWidth = root.dataset.context === 'app' ? 280 : 318;
     root.style.setProperty('--reading-native-reserve', `${nativeWidth}px`);
     root.dataset.readingShared = String(visible && window.innerWidth >= naturalWidth + nativeWidth + 32);
     const height = visible && toolbar ? Math.ceil(toolbar.getBoundingClientRect().height) : 0;

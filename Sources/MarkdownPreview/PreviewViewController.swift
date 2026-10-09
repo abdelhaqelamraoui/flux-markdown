@@ -1333,6 +1333,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
 
         let capturedUILanguage = AppearancePreference.shared.uiLanguage
         let capturedCollapseBlockquotes = AppearancePreference.shared.collapseBlockquotesByDefault
+        let capturedContentsSide = AppearancePreference.shared.contentsSide.rawValue
         let capturedShowLineNumbers = AppearancePreference.shared.showLineNumbers
         let capturedPrevMarkdown = self.prevMarkdown
         let capturedPreviewMode = self.currentPreviewMode
@@ -1346,7 +1347,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             guard let self = self else { return }
             
             let contextValue = capturedPreviewMode == .compact ? "finder" : "quicklook"
-            var options: [String: Any] = ["theme": theme, "context": contextValue, "uiLanguage": capturedUILanguage, "collapseBlockquotes": capturedCollapseBlockquotes, "showLineNumbers": capturedShowLineNumbers, "fontSize": capturedFontSize, "renderVersion": capturedRenderVersion]
+            var options: [String: Any] = ["theme": theme, "context": contextValue, "uiLanguage": capturedUILanguage, "collapseBlockquotes": capturedCollapseBlockquotes, "showLineNumbers": capturedShowLineNumbers, "contentsSide": capturedContentsSide, "fontSize": capturedFontSize, "renderVersion": capturedRenderVersion]
             if let url = capturedURL {
                 options["baseUrl"] = url.deletingLastPathComponent().path
                 let imageData = MarkdownImageDataCollector.collectImageData(from: url, content: content)
