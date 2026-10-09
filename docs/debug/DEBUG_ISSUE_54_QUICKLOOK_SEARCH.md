@@ -50,8 +50,11 @@ It defaults off, retains the no-permission search button, restricts eligible inp
 to Cmd+F in a verified active FluxMarkdown preview, and stops on invalidation.
 Remote AX attribution and safe event consumption are explicit feasibility gates.
 It introduces a separate process and Accessibility permission, so implementation
-waits for proposal approval per OpenSpec. No interception or permission change has
-been performed. #54 is still unresolved.
+initially waited for proposal approval per OpenSpec. The user subsequently approved
+a feasibility trial with concerns about permission friction. The read-only probe
+found the button marker but public AX reported Finder as its owner, so the direct
+identity strategy failed authentication. No interception or permission change has
+been performed. #54 is still unresolved. See DEBUG_SHORTCUT_HELPER_SPIKE.md.
 
 Issue: https://github.com/xykong/flux-markdown/issues/54
 Baseline: `3911a15`, release `v1.34.475`.

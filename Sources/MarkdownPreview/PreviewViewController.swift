@@ -287,6 +287,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     private var themeButton: CircularToolbarButton!
     private var sourceButton: CircularToolbarButton!
     private var searchButton: CircularToolbarButton!
+    private let shortcutViewID = UUID()
     private var helpButton: CircularToolbarButton!
     private var zoomInButton: CircularToolbarButton!
     private var zoomOutButton: CircularToolbarButton!
@@ -802,6 +803,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         button.keyEquivalent = "f"
         button.keyEquivalentModifierMask = .command
         button.keyEquivalentMatcher = QuickLookFindShortcut.matches
+        button.setAccessibilityIdentifier(QuickLookShortcutIdentity.identifier(for: shortcutViewID))
         return button
     }
 

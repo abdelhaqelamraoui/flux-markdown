@@ -67,7 +67,10 @@ key equivalent have been added, with eight search and twelve toolbar regressions
 passing, but the native button is a fallback and does not establish a Finder
 shortcut fix. The reporter confirmed that clicking content before Cmd+F still opens
 Finder search. An optional Accessibility-authorized shortcut helper is proposed in
-`openspec/changes/add-quicklook-shortcut-helper/`; it is not implemented or enabled.
+`openspec/changes/add-quicklook-shortcut-helper/`. Its separate read-only development
+probe is built, but the first real AX attribution test failed: the button was reported
+as owned by Finder. No interception has been implemented or enabled, and the probe
+is not embedded in the normal app.
 The supported modern
 default-editor setter did not complete within eight seconds even while unlocked;
 the previous editor values were restored and read back. VS Code preservation
@@ -92,11 +95,11 @@ not verified and production deployment settings are unchanged.
 
 ## Candidate artifact
 
-Installed development version: `1.34.475-dev-20261009-112059`.
+Installed development version: `1.34.475-dev-20261009-114213`.
 
 DMG: `build/artifacts/FluxMarkdown-Acceptance.dmg`
 
-SHA-256: `db88ab1d9cd49b53dcdf779e3db0e2669d2814d27a67fb4d9d4546a433ff6ef8`.
+SHA-256: `5f00325291613d1b0010f8d486fa157357c14403201a02297eb37e22637861e0`.
 
 The compressed image verifies successfully and contains the signed development app
 and vendor installer. It has not been published, notarized, or promoted into the

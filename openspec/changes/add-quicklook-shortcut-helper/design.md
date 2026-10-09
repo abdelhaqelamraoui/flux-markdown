@@ -1,5 +1,20 @@
 # Design
 
+## Feasibility result, October 9
+
+The user approved a development trial, expressing concern about permission friction.
+A standalone read-only probe was built without embedding or persistence. It does not
+create taps, request authorization or perform accessibility actions. Its actual
+runtime inspection found one search-button UUID marker in the Quick Look AX tree,
+but AXUIElementGetPid attributed that control to Finder. Authentication therefore
+failed and interception remains disabled. The direct AX route in the design below
+has not passed its feasibility gate. A cross-process attestation refinement would
+be needed before continuing; a marker-only predicate is not an acceptable shortcut.
+
+The CLI trust query returned true in the current launch context without any permission
+change. This does not establish independent helper authorization or ordinary-user
+setup behavior. Keep this probe outside the normal app/distribution dependency graph.
+
 ## Scope and permission boundary
 
 The preview remains sandboxed. The optional helper is a separate embedded background
