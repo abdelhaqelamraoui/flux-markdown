@@ -48,25 +48,12 @@ class InteractiveWebView: NativeMagnifyingWebView {
 
     private let logger = OSLog(subsystem: "com.markdownquicklook.app", category: "InteractiveWebView")
 
-    override func mouseDown(with event: NSEvent) {
-        super.mouseDown(with: event)
-        let result = self.window?.makeFirstResponder(self)
-        os_log("🔵 WebView mouseDown - makeFirstResponder result: %{public}@", 
-               log: logger, type: .debug, 
-               result == true ? "SUCCESS" : "FAILED")
-    }
-    
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         return true
     }
     
     override var acceptsFirstResponder: Bool {
-        return true
-    }
-    
-    override func becomeFirstResponder() -> Bool {
-        os_log("🔵 WebView becomeFirstResponder called", log: logger, type: .debug)
-        return super.becomeFirstResponder()
+        return false
     }
     
     override func scrollWheel(with event: NSEvent) {
@@ -104,6 +91,37 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     var pendingMarkdown: String?
     private var prevMarkdown: String? = nil
     var currentURL: URL?
+    var searchDocumentOpener: (URL, @escaping (Bool) -> Void) -> Void = { url, completion in
+        let appURL = Bundle.main.bundleURL.deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        guard Bundle(url: appURL)?.bundleIdentifier == "com.xykong.Markdown" else {
+            completion(false)
+            return
+        }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        configuration.promptsUserIfNeeded = false
+        guard let request = DocumentOpenRequest(url: url) else { completion(false); return }
+        let event = NSAppleEventDescriptor(eventClass: AEEventClass(kInternetEventClass),
+            eventID: AEEventID(kAEGetURL), targetDescriptor: nil,
+            returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID))
+        event.setParam(NSAppleEventDescriptor(string: url.absoluteString), forKeyword: AEKeyword(keyDirectObject))
+        configuration.appleEvent = event
+        NSWorkspace.shared.open([request.fileURL], withApplicationAt: appURL, configuration: configuration) { _, error in
+            if let error = error as NSError? {
+                os_log("Search application launch failed (domain=%{public}@ code=%{public}ld)",
+                       log: OSLog(subsystem: "com.markdownquicklook.app", category: "MarkdownPreview"),
+                       type: .error, error.domain, error.code)
+                if let underlying = error.userInfo[NSUnderlyingErrorKey] as? NSError {
+                    os_log("Search application launch underlying failure (domain=%{public}@ code=%{public}ld)",
+                           log: OSLog(subsystem: "com.markdownquicklook.app", category: "MarkdownPreview"),
+                           type: .error, underlying.domain, underlying.code)
+                }
+            }
+            DispatchQueue.main.async { completion(error == nil) }
+        }
+    }
+    var searchLaunchFailureHandler: (() -> Void)?
     var isWebViewLoaded = false
     var isSearchReady = false
     private var pendingSearchRequest = false
@@ -162,7 +180,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
 
     public override var acceptsFirstResponder: Bool {
-        return true
+        return false
     }
     
     private var handshakeWorkItem: DispatchWorkItem?
@@ -423,10 +441,6 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         // Zoom is session-only; always start at 1.0 (Bug 2 fix)
         webView.pageZoom = 1.0
         
-        DispatchQueue.main.async {
-            self.view.window?.makeFirstResponder(self.webView)
-        }
-
         #if DEBUG
         setupDebugLabel()
         #endif
@@ -508,11 +522,6 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         
         updatePreviewMode()
         
-        DispatchQueue.main.async { [weak self] in
-            self?.view.window?.makeFirstResponder(self?.webView)
-            os_log("🔵 Attempted to make WebView first responder",
-                   log: self?.logger ?? .default, type: .default)
-        }
     }
     
     private func updatePreviewMode() {
@@ -791,7 +800,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
 
     func makeSearchButton() -> CircularToolbarButton {
-        let title = NSLocalizedString("Find in Document", comment: "Quick Look search button")
+        let title = NSLocalizedString("Search in FluxMarkdown", comment: "Quick Look search handoff button")
         let button = CircularToolbarButton.make(
             systemName: "magnifyingglass",
             accessibilityDescription: title,
@@ -1103,14 +1112,31 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
 
     func completePendingSearchRequest() {
-        guard pendingSearchRequest, isWebViewLoaded, isSearchReady, let webView else { return }
+        guard pendingSearchRequest, let currentURL,
+              let url = DocumentOpenRequest.searchURL(for: currentURL) else { return }
         pendingSearchRequest = false
-        webView.evaluateJavaScript("window.showSearch && window.showSearch();") { [weak self] _, error in
-            if let error {
-                os_log("Search bridge failed: %{public}@", log: self?.logger ?? .default,
-                       type: .error, error.localizedDescription)
+        searchDocumentOpener(url) { [weak self] succeeded in
+            guard let self, !succeeded else { return }
+            guard let context = self.extensionContext else {
+                self.showSearchLaunchFailure()
+                return
+            }
+            context.open(url) { [weak self] accepted in
+                DispatchQueue.main.async {
+                    if !accepted { self?.showSearchLaunchFailure() }
+                }
             }
         }
+    }
+
+    private func showSearchLaunchFailure() {
+        os_log("Host also refused document search launch", log: logger, type: .error)
+        if let searchLaunchFailureHandler { searchLaunchFailureHandler(); return }
+        showToast(
+            message: NSLocalizedString("Search in FluxMarkdown", comment: "Search guidance title"),
+            hint: NSLocalizedString("Quick Look cannot accept search input. In Finder, right-click this file, choose Open With > FluxMarkdown, then press ⌘F.", comment: "Search guidance after host refuses app launch"),
+            iconName: "info.circle.fill", duration: 8
+        )
     }
 
     private func handleKeyDownEvent(_ event: NSEvent) -> NSEvent? {
@@ -1211,6 +1237,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         stopSecurityScopedAccessIfNeeded()
         securityScopedURL = url
         isSecurityScopedAccessActive = url.startAccessingSecurityScopedResource()
+        completePendingSearchRequest()
         os_log("🔵 Security-scoped resource access: %{public}@", log: logger, type: .debug, isSecurityScopedAccessActive ? "GRANTED" : "DENIED")
         
         logScreenEnvironment(context: "preparePreviewOfFile-ENTRY")
@@ -1538,7 +1565,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         showToast(message: message, hint: nil, iconName: "checkmark.circle.fill")
     }
 
-    private func showToast(message: String, hint: String?, iconName: String) {
+    private func showToast(message: String, hint: String?, iconName: String, duration: TimeInterval = 3) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
 
@@ -1564,7 +1591,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             messageLabel.translatesAutoresizingMaskIntoConstraints = false
             
             let hintLabel = hint.map { text -> NSTextField in
-                let label = NSTextField(labelWithString: text)
+                let label = NSTextField(wrappingLabelWithString: text)
                 label.textColor = NSColor.white.withAlphaComponent(0.9)
                 label.font = .systemFont(ofSize: 11)
                 label.translatesAutoresizingMaskIntoConstraints = false
@@ -1582,6 +1609,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                 toastContainer.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 16),
                 toastContainer.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
                 toastContainer.widthAnchor.constraint(lessThanOrEqualToConstant: 500),
+                toastContainer.widthAnchor.constraint(lessThanOrEqualTo: self.view.widthAnchor, constant: -32),
                 
                 iconImageView.leadingAnchor.constraint(equalTo: toastContainer.leadingAnchor, constant: 12),
                 iconImageView.centerYAnchor.constraint(equalTo: toastContainer.centerYAnchor),
@@ -1627,7 +1655,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                 })
             }
             self.toastDismissWorkItem = dismissWorkItem
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: dismissWorkItem)
+            DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: dismissWorkItem)
         }
     }
     

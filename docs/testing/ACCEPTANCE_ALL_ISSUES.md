@@ -76,6 +76,17 @@ default-editor setter did not complete within eight seconds even while unlocked;
 the previous editor values were restored and read back. VS Code preservation
 therefore remains unproven.
 
+The reporter then confirmed that the inline input opened by the search button did
+not accept typing. The native system warned against first-responder claims by Quick
+Look views. The final correction removes those explicit claims and the unusable
+inline field. The search button attempts a main-app file/search handoff; actual
+NSWorkspace/host-open requests were refused on this system, so it shows localized
+Open With → FluxMarkdown → Cmd+F guidance. The actual system Open With action and
+main-app keyboard typing verified Alpha with count 1/2. Cold-start app `find=1`,
+repeat requests retaining Alpha and Escape were also verified. 26 related native
+tests pass. Inline Quick Look search, automatic launch and Finder Cmd+F remain
+unresolved; the manual main-app route requires no new permission.
+
 ## Fixture and commands (after remaining automated/runtime work is complete)
 
 Use `Tests/fixtures/acceptance-all.md`. It contains date metadata, searchable Alpha,
@@ -95,11 +106,11 @@ not verified and production deployment settings are unchanged.
 
 ## Candidate artifact
 
-Installed development version: `1.34.475-dev-20261009-114213`.
+Installed development version: `1.34.475-dev-20261009-122657`.
 
 DMG: `build/artifacts/FluxMarkdown-Acceptance.dmg`
 
-SHA-256: `5f00325291613d1b0010f8d486fa157357c14403201a02297eb37e22637861e0`.
+SHA-256: `5593885996f50e595db6ca4d9f0b87f87b3a148284076e4ca31e9cc7f9af78f0`.
 
 The compressed image verifies successfully and contains the signed development app
 and vendor installer. It has not been published, notarized, or promoted into the
