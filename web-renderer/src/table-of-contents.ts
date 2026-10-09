@@ -150,7 +150,7 @@ export class TableOfContents {
         const controls = document.getElementById('reading-controls');
         const scrollMargin = parseFloat(getComputedStyle(this.headings[0]).scrollMarginTop);
         const threshold = (Number.isFinite(scrollMargin) ? scrollMargin
-            : (controls && !controls.hidden ? controls.getBoundingClientRect().bottom + 28 : 82)) + 2;
+            : Math.max(64, (controls && !controls.hidden ? controls.getBoundingClientRect().bottom : 0) + 8) + 16) + 2;
         let active = this.headings[0];
         for (const heading of this.headings) {
             if (heading.getBoundingClientRect().top > threshold) break;

@@ -80,3 +80,27 @@ The final input regression also verifies Escape priority when the search field i
 focused behind narrow contents. Capture-phase handling closes only contents and
 returns focus to its button; search stays open. The integration test failed before
 the phase change, passes afterward, and the browser repeated this exact scenario.
+
+## Follow-up: excessive top whitespace
+
+The user rejected the permanent extra toolbar row and layout-reserved search row.
+Two regressions first failed: search changed reserved height, and search without
+tools created an empty row. They now pass with measured compact shared controls
+and a floating search sibling outside the reserved chrome.
+
+Browser checks at 320/400/520/760/900/1100 CSS px show no horizontal overflow.
+Wide-view toolbar starts at y=10, height=32, beside the existing native controls;
+first document content moved from y=155 to y=80. Showing search at scrollY=1500
+preserves that scroll position and the 64 px body inset; search occupies a 520×44
+floating panel at y=68, centered within the document column. Small viewports wrap
+only when the controls cannot fit beside the native controls.
+
+334 tests pass. New navigation offsets and reading-anchor sampling avoid the
+floating search panel without reintroducing document reflow.
+
+Native verification on `1.34.475-dev-20261010-020640` confirms directory and native
+icons share the top row. App Cmd+F opens the floating panel without moving the
+metadata table; typing Alpha returns 1/2. Release build, deep signature and sandbox
+checks pass. SHA-256 comparison confirms both installed app and extension contain
+the latest renderer. The previous native package was rebuilt after detecting stale
+resource copies; only the matching final package is retained as the current candidate.

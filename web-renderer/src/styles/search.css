@@ -1,12 +1,19 @@
 #search-container {
-    position: static;
+    position: fixed;
+    top: calc(var(--reading-content-top, 64px) + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1003;
     display: none;
     flex-direction: column;
     gap: 4px;
-    width: 100%;
+    width: min(520px, calc(100vw - 32px));
     min-width: 0;
     box-sizing: border-box;
-    padding: 8px 0;
+}
+html[data-toc-docked="true"] #search-container {
+    left: calc((100% - 264px) / 2);
+    width: min(520px, calc(100vw - 304px));
 }
 
 .search-toolbar {

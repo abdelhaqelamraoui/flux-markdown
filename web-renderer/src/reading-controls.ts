@@ -22,13 +22,22 @@ export function updateReadingControlsLayout(): void {
         return slot && !slot.hidden && slot.childElementCount > 0;
     });
     if (toolbar) { toolbar.hidden = !hasTools; toolbar.setAttribute('aria-label', readingLabels().tools); }
-    const search = document.getElementById('search-container');
-    const hasSearch = !!search && search.style.display === 'flex';
-    const visible = !compact && (hasTools || hasSearch);
+    const visible = !compact && hasTools;
     controls.hidden = !visible;
     root.dataset.readingControls = String(visible);
-    const height = visible ? Math.ceil(controls.getBoundingClientRect().height) : 0;
+    const slots = toolbar ? Array.from(toolbar.children).filter(e => !(e as HTMLElement).hidden) : [];
+    const naturalWidth = slots.reduce((width, slot) => width + slot.getBoundingClientRect().width, 0) + Math.max(0, slots.length - 1) * 6;
+    // Reserve the existing native controls on the right; only wrap when necessary.
+    const nativeWidth = root.dataset.context === 'app' ? 300 : 340;
+    root.style.setProperty('--reading-native-reserve', `${nativeWidth}px`);
+    root.dataset.readingShared = String(visible && window.innerWidth >= naturalWidth + nativeWidth + 32);
+    const height = visible && toolbar ? Math.ceil(toolbar.getBoundingClientRect().height) : 0;
     root.style.setProperty('--reading-controls-height', `${height}px`);
+    const contentTop = Math.max(64, (visible ? controls.getBoundingClientRect().bottom : 0) + 8);
+    const search = document.getElementById('search-container');
+    const searchBottom = search?.style.display === 'flex' ? search.getBoundingClientRect().bottom + 8 : 0;
+    root.style.setProperty('--reading-scroll-top', `${Math.ceil(Math.max(contentTop + 16, searchBottom))}px`);
+
 }
 
 export class ReadingControls {
@@ -38,6 +47,8 @@ export class ReadingControls {
         if (typeof ResizeObserver !== 'undefined') {
             this.observer = new ResizeObserver(this.update);
             this.observer.observe(element);
+            const search = document.getElementById('search-container');
+            if (search) this.observer.observe(search);
         }
         window.addEventListener('resize', this.update);
         this.update();
@@ -52,8 +63,11 @@ export function captureReadingAnchor(): ReadingAnchor | null {
     const preview = document.getElementById('markdown-preview');
     const bounds = preview?.getBoundingClientRect();
     if (!bounds) return null;
-    const top = document.getElementById('reading-controls')?.getBoundingClientRect().bottom || 60;
-    const hit = document.elementFromPoint(bounds.left + bounds.width / 2, Math.min(top + 16, window.innerHeight - 1));
+    const controls = document.getElementById('reading-controls');
+    const top = Math.max(64, (controls && !controls.hidden ? controls.getBoundingClientRect().bottom : 0) + 8);
+    const search = document.getElementById('search-container');
+    const searchBottom = search?.style.display === 'flex' ? search.getBoundingClientRect().bottom + 8 : 0;
+    const hit = document.elementFromPoint(bounds.left + bounds.width / 2, Math.min(Math.max(top + 16, searchBottom), window.innerHeight - 1));
     const element = hit?.closest<HTMLElement>('#markdown-preview > *');
     return element ? { element, top: element.getBoundingClientRect().top, scrollY: window.scrollY } : null;
 }

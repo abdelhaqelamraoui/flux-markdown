@@ -59,7 +59,7 @@ test('disposed instances no longer close overlays in another document view', () 
 test('active heading includes the reserved gap and navigation scroll margin', () => {
     document.getElementById('reading-controls')!.getBoundingClientRect = jest.fn(() => ({ bottom: 98 } as DOMRect));
     document.getElementById('title')!.getBoundingClientRect = jest.fn(() => ({ top: -100 } as DOMRect));
-    document.getElementById('child')!.getBoundingClientRect = jest.fn(() => ({ top: 126 } as DOMRect));
+    document.getElementById('child')!.getBoundingClientRect = jest.fn(() => ({ top: 122 } as DOMRect));
     toc.render(headings);
     expect(document.querySelector('[aria-current="location"]')?.getAttribute('href')).toBe('#child');
 });

@@ -23,11 +23,11 @@ Finder compact previews SHALL retain their compact presentation. Printing, HTML 
 
 
 ### Requirement: Reserved reading controls
-The renderer SHALL reserve layout space for contents and blockquote controls at the top of the reading area. Search expansion SHALL reserve additional height. These controls SHALL NOT cover document text or the docked contents.
+The renderer SHALL place contents and blockquote controls beside the existing native controls when space permits, using a compact extra row only when necessary. Search SHALL use a temporary horizontally centered floating panel over the document area without reserving layout height or shifting the document. Permanent controls SHALL NOT cover document text or docked contents.
 
-#### Scenario: Search and contents visible
+#### Scenario: Floating search and contents visible
 - **WHEN** search opens while contents is docked
-- **THEN** document and contents start below the visible control rows without overlap
+- **THEN** the search panel is centered over the document column, the reading position stays unchanged and no extra toolbar row is allocated
 
 ### Requirement: Independent docked preference and temporary overlay
 The renderer SHALL retain docked visibility preference independently of narrow overlay visibility. Shrinking to a narrow viewport SHALL close the overlay; returning to a wide viewport SHALL restore docked preference. Successful narrow-overlay navigation SHALL close the overlay.

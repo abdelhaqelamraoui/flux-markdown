@@ -28,3 +28,11 @@ the same column's viewport position, with independent internal scrolling. This
 avoids the observed full-screen sticky-layer paint problem in WebKit. Explicit
 `#markdown-preview` margins preserve centered reading width despite upstream
 Markdown CSS resets. The final native full-screen screenshot validates both panes.
+
+## Approved user feedback: compact shared tools and floating search
+
+The user rejected the extra directory row and reserved search row. Controls now
+share the native top area whenever their measured widths fit. A compact row is
+used only when necessary. Search is centered over the document column, floats
+without changing document height or reading position, and navigation scroll margins
+clear its temporary overlay. Wide-view first content starts at 80 CSS px (was 155).
