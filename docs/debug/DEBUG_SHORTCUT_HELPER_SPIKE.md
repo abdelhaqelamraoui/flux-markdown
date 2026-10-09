@@ -1,3 +1,14 @@
+## Status: shortcut work withdrawn — 2026-10-10
+
+The user explicitly stopped further attempts to support Cmd+F directly inside the
+Finder Quick Look preview, accepting the system constraints. Shortcut interception,
+Accessibility helper development, remote-attestation refinements and inline-preview
+keyboard-search acceptance are no longer planned or release gates. The historical
+material below records the abandoned approach, not current product
+requirements. Retain the verified native search button → containing app → editable
+search route and normal Cmd+F in the standalone application. This decision does
+not claim that the original Finder shortcut was implemented or that #54 is released.
+
 # Quick Look shortcut helper feasibility
 
 The user approved trying the proposal on October 9, while explicitly questioning

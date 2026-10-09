@@ -1,3 +1,11 @@
+## Scope decision — 2026-10-10
+
+The user cancelled further preview Cmd+F work. Unchecked shortcut tasks in sections
+1–3 are cancelled, not pending implementation; keep their boxes unchecked to avoid
+claiming completion. Section 4 remains the retained app-search handoff path, with
+release/acceptance still required. Do not resume shortcut experiments unless the
+user explicitly changes this decision.
+
 ## 1. Approval and feasibility
 - [x] 1.1 Obtain approval to try the development feasibility spike. System permission changes and enabling interception are not authorized by this step.
 - [x] 1.2 Inspect public remote AX attribution in a normal preview: marker is visible but its reported owner is Finder, so direct attribution failed.
@@ -21,4 +29,4 @@
 - [x] 4.2 Implement an authenticated, sandboxed, on-demand own-app search launch service.
 - [x] 4.3 Verify actual Finder button → file → focused input → typed Alpha in Debug and Release candidates.
 - [x] 4.4 Verify warm-app query preservation, unchanged editors, release signatures and minimal service entitlements.
-- [ ] 4.5 Include this route in unified user acceptance and eventual release. Global shortcut work above remains incomplete.
+- [ ] 4.5 Include this route in unified user acceptance and eventual release. Global shortcut work above is cancelled by the user.
