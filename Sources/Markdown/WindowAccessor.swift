@@ -3,6 +3,10 @@ import AppKit
 import os.log
 
 struct WindowAccessor: NSViewRepresentable {
+    var fileURL: URL? = nil
+    private static let frameVersions = NSMapTable<NSWindow, NSUUID>(keyOptions: .weakMemory, valueOptions: .strongMemory)
+    private static let initializedWindows = NSHashTable<NSWindow>.weakObjects()
+    private static let preAttachSearchFrames = NSMapTable<NSWindow, NSValue>(keyOptions: .weakMemory, valueOptions: .strongMemory)
     static let minimumRestorableWindowSize = CGSize(width: 320, height: 200)
     private static let initialFrameReapplyDelays: [TimeInterval] = [0.20, 0.80]
     private static let logger = OSLog(subsystem: "com.markdownquicklook.app", category: "WindowAccessor")
@@ -104,9 +108,15 @@ struct WindowAccessor: NSViewRepresentable {
         let view = WindowObservingView()
         view.onWindowAttach = { window in
             window.minSize = Self.minimumRestorableWindowSize
+            let preAttachFrame = Self.takePreAttachSearchFrame(for: window)
 
             let startupPhase: Coordinator.StartupPhase
-            if Self.isInFullScreenContext(window) {
+            if let fileURL, let frame = Self.applyPendingSearchPlacement(to: window, for: fileURL) {
+                startupPhase = .restoring(targetFrame: frame)
+            } else if let preAttachFrame, !Self.isInFullScreenContext(window) {
+                Self.applyFrameApplications(to: window, targetFrame: preAttachFrame, visibleFrames: Self.currentVisibleFrames())
+                startupPhase = .restoring(targetFrame: preAttachFrame)
+            } else if Self.isInFullScreenContext(window) {
                 startupPhase = .applyingDefault
                 os_log("Skipping startup frame restore in full-screen context", log: Self.logger, type: .debug)
             } else if let savedFrame = AppearancePreference.shared.hostWindowFrame {
@@ -129,7 +139,28 @@ struct WindowAccessor: NSViewRepresentable {
         return view
     }
     
-    func updateNSView(_ nsView: WindowObservingView, context: Context) {}
+    func updateNSView(_ nsView: WindowObservingView, context: Context) {
+        if let fileURL, let window = nsView.window { Self.applyPendingSearchPlacement(to: window, for: fileURL) }
+    }
+
+    @discardableResult static func applyPendingSearchPlacement(to window: NSWindow, for url: URL) -> CGRect? {
+        guard let placement = DocumentWindowPlacementStore.shared.consume(for: url), !isInFullScreenContext(window) else { return nil }
+        let screens = NSScreen.screens.compactMap { screen -> SearchWindowPlacement.Screen? in
+            guard let id = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { return nil }
+            return .init(id: id.uint32Value, visibleFrame: screen.visibleFrame)
+        }
+        guard let frame = placement.fittedFrame(screens: screens) else { return nil }
+        if !initializedWindows.contains(window) { preAttachSearchFrames.setObject(NSValue(rect: frame), forKey: window) }
+        applyFrameApplications(to: window, targetFrame: frame, visibleFrames: screens.map(\.visibleFrame))
+        return frame
+    }
+
+    static func takePreAttachSearchFrame(for window: NSWindow) -> CGRect? {
+        initializedWindows.add(window)
+        let frame = preAttachSearchFrames.object(forKey: window)?.rectValue
+        preAttachSearchFrames.removeObject(forKey: window)
+        return frame
+    }
     
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -161,6 +192,8 @@ struct WindowAccessor: NSViewRepresentable {
             targetFrame: targetFrame,
             visibleFrames: visibleFrames
         )
+        let version = NSUUID()
+        frameVersions.setObject(version, forKey: window)
 
         for application in applications {
             if application.delay == 0 {
@@ -168,6 +201,7 @@ struct WindowAccessor: NSViewRepresentable {
             } else {
                 DispatchQueue.main.asyncAfter(deadline: .now() + application.delay) { [weak window] in
                     guard let window else { return }
+                    guard frameVersions.object(forKey: window) == version else { return }
                     guard !window.inLiveResize else { return }
                     guard !isFullScreen(window) else {
                         os_log("Cancelled delayed frame restore after window entered full-screen context", log: logger, type: .debug)

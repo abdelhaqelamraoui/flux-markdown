@@ -17,13 +17,15 @@ struct DocumentOpenRequest {
     let fileURL: URL
     let position: DocumentPosition?
     let wantsSearch: Bool
+    let windowPlacement: SearchWindowPlacement?
 
-    static func searchURL(for fileURL: URL) -> URL? {
+    static func searchURL(for fileURL: URL, placement: SearchWindowPlacement? = nil) -> URL? {
         guard fileURL.isFileURL, fileURL.path.hasPrefix("/"), !fileURL.path.contains("\0") else { return nil }
         var components = URLComponents()
         components.scheme = "markdownpreview"
         components.host = "open"
         components.queryItems = [URLQueryItem(name: "path", value: fileURL.path), URLQueryItem(name: "find", value: "1")]
+        if let placement { components.queryItems?.append(contentsOf: placement.queryItems) }
         return components.url
     }
     init?(url: URL) {
@@ -35,6 +37,7 @@ struct DocumentOpenRequest {
         fileURL = URL(fileURLWithPath: path).standardizedFileURL
         let searches = components.queryItems?.filter { $0.name == "find" } ?? []
         wantsSearch = searches.count == 1 && searches.first?.value == "1"
+        windowPlacement = wantsSearch ? SearchWindowPlacement.decode(components.queryItems ?? []) : nil
         let lines = components.queryItems?.filter { $0.name == "line" } ?? []
         if lines.count == 1, let value = lines.first?.value, !value.isEmpty,
            value.utf8.allSatisfy({ (48...57).contains($0) }), let line = Int(value), line > 0 {

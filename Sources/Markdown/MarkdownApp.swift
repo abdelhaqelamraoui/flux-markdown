@@ -48,14 +48,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         guard let request = DocumentOpenRequest(url: url) else { return }
-        os_log("Document URL request received; position=%{public}@", type: .info, request.position == nil ? "none" : "explicit")
+        os_log("Document URL request received; position=%{public}@ placement=%{public}d", type: .info,
+               request.position == nil ? "none" : "explicit", request.windowPlacement == nil ? 0 : 1)
         let id = request.position.map { DocumentPositionStore.shared.set($0, for: request.fileURL) }
         let searchID = request.wantsSearch ? DocumentPositionStore.searchRequests.set(.search, for: request.fileURL) : nil
-        NSDocumentController.shared.openDocument(withContentsOf: request.fileURL, display: true) { _, _, error in
+        let placementID = request.windowPlacement.map { DocumentWindowPlacementStore.shared.set($0, for: request.fileURL) }
+        NSDocumentController.shared.openDocument(withContentsOf: request.fileURL, display: true) { document, alreadyOpen, error in
             if error != nil {
                 if let id { DocumentPositionStore.shared.discard(for: request.fileURL, id: id) }
                 if let searchID { DocumentPositionStore.searchRequests.discard(for: request.fileURL, id: searchID) }
+                if let placementID { DocumentWindowPlacementStore.shared.discard(for: request.fileURL, id: placementID) }
                 return
+            }
+            if alreadyOpen, let window = document?.windowControllers.first?.window {
+                WindowAccessor.applyPendingSearchPlacement(to: window, for: request.fileURL)
             }
             NotificationCenter.default.post(name: DocumentPositionStore.notification, object: request.fileURL)
         }
@@ -353,7 +359,7 @@ private struct DocumentPreviewScene: View {
             maxHeight: .infinity
         )
         .environmentObject(preference)
-        .background(WindowAccessor())
+        .background(WindowAccessor(fileURL: file.fileURL))
         .background(ToolbarFeedbackObserver { result in
             switch result {
             case .reloadSuccess:
