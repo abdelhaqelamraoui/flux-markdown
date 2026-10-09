@@ -31,6 +31,10 @@ available. These are explicitly pending:
    context, preserving editor choice and real extension behavior (#53/#55).
 4. Concurrent-file URL navigation.
 5. Native sidebar layout at narrow sizes, theme/zoom and printing.
+6. Automatically dismiss the originating Finder preview after search handoff. Both
+   extension completion and closing the remote view-service window left the outer
+   panel visible. The experiments were rolled back; one-click search remains stable.
+   See DEBUG_SEARCH_PREVIEW_DISMISSAL.md.
 
 The unlocked console verified Chinese native controls, YAML date display, docked
 900-point sidebar without covering the document, and a settled 1920-point full
