@@ -1,0 +1,66 @@
+name: Feishu GitHub notifications
+
+on:
+  issues:
+    types: [opened, edited, closed, reopened, deleted, locked, unlocked]
+  pull_request_target:
+    types: [opened, edited, closed, reopened, synchronize, ready_for_review, converted_to_draft, review_requested, review_request_removed, locked, unlocked]
+  issue_comment:
+    types: [created, edited, deleted]
+  workflow_run:
+    workflows: [Capture PR review notification]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  notify:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Always trusted default-branch code, never PR head/merge commits.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Send Feishu notification
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          FEISHU_WEBHOOK_SECRET: ${{ secrets.FEISHU_WEBHOOK_SECRET }}
+          FEISHU_MENTION_OPEN_ID: ${{ vars.FEISHU_MENTION_OPEN_ID }}
+        with:
+          script: |
+            const { buildMessage, sendMessage } = require(`${process.env.GITHUB_WORKSPACE}/scripts/feishu-notify.cjs`);
+            let eventName = context.eventName;
+            let payload = context.payload;
+            if (eventName === 'workflow_run') {
+              const run = payload.workflow_run;
+              if (run.repository.full_name !== `${context.repo.owner}/${context.repo.repo}`) throw new Error('Unexpected review repository');
+              if (!['pull_request_review', 'pull_request_review_comment'].includes(run.event)) throw new Error('Unexpected review event');
+              const { data } = await github.rest.actions.listWorkflowRunArtifacts({ ...context.repo, run_id: run.id });
+              const artifact = data.artifacts.find(a => a.name === 'feishu-review-event' && !a.expired);
+              if (!artifact || artifact.size_in_bytes > 65536) throw new Error('Missing or oversized review event');
+              const archive = await github.rest.actions.downloadArtifact({ ...context.repo, artifact_id: artifact.id, archive_format: 'zip' });
+              const fs = require('node:fs');
+              const path = require('node:path');
+              const dir = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'feishu-event-'));
+              try {
+                const file = path.join(dir, 'event.zip');
+                fs.writeFileSync(file, Buffer.from(archive.data));
+                // Read just this JSON entry; never extract or execute artifact contents.
+                const raw = require('node:child_process').execFileSync('unzip', ['-p', file, 'event.json'], { maxBuffer: 65536, timeout: 10000 });
+                const event = JSON.parse(raw.toString('utf8'));
+                if (event.eventName !== run.event || event.payload?.repository?.full_name !== `${context.repo.owner}/${context.repo.repo}`) throw new Error('Invalid review event data');
+                eventName = event.eventName;
+                payload = event.payload;
+              } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+            }
+            const result = await sendMessage(buildMessage(eventName, payload, process.env.FEISHU_MENTION_OPEN_ID), {
+              url: process.env.FEISHU_WEBHOOK_URL, secret: process.env.FEISHU_WEBHOOK_SECRET
+            });
+            core.info(`Feishu accepted notification; mention configured: ${result.mentionConfigured}`);

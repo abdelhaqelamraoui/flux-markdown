@@ -1,0 +1,40 @@
+name: Capture PR review notification
+
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+
+permissions: {}
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      # No checkout, secrets, or execution of pull request code.
+      - name: Record event as data
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const p = context.payload;
+            const event = {
+              eventName: context.eventName,
+              payload: {
+                action: p.action,
+                repository: { full_name: p.repository.full_name, html_url: p.repository.html_url },
+                sender: { login: p.sender.login },
+                pull_request: { number: p.pull_request.number, title: p.pull_request.title.slice(0, 300), html_url: p.pull_request.html_url },
+                review: p.review ? { state: p.review.state, body: (p.review.body || '').slice(0, 1200), html_url: p.review.html_url } : undefined,
+                comment: p.comment ? { path: p.comment.path, body: (p.comment.body || '').slice(0, 1200), html_url: p.comment.html_url } : undefined,
+              }
+            };
+            require('node:fs').writeFileSync('event.json', JSON.stringify(event));
+      - name: Upload event
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: feishu-review-event
+          path: event.json
+          retention-days: 1
+          if-no-files-found: error
