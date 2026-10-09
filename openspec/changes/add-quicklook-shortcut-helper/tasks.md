@@ -15,3 +15,10 @@
 - [ ] 3.1 Complete real Finder positive and negative runtime scenarios from the design.
 - [ ] 3.2 Update the unified candidate and acceptance evidence; obtain user acceptance.
 - [ ] 3.3 Reply and label done only after a confirmed released fix; do not close the issue.
+
+## 4. User-directed launch-only trial
+- [x] 4.1 Replace the lengthy failure hint with the requested double-click/⌘F wording.
+- [x] 4.2 Implement an authenticated, sandboxed, on-demand own-app search launch service.
+- [x] 4.3 Verify actual Finder button → file → focused input → typed Alpha in Debug and Release candidates.
+- [x] 4.4 Verify warm-app query preservation, unchanged editors, release signatures and minimal service entitlements.
+- [ ] 4.5 Include this route in unified user acceptance and eventual release. Global shortcut work above remains incomplete.

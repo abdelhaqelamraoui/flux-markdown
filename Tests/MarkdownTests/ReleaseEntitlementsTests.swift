@@ -11,8 +11,8 @@ final class ReleaseEntitlementsTests: XCTestCase {
         XCTAssertTrue(project.contains("CODE_SIGN_ENTITLEMENTS: Sources/MarkdownPreview/MarkdownPreviewRelease.entitlements"))
         XCTAssertEqual(
             project.components(separatedBy: "CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO").count - 1,
-            2,
-            "Both app and QuickLook Release configurations must disable Xcode's base entitlement injection."
+            3,
+            "App, QuickLook and search launch service Release configurations must disable Xcode's base entitlement injection."
         )
     }
 
