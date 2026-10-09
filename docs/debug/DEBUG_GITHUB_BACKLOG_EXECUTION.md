@@ -129,3 +129,11 @@ fallback hint is the requested double-click/⌘F sentence. No Accessibility perm
 global input listener, login item or editor default change is introduced. The button
 route is resolved in the candidate; this is separate from Finder Cmd+F and does not
 mark #54 released/done. See DEBUG_SEARCH_LAUNCH_BROKER.md.
+
+The user then requested closing the Finder preview after successful search launch.
+Actual tests of extension request completion and closing the remote service window
+removed content but left Finder's outer panel visible. Callback-only tests were not
+treated as proof; both experiments were removed and the verified Release candidate
+130822 was restored. Automatic dismissal is an unresolved acceptance item. See
+DEBUG_SEARCH_PREVIEW_DISMISSAL.md. No additional permission or other-window hiding
+was used to force a result.
