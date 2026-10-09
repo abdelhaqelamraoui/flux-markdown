@@ -88,3 +88,19 @@ This is an implemented candidate, not evidence that every issue has been resolve
 in its reporter environment. The remaining runtime matrix is documented in
 docs/testing/ACCEPTANCE_ALL_ISSUES.md. User acceptance is not requested until
 the blocked native checks have been completed or their scope explicitly addressed.
+
+## Unlocked console follow-up — 2026-10-09
+
+IOConsoleLocked is now false. Restarting the candidate restored application AX
+access. Native wide/fullscreen contents layout and application search are verified.
+Found and corrected search/native toolbar overlap, then verified the rebuilt UI.
+Also reproduced a lost cold-start URL event and moved Apple Event registration to
+will-finish-launching; cold-start source-line navigation is now visible and logged.
+The URL handler no longer prints raw URLs.
+
+Finder preview AX content identifies the candidate renderer, but the automation
+provider associates its remote panel with the underlying Finder CG window. Keyboard
+and screenshot observations can therefore target Finder instead of Quick Look;
+Finder search is still not declared passed. VS Code switching remains unproven:
+the modern NSWorkspace completion did not arrive within eight seconds after unlock,
+and prior editor choices were restored/read back. See the updated acceptance matrix.

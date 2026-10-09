@@ -219,6 +219,9 @@ struct MarkdownWebView: NSViewRepresentable {
                 if case .failure(let error) = result {
                     os_log("Position navigation failed: %{public}@", log: self?.logger ?? .default, type: .error, error.localizedDescription)
                 }
+                if case .success(let value) = result {
+                    os_log("Position navigation found target=%{public}d", log: self?.logger ?? .default, type: .info, (value as? Bool) == true ? 1 : 0)
+                }
             }
         }
 
