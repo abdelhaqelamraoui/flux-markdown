@@ -25,7 +25,7 @@ The user unlocked the console on October 9. Native application verification now
 works after restarting the candidate. The original #49 Sequoia environment is not
 available. These are explicitly pending:
 
-1. Finder Space → Cmd+F, type Alpha, repeat Find, Escape, and full screen (#54).
+1. Retained #54 route: Finder preview search button → containing app → focused editable search, including repeated calls. Direct Finder-preview Cmd+F is excluded by the user decision on October 10; it is not a release gate.
 2. Finder rendered previews while VS Code remains default editor (#49).
 3. Homebrew clean install/reinstall/upgrade of the new payload in a trusted test
    context, preserving editor choice and real extension behavior (#53/#55).
@@ -129,3 +129,13 @@ SHA-256: `858acfb894d5763707e807ff4727beaac830bc02765513ae39c0b0d65d7b5c97`.
 The compressed image verifies successfully and contains the signed development app
 and vendor installer. It has not been published, notarized, or promoted into the
 production tap. Remaining runtime checks are listed above; the console is unlocked.
+
+## Accepted search scope — 2026-10-10
+
+The user accepts the system constraints and explicitly cancels further attempts at
+direct Cmd+F in Finder Quick Look. Retain the verified one-click search handoff to
+the main application and standalone-app Cmd+F. Do not pursue event interception,
+Accessibility helpers or authenticated remote-target refinements for this shortcut.
+Earlier failed shortcut tests remain historical evidence, not unfinished acceptance
+gates. #54 may only receive a released-alternative explanation after the retained
+route is shipped; do not describe it as working inside the preview.

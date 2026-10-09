@@ -51,7 +51,7 @@ not implementation completion; locally passing tests are not release completion.
 
 ### Remaining work
 
-- [ ] #54: complete real Finder keyboard/focus acceptance, investigate any remaining failure.
+- [ ] #54: ship and verify the retained one-click main-app search route. Direct preview Cmd+F research and acceptance were cancelled by the user on 2026-10-10.
 - [ ] #49: reproduce provider fallback on the affected environment, obtain targeted reporter evidence, implement and verify the identified fix.
 - [ ] #53/#55: define a supported installation/registration path, validate compatible Homebrew versions and real clean-install/upgrade/reinstall behavior, then migrate the tap safely.
 - [ ] #52: review the existing positional-navigation proposal, implement URL targets and original source mapping, and verify already-open and concurrent documents.
@@ -137,3 +137,12 @@ treated as proof; both experiments were removed and the verified Release candida
 130822 was restored. Automatic dismissal is an unresolved acceptance item. See
 DEBUG_SEARCH_PREVIEW_DISMISSAL.md. No additional permission or other-window hiding
 was used to force a result.
+
+## User scope decision — 2026-10-10
+
+Stop further direct Cmd+F experiments inside the Finder preview. The user accepts
+the system constraints; no helper, event tap or cross-process target-attestation
+work should continue for this requirement. The existing preview search button
+opens the file and editable search in the containing application; retain this route.
+Standalone-app Cmd+F remains supported. This removes direct-preview shortcut tests
+from release gates without claiming the original shortcut works or marking #54 done.
