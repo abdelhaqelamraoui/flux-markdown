@@ -4,7 +4,7 @@ import { SearchEngine } from '../src/search';
 
 beforeEach(() => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 700 });
-    document.body.innerHTML = '<div id="reading-controls"><div id="reading-toolbar"><div id="toc-button-container" hidden></div><div id="collapse-btn-container" hidden></div></div><div id="search-container"></div></div><div id="reading-layout"><div id="markdown-preview"></div><div id="toc-container"></div></div>';
+    document.body.innerHTML = '<div id="reading-controls"><div id="reading-toolbar"><div id="toc-button-container" hidden></div><div id="collapse-btn-container" hidden></div></div></div><div id="search-container"></div><div id="reading-layout"><div id="markdown-preview"></div><div id="toc-container"></div></div>';
 });
 test('global link bridge leaves directory clicks to directory navigation', async () => {
     await window.renderMarkdown('# One\n\n## Two', { context: 'app', theme: 'light' });

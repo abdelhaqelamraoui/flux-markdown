@@ -28,3 +28,9 @@ Native narrow-window/QuickLook coverage is still pending: the GUI
 provider could not resize the test window, and qlmanage accessibility observation
 returned permission_denied. These gaps do not become checked release-acceptance tasks.
 See docs/debug/DEBUG_ISSUE_50_CONTENTS_SIDEBAR.md for exact evidence and limits.
+
+## 4. User feedback: reclaim top space
+- [x] 4.1 Stop allocating separate directory/search rows when controls fit in the native top area.
+- [x] 4.2 Restore document-centered floating search without reflow or focus-induced scrolling.
+- [x] 4.3 Verify 334 tests, six browser widths, native shared-row layout and real Alpha search (1/2).
+- [x] 4.4 Rebuild/install current renderer and verify resource hashes, signatures and sandbox entitlements.

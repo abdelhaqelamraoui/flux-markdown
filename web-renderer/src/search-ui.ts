@@ -1,4 +1,4 @@
-import { captureReadingAnchor, restoreReadingAnchor, updateReadingControlsLayout } from './reading-controls';
+import { updateReadingControlsLayout } from './reading-controls';
 import type { SearchEngine, SearchOptions } from "./search";
 
 export class SearchUI {
@@ -259,18 +259,15 @@ export class SearchUI {
 	}
 
 	public show(): void {
-		const anchor = captureReadingAnchor();
 		this.isVisible = true;
 		this.container.style.display = "flex";
 		updateReadingControlsLayout();
-		restoreReadingAnchor(anchor);
 
-		this.searchInput.focus();
+		this.searchInput.focus({ preventScroll: true });
 		this.searchInput.select();
 	}
 
 	public hide(): void {
-		const anchor = captureReadingAnchor();
 		this.isVisible = false;
 		this.container.style.display = "none";
 		this.searchEngine.clear();
@@ -278,7 +275,6 @@ export class SearchUI {
 		this.updateMatchCounter(0, 0);
 		this.hideError();
 		updateReadingControlsLayout();
-		restoreReadingAnchor(anchor);
 	}
 
 	public toggle(): void {
