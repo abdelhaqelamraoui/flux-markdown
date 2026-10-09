@@ -1,6 +1,7 @@
 ## 1. Approval and feasibility
-- [ ] 1.1 Obtain approval for the optional helper and new Accessibility permission.
-- [ ] 1.2 Verify remote preview attribution through public AX APIs in normal/full screen.
+- [x] 1.1 Obtain approval to try the development feasibility spike. System permission changes and enabling interception are not authorized by this step.
+- [x] 1.2 Inspect public remote AX attribution in a normal preview: marker is visible but its reported owner is Finder, so direct attribution failed.
+- [ ] 1.2a Review an authenticated cross-process refinement before further interception work; full-screen attribution is not yet established.
 - [ ] 1.3 Verify scoped tap, native search action and safe event consumption in Finder.
 
 ## 2. Implementation

@@ -67,6 +67,22 @@ targets:
     dependencies:
       - sdk: QuickLookUI.framework
 
+  QuickLookShortcutProbe:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/ShortcutProbe
+      - Sources/Shared/QuickLookShortcutIdentity.swift
+    settings:
+      base:
+        PRODUCT_NAME: FluxMarkdownShortcutProbe
+        PRODUCT_BUNDLE_IDENTIFIER: com.xykong.Markdown.ShortcutProbe
+        INFOPLIST_FILE: Sources/ShortcutProbe/Info.plist
+        MARKETING_VERSION: ${MARKETING_VERSION}
+        CURRENT_PROJECT_VERSION: ${CURRENT_PROJECT_VERSION}
+        CODE_SIGN_IDENTITY: "-"
+        SKIP_INSTALL: YES
+
   MarkdownTests:
     type: bundle.unit-test
     platform: macOS
