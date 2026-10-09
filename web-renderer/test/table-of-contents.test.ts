@@ -22,6 +22,8 @@ describe('TableOfContents', () => {
         toc = new TableOfContents('toc-container');
     });
 
+    afterEach(() => toc.dispose());
+
     test('should initialize with toggle button', () => {
         const button = container.querySelector('.toc-toggle');
         expect(button).toBeTruthy();
@@ -150,6 +152,7 @@ describe('TableOfContents', () => {
         const targetHeading = document.getElementById('target')!;
         targetHeading.scrollIntoView = jest.fn();
         
+        toc.dispose();
         const newContainer = document.getElementById('toc-container')!;
         const newToc = new TableOfContents('toc-container');
         const headings: HeadingNode[] = [
@@ -166,5 +169,6 @@ describe('TableOfContents', () => {
 
         expect(preventDefaultSpy).toHaveBeenCalled();
         expect(targetHeading.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+        newToc.dispose();
     });
 });

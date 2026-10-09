@@ -1,18 +1,12 @@
 #search-container {
-    position: fixed;
-    top: 64px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
+    position: static;
     display: none;
     flex-direction: column;
     gap: 4px;
-    max-width: calc(100vw - 40px);
-}
-
-html[data-toc-docked="true"] #search-container {
-    left: calc((100% - 280px) / 2);
-    max-width: calc(100vw - 320px);
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 8px 0;
 }
 
 .search-toolbar {
@@ -241,10 +235,10 @@ html[data-toc-docked="true"] #search-container {
 @keyframes searchSlideIn {
     from {
         opacity: 0;
-        transform: translateX(-50%) translateY(-10px);
     }
     to {
         opacity: 1;
-        transform: translateX(-50%) translateY(0);
     }
 }
+
+@media (prefers-reduced-motion: reduce) { #search-container { animation: none; } }

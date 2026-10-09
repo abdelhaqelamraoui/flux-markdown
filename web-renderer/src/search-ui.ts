@@ -1,3 +1,4 @@
+import { captureReadingAnchor, restoreReadingAnchor, updateReadingControlsLayout } from './reading-controls';
 import type { SearchEngine, SearchOptions } from "./search";
 
 export class SearchUI {
@@ -247,29 +248,37 @@ export class SearchUI {
 	private showError(message: string): void {
 		this.errorMessage.textContent = message;
 		this.errorMessage.style.display = "block";
+		updateReadingControlsLayout();
 		this.searchInput.classList.add("search-input-error");
 	}
 
 	private hideError(): void {
 		this.errorMessage.style.display = "none";
+		updateReadingControlsLayout();
 		this.searchInput.classList.remove("search-input-error");
 	}
 
 	public show(): void {
+		const anchor = captureReadingAnchor();
 		this.isVisible = true;
 		this.container.style.display = "flex";
+		updateReadingControlsLayout();
+		restoreReadingAnchor(anchor);
 
 		this.searchInput.focus();
 		this.searchInput.select();
 	}
 
 	public hide(): void {
+		const anchor = captureReadingAnchor();
 		this.isVisible = false;
 		this.container.style.display = "none";
 		this.searchEngine.clear();
 		this.searchInput.value = "";
 		this.updateMatchCounter(0, 0);
 		this.hideError();
+		updateReadingControlsLayout();
+		restoreReadingAnchor(anchor);
 	}
 
 	public toggle(): void {

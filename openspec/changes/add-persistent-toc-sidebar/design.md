@@ -20,3 +20,11 @@
 - 窄窗口选择章节后收起浮层；提供点击正文/入口关闭。主应用支持 Esc；QuickLook 保留系统键盘行为。
 - 标题导航和布局切换保留阅读块及顶部偏移。长标题、活动项追踪、多文档隔离与输出布局纳入验收。
 - 首版固定右侧 240 CSS px；不新增宽度拖拽、左右切换、跨次启动偏好或全局快捷键。
+
+## Rendering choice verified in the native app
+
+The grid reserves the 240 CSS px contents column. Its navigation panel is fixed to
+the same column's viewport position, with independent internal scrolling. This
+avoids the observed full-screen sticky-layer paint problem in WebKit. Explicit
+`#markdown-preview` margins preserve centered reading width despite upstream
+Markdown CSS resets. The final native full-screen screenshot validates both panes.
