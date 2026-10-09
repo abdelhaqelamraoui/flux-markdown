@@ -69,11 +69,6 @@ class InteractiveWebView: NativeMagnifyingWebView {
         return super.becomeFirstResponder()
     }
     
-    override func keyDown(with event: NSEvent) {
-        os_log("🔵 WebView keyDown: %{public}@", log: logger, type: .debug, event.charactersIgnoringModifiers ?? "nil")
-        super.keyDown(with: event)
-    }
-    
     override func scrollWheel(with event: NSEvent) {
         guard event.phase == .changed || event.phase == .began else {
             super.scrollWheel(with: event)
@@ -291,6 +286,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     
     private var themeButton: CircularToolbarButton!
     private var sourceButton: CircularToolbarButton!
+    private var searchButton: CircularToolbarButton!
     private var helpButton: CircularToolbarButton!
     private var zoomInButton: CircularToolbarButton!
     private var zoomOutButton: CircularToolbarButton!
@@ -399,6 +395,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         
         setupThemeButton()
         setupSourceButton()
+        setupSearchButton()
         setupHelpButton()
         setupZoomInButton()
         setupResetZoomButton()
@@ -538,6 +535,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         
         themeButton?.isHidden = isCompact
         sourceButton?.isHidden = isCompact
+        searchButton?.isHidden = isCompact
         helpButton?.isHidden = isCompact
         zoomInButton?.isHidden = isCompact
         zoomOutButton?.isHidden = isCompact
@@ -791,6 +789,38 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         )
     }
 
+    func makeSearchButton() -> CircularToolbarButton {
+        let title = NSLocalizedString("Find in Document", comment: "Quick Look search button")
+        let button = CircularToolbarButton.make(
+            systemName: "magnifyingglass",
+            accessibilityDescription: title,
+            tintColor: NSColor.labelColor,
+            target: self,
+            action: #selector(showDocumentSearch),
+            toolTip: title
+        )
+        button.keyEquivalent = "f"
+        button.keyEquivalentModifierMask = .command
+        button.keyEquivalentMatcher = QuickLookFindShortcut.matches
+        return button
+    }
+
+    private func setupSearchButton() {
+        let button = makeSearchButton()
+        view.addSubview(button)
+        searchButton = button
+        NSLayoutConstraint.activate([
+            button.topAnchor.constraint(equalTo: view.topAnchor, constant: 10),
+            button.trailingAnchor.constraint(equalTo: sourceButton.leadingAnchor, constant: -8),
+            button.widthAnchor.constraint(equalToConstant: 30),
+            button.heightAnchor.constraint(equalToConstant: 30)
+        ])
+    }
+
+    @objc private func showDocumentSearch() {
+        requestSearch()
+    }
+
     private func setupHelpButton() {
         let button = CircularToolbarButton.make(
             systemName: "questionmark.circle",
@@ -806,7 +836,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
 
         NSLayoutConstraint.activate([
             button.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 10),
-            button.trailingAnchor.constraint(equalTo: sourceButton.leadingAnchor, constant: -8),
+            button.trailingAnchor.constraint(equalTo: searchButton.leadingAnchor, constant: -8),
             button.widthAnchor.constraint(equalToConstant: 30),
             button.heightAnchor.constraint(equalToConstant: 30)
         ])
@@ -1088,11 +1118,6 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         }
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         
-        os_log("🔵 handleKeyDownEvent: key=%{public}@ flags=%{public}@", 
-               log: logger, type: .debug, 
-               event.charactersIgnoringModifiers ?? "nil",
-               String(describing: flags))
-        
         if flags == .command {
             switch event.charactersIgnoringModifiers {
             case "+", "=":
@@ -1134,11 +1159,6 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
 
     public override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        os_log("🔵 performKeyEquivalent called: key=%{public}@ modifiers=%{public}@", 
-               log: logger, type: .debug,
-               event.charactersIgnoringModifiers ?? "nil",
-               String(describing: event.modifierFlags))
-        
         if handleKeyDownEvent(event) == nil {
             os_log("🔵 performKeyEquivalent handled the event", log: logger, type: .default)
             return true

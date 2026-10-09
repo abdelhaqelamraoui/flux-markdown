@@ -50,6 +50,7 @@ final class QuickLookSearchTests: XCTestCase {
         XCTAssertEqual(calls, 1)
     }
 
+
     func testEarlyRequestWaitsUntilRendererIsReady() {
         let (controller, webView) = controller()
         XCTAssertTrue(controller.performKeyEquivalent(with: event()))
@@ -102,6 +103,31 @@ final class QuickLookSearchTests: XCTestCase {
         webView.searchShortcutHandler = { webViewCalls += 1 }
         webView.performTextFinderAction(item)
         XCTAssertEqual(webViewCalls, 1)
+    }
+
+    func testNativeFindButtonWorksWithoutReceivingAKeyboardEvent() {
+        let (controller, webView) = controller()
+        let button = controller.makeSearchButton()
+        button.performClick(nil)
+        XCTAssertTrue(webView.scripts.isEmpty)
+        controller.isWebViewLoaded = true
+        controller.isSearchReady = true
+        controller.completePendingSearchRequest()
+        XCTAssertEqual(webView.scripts.count, 1)
+        button.performClick(nil)
+        XCTAssertEqual(webView.scripts.count, 2)
+        XCTAssertTrue(webView.scripts.allSatisfy { $0.contains("window.showSearch") })
+    }
+
+    func testNativeFindButtonKeyEquivalentUsesTheSameAction() {
+        let (controller, webView) = controller()
+        controller.isWebViewLoaded = true
+        controller.isSearchReady = true
+        let button = controller.makeSearchButton()
+        XCTAssertTrue(button.performKeyEquivalent(with: event()))
+        XCTAssertEqual(webView.scripts.count, 1)
+        XCTAssertFalse(button.performKeyEquivalent(with: event(flags: [.command, .shift])))
+        XCTAssertEqual(webView.scripts.count, 1)
     }
 
 }

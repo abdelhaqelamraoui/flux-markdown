@@ -2,9 +2,15 @@ import AppKit
 import SwiftUI
 
 final class CircularToolbarButton: NSButton, NSViewToolTipOwner {
+    var keyEquivalentMatcher: ((NSEvent) -> Bool)?
     static let diameter: CGFloat = 30
     private var currentToolTipText: String?
     private var toolTipTag: NSView.ToolTipTag?
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if let keyEquivalentMatcher, !keyEquivalentMatcher(event) { return false }
+        return super.performKeyEquivalent(with: event)
+    }
 
     override var intrinsicContentSize: NSSize {
         NSSize(width: 30, height: 30)

@@ -60,8 +60,13 @@ the existing print CSS already requests `page-break-after: avoid`.
 
 Finder Space produced candidate-version rendered content in the accessibility
 tree. The automation provider binds that remote panel to the underlying Finder
-CG window, so its screenshot/keyboard recipient can be wrong. Cmd+F in Finder
-is still unproven; synthetic input success is not a pass. The supported modern
+CG window, so its screenshot/keyboard recipient can be wrong. The reporter then
+tested manually and confirmed Cmd+F opens Finder search. This is a failed runtime
+test; #54 remains unresolved. A native magnifying-glass search button and AppKit
+key equivalent have been added, with eight search and twelve toolbar regressions
+passing, but the native button is a fallback and does not establish a Finder
+shortcut fix. Clicking content before Cmd+F is the pending diagnostic comparison.
+The supported modern
 default-editor setter did not complete within eight seconds even while unlocked;
 the previous editor values were restored and read back. VS Code preservation
 therefore remains unproven.
@@ -85,11 +90,11 @@ not verified and production deployment settings are unchanged.
 
 ## Candidate artifact
 
-Installed development version: `1.34.475-dev-20261009-102822`.
+Installed development version: `1.34.475-dev-20261009-112059`.
 
 DMG: `build/artifacts/FluxMarkdown-Acceptance.dmg`
 
-SHA-256: `750713d0b8c287958eb8864154ac8435992de295a982bb25dd19337289a6080e`.
+SHA-256: `db88ab1d9cd49b53dcdf779e3db0e2669d2814d27a67fb4d9d4546a433ff6ef8`.
 
 The compressed image verifies successfully and contains the signed development app
 and vendor installer. It has not been published, notarized, or promoted into the

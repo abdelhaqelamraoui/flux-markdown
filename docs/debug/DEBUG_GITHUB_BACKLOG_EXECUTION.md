@@ -104,3 +104,9 @@ and screenshot observations can therefore target Finder instead of Quick Look;
 Finder search is still not declared passed. VS Code switching remains unproven:
 the modern NSWorkspace completion did not arrive within eight seconds after unlock,
 and prior editor choices were restored/read back. See the updated acceptance matrix.
+
+The reporter subsequently confirmed Cmd+F still opens Finder search during manual
+Quick Look testing. #54 is a real failed acceptance test, not only an automation
+limitation. Added a native search button as a direct fallback; 20 native search and
+toolbar tests pass, while the Finder shortcut remains unresolved. See
+DEBUG_ISSUE_54_QUICKLOOK_SEARCH.md for the diagnostic comparison and API evidence.
