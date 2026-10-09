@@ -66,6 +66,26 @@ targets:
           CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
     dependencies:
       - sdk: QuickLookUI.framework
+      - target: SearchLauncher
+        embed: true
+
+  SearchLauncher:
+    type: xpc-service
+    platform: macOS
+    sources:
+      - Sources/SearchLauncher
+      - Sources/Shared/SearchLaunchProtocol.swift
+      - Sources/Shared/DocumentPosition.swift
+    settings:
+      base:
+        PRODUCT_NAME: FluxMarkdownSearchLauncher
+        PRODUCT_BUNDLE_IDENTIFIER: com.xykong.Markdown.SearchLauncher
+        INFOPLIST_FILE: Sources/SearchLauncher/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/SearchLauncher/SearchLauncher.entitlements
+        SKIP_INSTALL: YES
+      configs:
+        Release:
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
 
   QuickLookShortcutProbe:
     type: application

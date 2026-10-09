@@ -91,36 +91,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     var pendingMarkdown: String?
     private var prevMarkdown: String? = nil
     var currentURL: URL?
-    var searchDocumentOpener: (URL, @escaping (Bool) -> Void) -> Void = { url, completion in
-        let appURL = Bundle.main.bundleURL.deletingLastPathComponent()
-            .deletingLastPathComponent().deletingLastPathComponent()
-        guard Bundle(url: appURL)?.bundleIdentifier == "com.xykong.Markdown" else {
-            completion(false)
-            return
-        }
-        let configuration = NSWorkspace.OpenConfiguration()
-        configuration.activates = true
-        configuration.promptsUserIfNeeded = false
-        guard let request = DocumentOpenRequest(url: url) else { completion(false); return }
-        let event = NSAppleEventDescriptor(eventClass: AEEventClass(kInternetEventClass),
-            eventID: AEEventID(kAEGetURL), targetDescriptor: nil,
-            returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID))
-        event.setParam(NSAppleEventDescriptor(string: url.absoluteString), forKeyword: AEKeyword(keyDirectObject))
-        configuration.appleEvent = event
-        NSWorkspace.shared.open([request.fileURL], withApplicationAt: appURL, configuration: configuration) { _, error in
-            if let error = error as NSError? {
-                os_log("Search application launch failed (domain=%{public}@ code=%{public}ld)",
-                       log: OSLog(subsystem: "com.markdownquicklook.app", category: "MarkdownPreview"),
-                       type: .error, error.domain, error.code)
-                if let underlying = error.userInfo[NSUnderlyingErrorKey] as? NSError {
-                    os_log("Search application launch underlying failure (domain=%{public}@ code=%{public}ld)",
-                           log: OSLog(subsystem: "com.markdownquicklook.app", category: "MarkdownPreview"),
-                           type: .error, underlying.domain, underlying.code)
-                }
-            }
-            DispatchQueue.main.async { completion(error == nil) }
-        }
-    }
+    var searchDocumentOpener: (URL, @escaping (Bool) -> Void) -> Void = SearchLaunchClient.open
     var searchLaunchFailureHandler: (() -> Void)?
     var isWebViewLoaded = false
     var isSearchReady = false
@@ -1134,7 +1105,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         if let searchLaunchFailureHandler { searchLaunchFailureHandler(); return }
         showToast(
             message: NSLocalizedString("Search in FluxMarkdown", comment: "Search guidance title"),
-            hint: NSLocalizedString("Quick Look cannot accept search input. In Finder, right-click this file, choose Open With > FluxMarkdown, then press ⌘F.", comment: "Search guidance after host refuses app launch"),
+            hint: NSLocalizedString("Double-click the file, then press ⌘F to search.", comment: "Search guidance after host refuses app launch"),
             iconName: "info.circle.fill", duration: 8
         )
     }

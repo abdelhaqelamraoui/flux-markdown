@@ -61,3 +61,11 @@ permission, interception, sandbox weakening or default-editor change was introdu
 The final source cleanup was rebuilt and the same 26 regressions passed again.
 Delivered candidate: `1.34.475-dev-20261009-122657`, with a verified compressed DMG
 and unchanged per-type default-editor handlers. No issue is marked done or released.
+
+## Follow-up: one-click launch succeeds through a constrained XPC service
+
+The user requested a shorter hint and automatic app/file/search opening. A separate
+standard-sandbox XPC launch service succeeded where calls inside the special Quick
+Look sandbox failed. Its authenticated, own-app-only request route has been tested
+in actual Finder and Release configuration, including native keyboard input. The
+fallback is now simply “双击打开文件后，按 ⌘F 搜索。” See DEBUG_SEARCH_LAUNCH_BROKER.md.

@@ -87,6 +87,16 @@ repeat requests retaining Alpha and Escape were also verified. 26 related native
 tests pass. Inline Quick Look search, automatic launch and Finder Cmd+F remain
 unresolved; the manual main-app route requires no new permission.
 
+The user's subsequent one-click request is now implemented through an embedded,
+authenticated, standard-sandbox XPC launch service. Actual Finder search-icon clicks
+opened the current file, focused main-app search and accepted Alpha with count 1/2
+in both Debug and Release candidates. Warm calls reused the application and retained
+the query. The failure hint is shortened to “双击打开文件后，按 ⌘F 搜索。” No input
+monitor, Accessibility permission, login registration or default-editor change is
+introduced. 28 related native tests and release signature/entitlement checks pass.
+Automatic launch is now verified; inline Quick Look input and Finder Cmd+F remain
+separate unresolved behaviors. See DEBUG_SEARCH_LAUNCH_BROKER.md.
+
 ## Fixture and commands (after remaining automated/runtime work is complete)
 
 Use `Tests/fixtures/acceptance-all.md`. It contains date metadata, searchable Alpha,
@@ -106,11 +116,11 @@ not verified and production deployment settings are unchanged.
 
 ## Candidate artifact
 
-Installed development version: `1.34.475-dev-20261009-122657`.
+Installed development version: `1.34.475-dev-20261009-130822` (Release configuration).
 
 DMG: `build/artifacts/FluxMarkdown-Acceptance.dmg`
 
-SHA-256: `5593885996f50e595db6ca4d9f0b87f87b3a148284076e4ca31e9cc7f9af78f0`.
+SHA-256: `858acfb894d5763707e807ff4727beaac830bc02765513ae39c0b0d65d7b5c97`.
 
 The compressed image verifies successfully and contains the signed development app
 and vendor installer. It has not been published, notarized, or promoted into the

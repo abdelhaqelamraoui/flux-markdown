@@ -119,3 +119,13 @@ host-open API. The localized button now gives Open With → FluxMarkdown → Cmd
 guidance on refusal. Actual system Open With and main-app keyboard input verified
 Alpha with 1/2; app cold-start/repeated `find=1` and Escape also passed. 26 relevant
 native regressions pass. Inline search and Finder Cmd+F remain unresolved.
+
+The user requested a simpler hint and one-click search opening. A launch-only,
+authenticated standard-sandbox XPC service now opens the containing app and current
+file with main-app search focused. Real Finder cold-start and warm-app tests passed,
+including actual typed Alpha (1/2) and query preservation. Release configuration also
+passed the real click/type test and strict signature/entitlement verification. The
+fallback hint is the requested double-click/⌘F sentence. No Accessibility permission,
+global input listener, login item or editor default change is introduced. The button
+route is resolved in the candidate; this is separate from Finder Cmd+F and does not
+mark #54 released/done. See DEBUG_SEARCH_LAUNCH_BROKER.md.

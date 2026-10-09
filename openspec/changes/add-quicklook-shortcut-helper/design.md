@@ -1,5 +1,16 @@
 # Design
 
+## User-directed launch-only trial
+
+The user subsequently requested a simpler double-click hint and one-click opening
+of the current file with main-app search. This narrows the development trial to a
+separate standard-sandbox XPC service embedded in the preview, using public APIs.
+It performs only a validated own-app search launch; it has no event tap, input
+monitor, Accessibility use, login item or extra sandbox exception. Authenticate
+the connecting preview process and restrict the URI and destination. Retain it
+only after real Finder verifies app activation and editable search. This trial
+does not implement or complete the original global-shortcut proposal.
+
 ## Feasibility result, October 9
 
 The user approved a development trial, expressing concern about permission friction.

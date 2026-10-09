@@ -74,4 +74,17 @@ if printf '%s\n' "$APP_ENTITLEMENTS" | grep -q "com.apple.security.get-task-allo
     fail "FluxMarkdown.app release entitlements must not include com.apple.security.get-task-allow"
 fi
 
+LAUNCHER_PATH="$APPEX_PATH/Contents/XPCServices/FluxMarkdownSearchLauncher.xpc"
+if [ ! -d "$LAUNCHER_PATH" ]; then
+    fail "Search launch service is missing from the release extension"
+fi
+echo "🔐 Checking search launch service sandbox and restricted entitlements..."
+/usr/bin/codesign -d --entitlements :- "$LAUNCHER_PATH" 2>/dev/null | python3 -c '
+import plistlib, sys
+entitlements = plistlib.loads(sys.stdin.buffer.read())
+expected = {"com.apple.security.app-sandbox": True, "com.apple.security.files.user-selected.read-only": True}
+if set(entitlements) != set(expected) or not all(entitlements[key] is True for key in expected):
+    sys.exit("Search launcher release entitlements must contain only sandbox and selected-file read access")
+'
+
 echo "✅ Release artifact preserves MarkdownPreview.appex sandbox entitlement"
