@@ -124,3 +124,11 @@
 "Quick Look registration repaired" = "Registro de Quick Look reparado";
 "Quick Look repair failed" = "Error al reparar Quick Look";
 "Try selecting the file in Finder and pressing Space. Your default editor was preserved." = "Seleccione el archivo en Finder y pulse Espacio. Se ha conservado su editor predeterminado.";
+
+"Contents Position" = "Posición del índice";
+
+"Left" = "Izquierda";
+
+"Right" = "Derecha";
+
+"Keep contents and its button on the same side" = "Mantener el índice y su botón en el mismo lado";

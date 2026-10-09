@@ -104,3 +104,21 @@ metadata table; typing Alpha returns 1/2. Release build, deep signature and sand
 checks pass. SHA-256 comparison confirms both installed app and extension contain
 the latest renderer. The previous native package was rebuilt after detecting stale
 resource copies; only the matching final package is retained as the current candidate.
+
+## Follow-up: entrance alignment and persisted side
+
+User explicitly requested same-side entrance and a left/right choice. Appearance
+settings now offers localized Left/Right selection, defaults to Right, and uses
+existing shared settings for the app and QuickLook. A native unit test first failed
+because the preference was missing; persistence, invalid fallback and diagnostic
+allowlisting now pass. The all-settings history test was extended for the new key.
+
+335 renderer tests and 280 native tests pass. Browser geometry measures a 12 px gap
+before native right tools, zero directory/body overlap on either side, zero search
+centering error, zero reading-position drift, and a 16 px left edge for narrow overlays.
+
+Installed candidate: `1.34.475-dev-20261010-073330`. Native picker selection changes
+the existing document immediately; the shared plist contains Left after debounce,
+and restarting the application retains Left. The test restores Right afterward.
+The QuickLook renderer receives the same persisted enum through its existing options;
+full native QuickLook GUI acceptance remains the earlier outstanding platform check.

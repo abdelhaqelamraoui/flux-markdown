@@ -26,6 +26,17 @@ public enum AppearanceMode: String, CaseIterable, Identifiable {
     }
 }
 
+public enum ContentsSidebarSide: String, CaseIterable, Identifiable {
+    case left, right
+    public var id: String { rawValue }
+    public var displayName: String {
+        switch self {
+        case .left: return NSLocalizedString("Left", comment: "Contents position")
+        case .right: return NSLocalizedString("Right", comment: "Contents position")
+        }
+    }
+}
+
 public class AppearancePreference: ObservableObject {
     public static let shared = AppearancePreference()
     
@@ -142,6 +153,7 @@ public class AppearancePreference: ObservableObject {
     private let enableTypstKey = "enableTypst"
     private let collapseBlockquotesByDefaultKey = "collapseBlockquotesByDefault"
     private let uiLanguageKey = "uiLanguage"
+    private let contentsSideKey = "contentsSide"
     private let showLineNumbersKey = "showLineNumbers"
     private let finderPaneFontSizeKey = "finderPaneFontSize"
 
@@ -242,6 +254,16 @@ public class AppearancePreference: ObservableObject {
             scheduleSyncToSharedStore()
             LocalizationManager.apply(languageCode: newValue)
             LocalizationManager.applyAppleLanguages(for: newValue)
+        }
+    }
+
+    public var contentsSide: ContentsSidebarSide {
+        get { ContentsSidebarSide(rawValue: sharedStore.string(forKey: contentsSideKey) ?? "right") ?? .right }
+        set {
+            objectWillChange.send()
+            recordSetting(key: contentsSideKey, newValue: newValue.rawValue, source: .settings)
+            sharedStore.set(newValue.rawValue, forKey: contentsSideKey)
+            scheduleSyncToSharedStore()
         }
     }
 

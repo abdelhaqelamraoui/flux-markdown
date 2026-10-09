@@ -39,3 +39,14 @@ The renderer SHALL retain docked visibility preference independently of narrow o
 #### Scenario: QuickLook overlay dismissal
 - **WHEN** the user clicks outside an open contents overlay in expanded QuickLook
 - **THEN** the overlay closes without requiring keyboard focus or interception of system shortcuts
+
+### Requirement: Persistent side selection and aligned entrance
+The application SHALL offer Left and Right contents positions in Appearance settings, default to Right and persist the choice through the existing shared settings. App and QuickLook renderer options SHALL carry the choice. The entrance and temporary/docked directory SHALL appear on the selected side. Right-side shared controls SHALL leave 12 CSS px before native tools. Changing side SHALL preserve visibility, reading position and the current search query; floating search SHALL center over the document column.
+
+#### Scenario: User selects left
+- **WHEN** the user changes contents position to Left
+- **THEN** the app moves directory and entrance left without reopening closed contents or resetting search, and reopening the app or a QuickLook preview uses Left
+
+#### Scenario: Missing or invalid setting
+- **WHEN** no valid position is stored
+- **THEN** the directory and entrance use Right

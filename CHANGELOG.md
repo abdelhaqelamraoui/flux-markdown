@@ -2,7 +2,7 @@
 
 ### Added
 - **Positioned document links** (#52): Open source lines or heading fragments through markdownpreview URLs, including already-open documents and original line numbers after front matter.
-- **Contents sidebar** (#50): Reserve space beside wide previews for a persistent directory. Keep docked preferences separate from temporary narrow-window navigation; selecting a heading closes the narrow overlay. Place contents and blockquote controls beside the existing top tools when space permits, retain a centered floating search panel without document reflow, and omit controls and spacing from printed/exported output.
+- **Contents sidebar** (#50): Reserve space beside wide previews for a persistent directory. Keep docked preferences separate from temporary narrow-window navigation; selecting a heading closes the narrow overlay. Choose a persisted left/right directory position with its entrance on the same side. Place right-side contents controls beside the existing top tools with a small gap, retain a centered floating search panel without document reflow, and omit controls and spacing from printed/exported output.
 - **Quick Look recovery** (#49): Add a registration/priority repair action that preserves existing Markdown editor handlers and reports failures.
 - **Feedback diagnostics**: Keep the latest 200 settings changes without time expiration and prepare reviewable bug reports.
 

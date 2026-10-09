@@ -256,7 +256,8 @@ private struct DocumentPreviewScene: View {
                 enableTypst: preference.enableTypst,
                 codeHighlightTheme: preference.codeHighlightTheme,
                 collapseBlockquotesByDefault: preference.collapseBlockquotesByDefault,
-                showLineNumbers: preference.showLineNumbers
+                showLineNumbers: preference.showLineNumbers,
+                contentsSide: preference.contentsSide
             )
 
             if let version = DisplayVersion.text(in: .main) {

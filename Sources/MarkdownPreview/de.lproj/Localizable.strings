@@ -1,2 +1,10 @@
 "Search in FluxMarkdown" = "In FluxMarkdown suchen";
 "Double-click the file, then press ⌘F to search." = "Öffne die Datei per Doppelklick und drücke ⌘F zum Suchen.";
+
+"Contents Position" = "Position des Inhaltsverzeichnisses";
+
+"Left" = "Links";
+
+"Right" = "Rechts";
+
+"Keep contents and its button on the same side" = "Inhalt und Schaltfläche auf derselben Seite";

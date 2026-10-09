@@ -43,3 +43,17 @@ test('Escape closes narrow contents before the focused search input', async () =
     expect(document.querySelector<HTMLElement>('.toc-nav')!.hidden).toBe(true);
     expect(search.isSearchVisible()).toBe(true);
 });
+
+test('side changes retain a closed directory and current search query', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1100 });
+    await window.renderMarkdown('# One\n\n## Two', { context: 'app', contentsSide: 'right' });
+    document.querySelector<HTMLButtonElement>('.toc-toggle')!.click();
+    const search = new SearchUI('search-container', new SearchEngine()); search.show();
+    document.querySelector<HTMLInputElement>('.search-input')!.value = 'One';
+    window.setContentsSide('left');
+    expect(document.documentElement.dataset.tocSide).toBe('left');
+    expect(document.querySelector<HTMLElement>('.toc-nav')!.hidden).toBe(true);
+    expect(document.querySelector<HTMLInputElement>('.search-input')!.value).toBe('One');
+    window.setContentsSide('invalid');
+    expect(document.documentElement.dataset.tocSide).toBe('right');
+});

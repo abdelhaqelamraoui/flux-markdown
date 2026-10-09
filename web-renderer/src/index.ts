@@ -272,7 +272,7 @@ import githubAlerts from 'markdown-it-github-alerts';
 import { findSourceLineTarget, DocumentPosition } from './position-navigation';
 import { extractOutline } from './outline';
 import { TableOfContents } from './table-of-contents';
-import { ReadingControls, updateReadingControlsLayout } from './reading-controls';
+import { ReadingControls, updateReadingControlsLayout, captureReadingAnchor, restoreReadingAnchor } from './reading-controls';
 import { SearchEngine } from './search';
 import { SearchUI } from './search-ui';
 import { HelpOverlay } from './help-overlay';
@@ -465,6 +465,7 @@ interface RenderOptions {
     enableEmoji?: boolean;
     context?: 'quicklook' | 'app' | 'finder';
     uiLanguage?: string;
+    contentsSide?: string;
     collapseBlockquotes?: boolean;
     prevContent?: string;
     showLineNumbers?: boolean;
@@ -569,6 +570,7 @@ declare global {
         renderMarkdown: (text: string, options?: RenderOptions) => Promise<void>;
         renderSource: (text: string, theme: string, prevContent?: string) => void;
         clearDiffMarks: () => void;
+        setContentsSide: (side: string) => void;
         updateTheme: (theme: string) => void;
         exportHTML: () => string;
         setZoomLevel: (level: number) => void;
@@ -766,6 +768,16 @@ ${clone.innerHTML}
     return finalHtml;
 };
 
+window.setContentsSide = function(side: string) {
+    const normalized = side === 'left' ? 'left' : 'right';
+    if (document.documentElement.dataset.tocSide === normalized) return;
+    const anchor = captureReadingAnchor();
+    document.documentElement.dataset.tocSide = normalized;
+    if (toc?.isMounted()) toc.updateLayout();
+    updateReadingControlsLayout();
+    restoreReadingAnchor(anchor);
+};
+
 window.renderMarkdown = async function (text: string, options: RenderOptions = {}) {
     const callId = Date.now();
     logToSwift(`[renderMarkdown:${callId}] START textLen=${text.length}`);
@@ -806,6 +818,8 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
         (window as any).__fluxContext = currentContext;
         document.documentElement.setAttribute('data-context', currentContext);
     }
+
+    if (options.contentsSide !== undefined) window.setContentsSide(options.contentsSide);
 
     if (options.uiLanguage) {
         (window as any).__fluxLang = options.uiLanguage === 'system' ? undefined : options.uiLanguage;

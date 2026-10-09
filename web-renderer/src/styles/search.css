@@ -249,3 +249,5 @@ html[data-toc-docked="true"] #search-container {
 }
 
 @media (prefers-reduced-motion: reduce) { #search-container { animation: none; } }
+
+html[data-toc-side="left"][data-toc-docked="true"] #search-container { left: calc((100% + 264px) / 2); }

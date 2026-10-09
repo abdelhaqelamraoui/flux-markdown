@@ -22,6 +22,7 @@ struct MarkdownWebView: NSViewRepresentable {
     var codeHighlightTheme: String = "default"
     var collapseBlockquotesByDefault: Bool = false
     var showLineNumbers: Bool = true
+    var contentsSide: ContentsSidebarSide = .right
     
     private let localSchemeHandler = LocalSchemeHandler()
     
@@ -102,6 +103,7 @@ struct MarkdownWebView: NSViewRepresentable {
             webView.appearance = nil
         }
 
+        context.coordinator.updateContentsSide(webView: webView, side: contentsSide)
         context.coordinator.render(webView: webView, content: content, fileURL: fileURL, viewMode: viewMode, appearanceMode: appearanceMode, baseFontSize: baseFontSize, enableMermaid: enableMermaid, enableKatex: enableKatex, enableEmoji: enableEmoji, enableTypst: enableTypst, codeHighlightTheme: codeHighlightTheme, collapseBlockquotesByDefault: collapseBlockquotesByDefault, showLineNumbers: showLineNumbers)
     }
 
@@ -129,6 +131,7 @@ struct MarkdownWebView: NSViewRepresentable {
         private var lastCodeHighlightTheme: String = "default"
         private var lastCollapseBlockquotesByDefault: Bool = false
         private var lastShowLineNumbers: Bool = true
+        private var lastContentsSide: ContentsSidebarSide?
         private var lastRenderedContent: String = ""
         private var lastRenderedFileURL: URL?
         private var pollingTimer: Timer?
@@ -359,6 +362,17 @@ struct MarkdownWebView: NSViewRepresentable {
             return fileURL.deletingPathExtension().lastPathComponent + ".\(ext)"
         }
         
+        func updateContentsSide(webView: WKWebView, side: ContentsSidebarSide) {
+            guard lastContentsSide != side else { return }
+            lastContentsSide = side
+            guard isWebViewLoaded else { return }
+            webView.evaluateJavaScript("window.setContentsSide('\(side.rawValue)');") { [weak self] _, error in
+                if let error {
+                    os_log("Contents side update failed: %{public}@", log: self?.logger ?? .default, type: .error, error.localizedDescription)
+                }
+            }
+        }
+
         func render(webView: WKWebView, content: String, fileURL: URL?, viewMode: ViewMode, appearanceMode: AppearanceMode, baseFontSize: Double, enableMermaid: Bool, enableKatex: Bool, enableEmoji: Bool, enableTypst: Bool, codeHighlightTheme: String, collapseBlockquotesByDefault: Bool, showLineNumbers: Bool = false) {
             print("🟢 Coordinator.render called with viewMode=\(viewMode)")
             lastAppearanceMode = appearanceMode
@@ -468,6 +482,7 @@ struct MarkdownWebView: NSViewRepresentable {
             options["enableTypst"] = enableTypst
             options["collapseBlockquotes"] = collapseBlockquotesByDefault
             options["showLineNumbers"] = showLineNumbers
+            options["contentsSide"] = AppearancePreference.shared.contentsSide.rawValue
             options["uiLanguage"] = AppearancePreference.shared.uiLanguage
             options["renderVersion"] = renderVersion.next()
 

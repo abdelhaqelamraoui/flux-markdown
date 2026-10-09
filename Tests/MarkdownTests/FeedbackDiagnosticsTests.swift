@@ -139,6 +139,7 @@ final class FeedbackDiagnosticsTests: XCTestCase {
         prefs.collapseBlockquotesByDefault = true
         prefs.showLineNumbers = true
         prefs.finderPaneFontSize = 16
+        prefs.contentsSide = .left
         prefs.flushSharedPreferences()
         let events = history.snapshot().events
         XCTAssertEqual(Set(events.map(\.key)), Set(DiagnosticSettings.defaults.keys))

@@ -34,3 +34,9 @@ See docs/debug/DEBUG_ISSUE_50_CONTENTS_SIDEBAR.md for exact evidence and limits.
 - [x] 4.2 Restore document-centered floating search without reflow or focus-induced scrolling.
 - [x] 4.3 Verify 334 tests, six browser widths, native shared-row layout and real Alpha search (1/2).
 - [x] 4.4 Rebuild/install current renderer and verify resource hashes, signatures and sandbox entitlements.
+
+## 5. User-requested directory side
+- [x] 5.1 Record the explicitly requested left/right preference and aligned entrance.
+- [x] 5.2 Verify persisted native settings, live side changes and invalid-value fallback.
+- [x] 5.3 Implement localized Appearance picker, app/QuickLook option propagation and same-side layouts.
+- [x] 5.4 Verify geometry, navigation, search centering and native picker before installing the candidate.
