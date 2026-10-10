@@ -160,6 +160,7 @@ export class TableOfContents {
     }
 
     private setActiveItem(id: string): void {
+        document.dispatchEvent(new CustomEvent('reading-heading', { detail: id }));
         this.container.querySelectorAll<HTMLAnchorElement>('.toc-link').forEach(link => {
             const selected = link.getAttribute('href') === `#${id}`;
             link.classList.toggle('active', selected);

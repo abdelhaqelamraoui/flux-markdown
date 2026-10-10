@@ -1,0 +1,4 @@
+- [x] Document approved scope and acceptance criteria
+- [x] Add heading, progress, update and lifecycle regressions
+- [x] Implement responsive status and native filename option
+- [x] Verify tests, build and browser geometry; install development app

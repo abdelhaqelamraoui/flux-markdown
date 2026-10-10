@@ -463,6 +463,7 @@ struct MarkdownWebView: NSViewRepresentable {
 
             if let url = fileURL {
                 let baseUrlString = url.deletingLastPathComponent().path
+                options["filename"] = url.lastPathComponent
                 options["baseUrl"] = baseUrlString
             }
 

@@ -272,6 +272,7 @@ import githubAlerts from 'markdown-it-github-alerts';
 import { findSourceLineTarget, DocumentPosition } from './position-navigation';
 import { extractOutline } from './outline';
 import { TableOfContents } from './table-of-contents';
+import { ReadingStatus } from './reading-status';
 import { ReadingControls, updateReadingControlsLayout, captureReadingAnchor, restoreReadingAnchor } from './reading-controls';
 import { SearchEngine } from './search';
 import { SearchUI } from './search-ui';
@@ -441,6 +442,7 @@ function rebuildMd(): void {
 
 let toc: TableOfContents | null = null;
 let readingControls: ReadingControls | null = null;
+let readingStatus: ReadingStatus | null = null;
 let searchEngine: SearchEngine | null = null;
 let searchUI: SearchUI | null = null;
 let helpOverlay: HelpOverlay | null = null;
@@ -454,6 +456,7 @@ let graphvizInstance: { dot: (src: string) => string } | null = null;
 let lastShowLineNumbers: boolean = false;
 
 interface RenderOptions {
+    filename?: string;
     baseUrl?: string;
     theme?: string;
     imageData?: Record<string, string>;
@@ -840,6 +843,11 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
             readingControls?.dispose();
             readingControls = new ReadingControls(controlsElement);
         }
+        const statusElement = document.getElementById('reading-status');
+        if (statusElement && !readingStatus?.isMounted()) {
+            readingStatus?.dispose();
+            readingStatus = new ReadingStatus(statusElement);
+        }
         if (!toc || !toc.isMounted()) {
             toc?.dispose();
             try { toc = new TableOfContents('toc-container'); } catch (e) {
@@ -1035,6 +1043,9 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
             }
         }, 0);
 
+        readingStatus?.render(text, options.filename, options.prevContent);
+        // Refresh the shared active-heading selection after asynchronous diagrams settle.
+        window.dispatchEvent(new Event('scroll'));
         logToSwift(`[renderMarkdown:${callId}] COMPLETE`);
     } catch (e) {
         logToSwift(`[renderMarkdown:${callId}] ERROR: ` + e);
@@ -1060,6 +1071,7 @@ window.renderSource = function(text: string, theme: string, prevContent?: string
     }
 
     outputDiv.classList.add('source-mode');
+    readingStatus?.render(text);
     toc?.render([]);
 
     try {

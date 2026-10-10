@@ -19,18 +19,20 @@ export function updateReadingControlsLayout(): void {
     if (!controls) return;
     const compact = root.dataset.context === 'finder';
     const toolbar = document.getElementById('reading-toolbar');
+    const nativeBase = root.dataset.context === 'app' ? 268 : 306;
+    const status = document.getElementById('reading-status');
+    const hasStatus = !!status && !status.hidden && window.innerWidth >= nativeBase + 156;
     const hasTools = ['toc-button-container', 'collapse-btn-container'].some(id => {
         const slot = document.getElementById(id);
         return slot && !slot.hidden && slot.childElementCount > 0;
     });
-    if (toolbar) { toolbar.hidden = !hasTools; toolbar.setAttribute('aria-label', readingLabels().tools); }
-    const visible = !compact && hasTools;
+    if (toolbar) { toolbar.hidden = !(hasTools || hasStatus); toolbar.setAttribute('aria-label', readingLabels().tools); }
+    const visible = !compact && (hasTools || hasStatus);
     controls.hidden = !visible;
     root.dataset.readingControls = String(visible);
-    const slots = toolbar ? Array.from(toolbar.children).filter(e => !(e as HTMLElement).hidden) : [];
+    const slots = toolbar ? Array.from(toolbar.children).filter(e => e.id !== 'reading-status' && !(e as HTMLElement).hidden) : [];
     const naturalWidth = slots.reduce((width, slot) => width + slot.getBoundingClientRect().width, 0) + Math.max(0, slots.length - 1) * 12;
     // Reserve the existing native controls on the right; only wrap when necessary.
-    const nativeBase = root.dataset.context === 'app' ? 268 : 306;
     const shared = visible && window.innerWidth >= naturalWidth + nativeBase + 56;
     root.dataset.readingShared = String(shared);
     const directory = document.getElementById('toc-button-container');

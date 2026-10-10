@@ -1355,6 +1355,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             let contextValue = capturedPreviewMode == .compact ? "finder" : "quicklook"
             var options: [String: Any] = ["theme": theme, "context": contextValue, "uiLanguage": capturedUILanguage, "collapseBlockquotes": capturedCollapseBlockquotes, "showLineNumbers": capturedShowLineNumbers, "contentsSide": capturedContentsSide, "fontSize": capturedFontSize, "renderVersion": capturedRenderVersion]
             if let url = capturedURL {
+                options["filename"] = url.lastPathComponent
                 options["baseUrl"] = url.deletingLastPathComponent().path
                 let imageData = MarkdownImageDataCollector.collectImageData(from: url, content: content)
                 if !imageData.isEmpty {
