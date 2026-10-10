@@ -7,6 +7,23 @@
         <language>zh-CN</language>
 
         <item>
+            <title>Version 1.35.521</title>
+            <link>https://github.com/xykong/flux-markdown/releases/tag/v1.35.521</link>
+            <sparkle:version>521</sparkle:version>
+            <sparkle:shortVersionString>1.35.521</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+            <pubDate>Sat, 10 Oct 2026 04:00:33 +0000</pubDate>
+            <enclosure
+                url="https://github.com/xykong/flux-markdown/releases/download/v1.35.521/FluxMarkdown.dmg"
+                sparkle:edSignature="EdJ2hQ5pbFVeZuKBtVNjrZj8TbPWcbyVQgRW4ca1Mb1GIlSnfyZ0wx0w2R8NNfs2JQQm+wrJhvkTpBgt/TaVCw=="
+                length="11663193"
+                type="application/octet-stream" />
+            <description><![CDATA[
+                <h2>更新内容</h2><h3>Added</h3><ul><li><strong>Positioned document links</strong> (#52): Open source lines or heading fragments through markdownpreview URLs, including already-open documents and original line numbers after front matter.</li><li><strong>Reading status</strong>: Show the current chapter path and scroll position in spare toolbar space, with responsive truncation, QuickLook filenames and brief content-update notices.</li><li><strong>Contents sidebar</strong> (#50): Reserve space beside wide previews for a persistent directory. Keep docked preferences separate from temporary narrow-window navigation; selecting a heading closes the narrow overlay. Choose a persisted left/right directory position with its entrance on the same side. Place right-side contents controls beside the existing top tools with a small gap, retain a centered floating search panel without document reflow, and omit controls and spacing from printed/exported output.</li><li><strong>Quick Look recovery</strong> (#49): Add a registration/priority repair action that preserves existing Markdown editor handlers and reports failures.</li><li><strong>Feedback diagnostics</strong>: Keep the latest 200 settings changes without time expiration and prepare reviewable bug reports.</li></ul><h3>Fixed</h3><ul><li><strong>YAML date values</strong> (thanks [](https://github.com/xluffy), [#56](https://github.com/xykong/flux-markdown/pull/56)): Display dates in metadata fields, arrays and nested values.</li><li><strong>Homebrew installation</strong> (#53/#55): Prepare a vendor installer with checked registration and rollback, replacing deprecated flight hooks when the new package is published.</li><li><strong>Quick Look search alternative</strong> (#54): Use the preview search button to open the current document with focused, editable search in FluxMarkdown. Repeated requests retain the query and inherit the preview display and window position. Direct Command-F inside Finder Quick Look remains constrained by the system; Command-F works in the standalone app.</li><li><strong>Bare URL links</strong> (#51): Recognize plain HTTP/HTTPS references as clickable links in the app and Quick Look while preserving code literals and explicit Markdown links.</li><li><strong>Quick Look full-screen scrollbar gestures</strong>: Prevented Quick Look's double-click interception from blocking WebKit's native pan recognizer when dragging the full-screen document scrollbar.</li><li>&nbsp;&nbsp;&nbsp;&nbsp;Three-finger scrollbar drags can now yield to native WebKit scrolling without leaving subsequent trackpad scrolling unresponsive.</li></ul><p><a href="https://github.com/xykong/flux-markdown/releases/tag/v1.35.521">查看完整更新日志</a></p>
+            ]]></description>
+        </item>
+        
+        <item>
             <title>Version 1.34.475</title>
             <link>https://github.com/xykong/flux-markdown/releases/tag/v1.34.475</link>
             <sparkle:version>475</sparkle:version>
