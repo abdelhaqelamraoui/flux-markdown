@@ -49,3 +49,18 @@ test('reading anchor is sampled below the floating search instead of the input',
     expect(captureReadingAnchor()?.element).toBe(paragraph);
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 });
 });
+
+test('rightmost directory reserves its measured width for the native circle group', () => {
+    document.documentElement.dataset.tocSide = 'right';
+    const slot = document.getElementById('toc-button-container')!;
+    slot.hidden = false;
+    slot.getBoundingClientRect = jest.fn(() => ({ width: 48 } as DOMRect));
+    const postMessage = jest.fn();
+    window.webkit = { messageHandlers: { logger: { postMessage: jest.fn() }, linkClicked: { postMessage: jest.fn() }, readingToolsLayout: { postMessage } } };
+    updateReadingControlsLayout();
+    expect(postMessage).toHaveBeenLastCalledWith({ rightInset: 68 });
+    document.documentElement.dataset.tocSide = 'left';
+    updateReadingControlsLayout();
+    expect(postMessage).toHaveBeenLastCalledWith({ rightInset: 0 });
+    delete window.webkit;
+});

@@ -41,6 +41,7 @@ struct MarkdownWebView: NSViewRepresentable {
         let userContentController = WKUserContentController()
         userContentController.add(coordinator, name: "logger")
         userContentController.add(coordinator, name: "linkClicked")
+        userContentController.add(coordinator, name: "readingToolsLayout")
         
         let debugSource = """
         window.onerror = function(msg, url, line, col, error) {
@@ -605,6 +606,9 @@ struct MarkdownWebView: NSViewRepresentable {
                         pendingRender = nil
                     }
                 }
+            } else if message.name == "readingToolsLayout" {
+                let inset = ReadingToolbarLayout.trailingInset(body: message.body, zoom: message.webView?.pageZoom ?? 1)
+                NotificationCenter.default.post(name: ReadingToolbarLayout.notification, object: currentFileURL, userInfo: ["inset": inset])
             } else if message.name == "linkClicked", let href = message.body as? String {
                 os_log("🔵 Link clicked from JS: %{public}@", log: logger, type: .default, href)
                 handleLinkClick(href: href)

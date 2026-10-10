@@ -228,6 +228,7 @@ private struct DocumentPreviewScene: View {
     @ObservedObject var preference: AppearancePreference
     @Binding var viewMode: ViewMode
     @State private var toolbarToast: ToolbarToastState?
+    @State private var nativeToolbarTrailingInset: CGFloat = 10
 
     private let initialContentSize: CGSize
     private let reloadSuccessToastMessage = NSLocalizedString("已重新载入文档", comment: "Reload success toast")
@@ -340,11 +341,17 @@ private struct DocumentPreviewScene: View {
                     }
                 }
             }
-            .padding([.top, .trailing], 10)
+            .padding(.top, 10)
+            .padding(.trailing, nativeToolbarTrailingInset)
 
             ToolbarFeedbackToastHost(toast: toolbarToast)
                 .allowsHitTesting(false)
                 .zIndex(3)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: ReadingToolbarLayout.notification)) { note in
+            guard (note.object as? URL)?.standardizedFileURL == file.fileURL?.standardizedFileURL,
+                  let inset = note.userInfo?["inset"] as? CGFloat else { return }
+            if nativeToolbarTrailingInset != inset { nativeToolbarTrailingInset = inset }
         }
         .onAppear {
             if let fileURL = file.fileURL {

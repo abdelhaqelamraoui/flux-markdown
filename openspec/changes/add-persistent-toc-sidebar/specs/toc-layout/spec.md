@@ -41,7 +41,7 @@ The renderer SHALL retain docked visibility preference independently of narrow o
 - **THEN** the overlay closes without requiring keyboard focus or interception of system shortcuts
 
 ### Requirement: Persistent side selection and aligned entrance
-The application SHALL offer Left and Right contents positions in Appearance settings, default to Right and persist the choice through the existing shared settings. App and QuickLook renderer options SHALL carry the choice. The entrance and temporary/docked directory SHALL appear on the selected side. Right-side shared controls SHALL leave 12 CSS px before native tools. Changing side SHALL preserve visibility, reading position and the current search query; floating search SHALL center over the document column.
+The application SHALL offer Left and Right contents positions in Appearance settings, default to Right and persist the choice through the existing shared settings. App and QuickLook renderer options SHALL carry the choice. The entrance and temporary/docked directory SHALL appear on the selected side. The right-side entrance SHALL be positioned at the far right after the native circular tool group, with a 12-point separation. Native controls SHALL reserve its measured width when sharing the row. Changing side SHALL preserve visibility, reading position and the current search query; floating search SHALL center over the document column.
 
 #### Scenario: User selects left
 - **WHEN** the user changes contents position to Left
