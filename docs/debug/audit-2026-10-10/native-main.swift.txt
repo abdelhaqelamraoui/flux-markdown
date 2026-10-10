@@ -1,0 +1,32 @@
+import AppKit
+import WebKit
+let app = NSApplication.shared
+app.setActivationPolicy(.prohibited)
+final class Probe: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+ var web: WKWebView!
+ var events: [String] = []
+ func start() {
+  let c = WKWebViewConfiguration()
+  c.userContentController.add(self, name: "logger")
+  c.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
+  c.setURLSchemeHandler(RendererBundleSchemeHandler(rootDirectory: URL(fileURLWithPath: CommandLine.arguments[1])), forURLScheme: RendererBundleSchemeHandler.scheme)
+  web = WKWebView(frame: CGRect(x: 0, y: 0, width: 800, height: 600), configuration: c)
+  web.navigationDelegate = self
+  web.load(URLRequest(url: RendererBundleSchemeHandler.rendererURL()))
+  DispatchQueue.main.asyncAfter(deadline: .now() + 12) { print("TIMEOUT \(self.events)"); exit(2) }
+ }
+ func userContentController(_ u: WKUserContentController, didReceive m: WKScriptMessage) {
+  print("LOG \(m.body)")
+  if m.body as? String == "rendererReady" { events.append("rendererReady"); DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {self.check()} }
+ }
+ func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+  events.append("didFinish")
+ }
+ func check() {
+  print("EVENTS \(events)")
+  web.callAsyncJavaScript("await window.renderMarkdown('<img src=\"missing.png\" onerror=\"window.__auditExecuted=true\">'); await new Promise(r=>setTimeout(r,300)); let error; try { new Function('return import.meta')(); } catch(e) {error=String(e)}; return JSON.stringify({executed:window.__auditExecuted,metaError:error});", arguments: [:], in: nil, in: .page) { result in print("PROBE \(result)"); exit(0) }
+ }
+}
+let probe = Probe()
+probe.start()
+app.run()
