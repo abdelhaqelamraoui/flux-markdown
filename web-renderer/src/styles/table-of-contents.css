@@ -81,3 +81,16 @@ html[data-toc-side="left"] #toc-container[data-layout="overlay"] { left: 16px; r
 html[data-reading-shared="true"]:not([data-toc-side="left"]) #toc-button-container {
     position: fixed; top: var(--reading-controls-top); right: 20px; width: max-content;
 }
+
+/* Status consumes only spare toolbar width; it cannot move tools onto another row. */
+#reading-status { display: flex; flex: 1 1 0; min-width: 0; align-items: center; gap: 14px; overflow: hidden; white-space: nowrap; height: 32px; color: var(--reading-muted); font: 12px/1.4 -apple-system, BlinkMacSystemFont, sans-serif; }
+#reading-toolbar > :not(#reading-status) { flex-shrink: 0; }
+.reading-path { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.reading-filename { max-width: 30%; overflow: hidden; text-overflow: ellipsis; }
+.reading-filename:empty { display: none; }
+.reading-progress { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.reading-updated { overflow: hidden; text-overflow: ellipsis; }
+#reading-status:not([data-size="large"]) .reading-filename { display: none; }
+#reading-status[data-size="small"] .reading-parent, #reading-status[data-size="tiny"] .reading-parent { display: none; }
+#reading-status[data-size="tiny"] .reading-progress, #reading-status[data-size="tiny"] .reading-updated { display: none; }
+html:not([data-reading-shared="true"]) #reading-status { display: none; }
