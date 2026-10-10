@@ -151,8 +151,8 @@ if ./scripts/create_macports_tarball.sh "$NEW_FULL_VERSION"; then
         echo "✅ macports/Portfile committed"
     fi
 else
-    echo "⚠️  MacPorts tarball creation failed (non-fatal)"
-    MACPORTS_TARBALL=""
+    echo "❌ MacPorts tarball creation failed; release preparation stopped" >&2
+    exit 1
 fi
 
 python3 scripts/release-manifest.py write
