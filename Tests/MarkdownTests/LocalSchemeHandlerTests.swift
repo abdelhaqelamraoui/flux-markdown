@@ -23,7 +23,7 @@ final class LocalSchemeHandlerTests: XCTestCase {
         XCTAssertEqual(resolved, "/Users/me/docs/image.png")
     }
 
-    func testResolveContainedFileURLAllowsFilesInsideBaseDirectory() throws {
+    func testResolveContainedFileURLAllowsExplicitImageInsideBaseDirectory() throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         let assets = root.appendingPathComponent("assets", isDirectory: true)
@@ -35,6 +35,7 @@ final class LocalSchemeHandlerTests: XCTestCase {
 
         let handler = LocalSchemeHandler()
         handler.baseDirectory = root
+        handler.allowedFileURLs = [imageURL]
 
         let url = URL(string: "local-md://\(imageURL.path)")!
         let resolved = try XCTUnwrap(handler.resolveContainedFileURL(from: url))
@@ -147,5 +148,21 @@ final class LocalSchemeHandlerTests: XCTestCase {
         XCTAssertEqual(pngResp?.mimeType, "image/png")
         XCTAssertEqual(jpgResp?.mimeType, "image/jpeg")
         XCTAssertEqual(svgResp?.mimeType, "image/svg+xml")
+    }
+}
+
+extension LocalSchemeHandlerTests {
+    func testLocalSchemeDoesNotServeScriptsOrArbitraryDocuments() {
+        let handler = LocalSchemeHandler()
+        handler.baseDirectory = URL(fileURLWithPath: "/tmp/docs")
+        XCTAssertNil(handler.resolveContainedFileURL(from: URL(string: "local-md:///tmp/docs/secrets.txt")!))
+        XCTAssertNil(handler.resolveContainedFileURL(from: URL(string: "local-md:///tmp/docs/script.js")!))
+    }
+    func testBridgeOnlyAcceptsMainRendererFrame() {
+        let bundle = RendererBundleSchemeHandler.rendererURL()
+        XCTAssertTrue(RendererBridgePolicy.accepts(url: bundle, isMainFrame: true))
+        XCTAssertFalse(RendererBridgePolicy.accepts(url: bundle, isMainFrame: false))
+        XCTAssertFalse(RendererBridgePolicy.accepts(url: URL(string: "https://example.org"), isMainFrame: true))
+        XCTAssertFalse(RendererBridgePolicy.accepts(url: URL(string: "local-md:///tmp/a.svg"), isMainFrame: true))
     }
 }

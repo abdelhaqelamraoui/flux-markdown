@@ -118,6 +118,8 @@ struct MarkdownWebView: NSViewRepresentable {
         var pendingAnchor: String?
 
         // File monitoring
+        private let fileReadVersion = RenderVersionCounter()
+        private var fileReadInFlight = false
         private var fileMonitor: DispatchSourceFileSystemObject?
         private var monitoredFileDescriptor: Int32 = -1
         private var lastKnownFileSize: UInt64 = 0
@@ -288,10 +290,8 @@ struct MarkdownWebView: NSViewRepresentable {
                   let url = currentFileURL else { return }
             os_log("🔄 Manual reload triggered: %{public}@", log: logger, type: .default, url.lastPathComponent)
             webView.evaluateJavaScript("window.clearDiffMarks && window.clearDiffMarks();", completionHandler: nil)
-            if reloadFromDisk(url: url, force: true) {
-                NotificationCenter.default.post(name: .reloadFileSucceeded, object: window)
-            } else {
-                NotificationCenter.default.post(name: .reloadFileFailed, object: window)
+            reloadFromDisk(url: url, force: true) { success in
+                NotificationCenter.default.post(name: success ? .reloadFileSucceeded : .reloadFileFailed, object: window)
             }
         }
 
@@ -589,6 +589,7 @@ struct MarkdownWebView: NSViewRepresentable {
         }
         
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard RendererBridgePolicy.accepts(message) else { return }
             if message.name == "logger", let body = message.body as? String {
                 os_log("JS Log: %{public}@", log: logger, type: .debug, body)
                 
@@ -769,6 +770,8 @@ struct MarkdownWebView: NSViewRepresentable {
         }
 
         private func stopFileMonitoring() {
+            fileReadVersion.next()
+            fileReadInFlight = false
             stopDispatchMonitor()
             stopPollingTimer()
         }
@@ -801,42 +804,45 @@ struct MarkdownWebView: NSViewRepresentable {
             reloadFromDisk(url: url)
         }
 
-        @discardableResult
-        private func reloadFromDisk(url: URL, force: Bool = false) -> Bool {
-            do {
-                let attrs = try FileManager.default.attributesOfItem(atPath: url.path)
-                let newSize = attrs[.size] as? UInt64 ?? 0
-                let newMtime = attrs[.modificationDate] as? Date
-                if !force {
-                    guard FileMonitorHelpers.shouldReload(
-                        newSize: newSize, newMtime: newMtime,
-                        knownSize: lastKnownFileSize, knownMtime: lastKnownFileModificationDate
-                    ) else { return true }
+        private func reloadFromDisk(url: URL, force: Bool = false, completion: ((Bool) -> Void)? = nil) {
+            if fileReadInFlight && !force { return }
+            fileReadInFlight = true
+            let generation = fileReadVersion.next()
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                let result = Result { () -> (String, [FileAttributeKey: Any]) in
+                    let data = try BoundedFileReader.read(url, maxBytes: BoundedFileReader.documentLimit)
+                    guard let text = String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
+                    return (text, try FileManager.default.attributesOfItem(atPath: url.path))
                 }
-                let newContent = try String(contentsOf: url, encoding: .utf8)
-                lastKnownFileSize = newSize
-                lastKnownFileModificationDate = newMtime
-                guard let webView = currentWebView else { return false }
-                executeRender(
+                DispatchQueue.main.async {
+                    guard let self, self.fileReadVersion.isCurrent(generation), self.currentFileURL == url else { completion?(false); return }
+                    self.fileReadInFlight = false
+                    do {
+                        let (newContent, attrs) = try result.get()
+                        self.lastKnownFileSize = attrs[.size] as? UInt64 ?? 0
+                        self.lastKnownFileModificationDate = attrs[.modificationDate] as? Date
+                        guard let webView = self.currentWebView else { completion?(false); return }
+                self.executeRender(
                     webView: webView,
                     content: newContent,
                     fileURL: url,
-                    viewMode: lastViewMode,
-                    appearanceMode: lastAppearanceMode,
-                    baseFontSize: lastBaseFontSize,
-                    enableMermaid: lastEnableMermaid,
-                    enableKatex: lastEnableKatex,
-                    enableEmoji: lastEnableEmoji,
-                    enableTypst: lastEnableTypst,
-                    codeHighlightTheme: lastCodeHighlightTheme,
-                    collapseBlockquotesByDefault: lastCollapseBlockquotesByDefault,
-                    showLineNumbers: lastShowLineNumbers
+                    viewMode: self.lastViewMode,
+                    appearanceMode: self.lastAppearanceMode,
+                    baseFontSize: self.lastBaseFontSize,
+                    enableMermaid: self.lastEnableMermaid,
+                    enableKatex: self.lastEnableKatex,
+                    enableEmoji: self.lastEnableEmoji,
+                    enableTypst: self.lastEnableTypst,
+                    codeHighlightTheme: self.lastCodeHighlightTheme,
+                    collapseBlockquotesByDefault: self.lastCollapseBlockquotesByDefault,
+                    showLineNumbers: self.lastShowLineNumbers
                 )
-                os_log("🟢 Reloaded from disk: %{public}@", log: logger, type: .default, url.lastPathComponent)
-                return true
-            } catch {
-                os_log("🔴 reloadFromDisk failed: %{public}@", log: logger, type: .error, error.localizedDescription)
-                return false
+                        completion?(true)
+                    } catch {
+                        os_log("Reload failed: %{public}@", log: self.logger, type: .error, error.localizedDescription)
+                        completion?(false)
+                    }
+                }
             }
         }
 

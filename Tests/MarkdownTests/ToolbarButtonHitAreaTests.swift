@@ -263,16 +263,16 @@ final class ToolbarButtonHitAreaTests: XCTestCase {
             "Main document windows should show the existing native toast feedback for reload success/failure and reset zoom."
         )
         XCTAssertTrue(
-            mainWebViewSource.contains("private func reloadFromDisk(url: URL, force: Bool = false) -> Bool")
-                && mainWebViewSource.contains("NotificationCenter.default.post(name: .reloadFileSucceeded, object: window)")
-                && mainWebViewSource.contains("NotificationCenter.default.post(name: .reloadFileFailed, object: window)")
+            mainWebViewSource.contains("private func reloadFromDisk(url: URL, force: Bool = false, completion: ((Bool) -> Void)? = nil)")
+                && mainWebViewSource.contains("NotificationCenter.default.post(name: success ? .reloadFileSucceeded : .reloadFileFailed, object: window)")
+                && mainWebViewSource.contains("reloadFromDisk(url: url, force: true) { success in")
                 && mainWebViewSource.contains("NotificationCenter.default.post(name: .resetZoomCompleted, object: window)"),
             "Main WebView toolbar commands should report visible feedback through window-scoped notifications."
         )
         XCTAssertTrue(
             quickLookSource.contains("showToolbarFeedbackToast")
                 && quickLookSource.contains("showToast(")
-                && quickLookSource.contains("if reloadFromDisk(force: true)")
+                && quickLookSource.contains("reloadFromDisk(force: true) { [weak self] success in")
                 && quickLookSource.contains("已重新载入文档")
                 && quickLookSource.contains("重新载入失败")
                 && quickLookSource.contains("已重置缩放"),

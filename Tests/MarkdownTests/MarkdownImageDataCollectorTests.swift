@@ -272,3 +272,20 @@ final class MarkdownImageDataCollectorTests: XCTestCase {
         XCTAssertTrue(imageData.isEmpty)
     }
 }
+
+extension MarkdownImageDataCollectorTests {
+    func testReferenceImagesAndParenthesizedNamesShareResourceBudget() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let image = root.appendingPathComponent("photo (1).png")
+        try Data([1, 2, 3]).write(to: image)
+        let markdown = "![one][pic]\n![two](<photo (1).png>)\n\n[pic]: <photo (1).png>"
+        let document = root.appendingPathComponent("test.md")
+        XCTAssertEqual(MarkdownImageDataCollector.referencedLocalImageURLs(from: document, content: markdown), [image])
+        XCTAssertNotNil(MarkdownImageDataCollector.collectImageData(from: document, content: markdown)["photo (1).png"])
+        let large = root.appendingPathComponent("large.png")
+        try Data(repeating: 0, count: 2 * 1024 * 1024 + 1).write(to: large)
+        XCTAssertTrue(MarkdownImageDataCollector.referencedLocalImageURLs(from: document, content: "![large](large.png)").isEmpty)
+    }
+}

@@ -172,6 +172,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     private var sawLiveResizeStartForWindow: ObjectIdentifier?
     
     private let renderVersion = RenderVersionCounter()
+    private let fileReadVersion = RenderVersionCounter()
 
     // MARK: - File Monitoring
     private var fileMonitor: DispatchSourceFileSystemObject?
@@ -196,7 +197,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     
     private var keyDownEventMonitor: Any?
     
-    private let maxPreviewSizeBytes: UInt64 = 500 * 1024 // 500KB limit
+    private var fileReadInFlight = false
     
     private func logScreenEnvironment(context: String) {
         os_log("📊 [%{public}@] ===== SCREEN ENVIRONMENT =====", log: logger, type: .default, context)
@@ -528,6 +529,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     
     public override func viewWillDisappear() {
         super.viewWillDisappear()
+        fileReadVersion.next()
         renderVersion.next()
         webView.evaluateJavaScript("window.invalidateRender && window.invalidateRender();", completionHandler: nil)
         logScreenEnvironment(context: "viewWillDisappear")
@@ -1071,10 +1073,10 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
 
     @objc private func reloadFileManually() {
         os_log("🔄 Manual reload triggered by button/shortcut", log: logger, type: .default)
-        if reloadFromDisk(force: true) {
-            showToolbarFeedbackToast(NSLocalizedString("已重新载入文档", comment: "Reload success toast"))
-        } else {
-            showToolbarFeedbackToast(NSLocalizedString("重新载入失败", comment: "Reload failure toast"))
+        reloadFromDisk(force: true) { [weak self] success in
+            self?.showToolbarFeedbackToast(success
+                ? NSLocalizedString("已重新载入文档", comment: "Reload success toast")
+                : NSLocalizedString("重新载入失败", comment: "Reload failure toast"))
         }
     }
     
@@ -1218,6 +1220,9 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     public func preparePreviewOfFile(at url: URL, completionHandler handler: @escaping (Error?) -> Void) {
         os_log("🔵 preparePreviewOfFile called for: %{public}@", log: logger, type: .default, url.path)
         renderVersion.next()
+        let readVersion = fileReadVersion.next()
+        fileReadInFlight = false
+        pendingMarkdown = nil
         self.currentURL = url
         
         stopSecurityScopedAccessIfNeeded()
@@ -1262,47 +1267,28 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             AppearancePreference.shared.apply(to: self.view)
             self.updateThemeButtonState()
             
-            do {
-                let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
-                let fileSize = attributes[.size] as? UInt64 ?? 0
-                let fileMtime = attributes[.modificationDate] as? Date
-                
-                var content: String
-                if fileSize > self.maxPreviewSizeBytes {
-                    let fileHandle = try FileHandle(forReadingFrom: url)
-                    defer { try? fileHandle.close() }
-                    let data = fileHandle.readData(ofLength: Int(self.maxPreviewSizeBytes))
-                    if var stringContent = String(data: data, encoding: .utf8) {
-                        if let lastNewline = stringContent.lastIndex(of: "\n") {
-                            stringContent = String(stringContent[...lastNewline])
-                        }
-                        content = stringContent + "\n\n> **Preview truncated.**"
-                    } else {
-                        content = "> **Encoding Error**"
+            DispatchQueue.global(qos: .userInitiated).async {
+                let result = Result { try PreviewFileReader.read(url) }
+                DispatchQueue.main.async {
+                    guard self.fileReadVersion.isCurrent(readVersion), self.currentURL == url else {
+                        handler(CocoaError(.userCancelled))
+                        return
                     }
-                } else {
-                    content = try String(contentsOf: url, encoding: .utf8)
+                    switch result {
+                    case .success(let snapshot):
+                        self.pendingMarkdown = snapshot.content
+                        self.lastKnownFileSize = snapshot.size
+                        self.lastKnownFileModificationDate = snapshot.modificationDate
+                        if self.isWebViewLoaded { self.renderCurrentMode() }
+                        self.startFileMonitoring()
+                        handler(nil)
+                    case .failure(let error):
+                        os_log("Failed to read preview: %{public}@", log: self.logger, type: .error, error.localizedDescription)
+                        handler(error)
+                    }
                 }
-
-                let fileExtension = url.pathExtension.lowercased()
-                if fileExtension == "mmd" {
-                    content = "```mermaid\n\(content)\n```"
-                    os_log("🔵 Wrapped .mmd content in mermaid fenced block", log: self.logger, type: .debug)
-                }
-
-                self.pendingMarkdown = content
-                self.lastKnownFileSize = fileSize
-                self.lastKnownFileModificationDate = fileMtime
-                if self.isWebViewLoaded {
-                    self.renderCurrentMode()
-                }
-                
-                self.startFileMonitoring()
-            } catch {
-                os_log("🔴 Failed to read file: %{public}@", log: self.logger, type: .error, error.localizedDescription)
             }
         }
-        handler(nil)
     }
     
     private func renderPendingMarkdown() {
@@ -1507,6 +1493,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
     
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard RendererBridgePolicy.accepts(message) else { return }
         if message.name == "logger", let body = message.body as? String {
             os_log("🟢 JS Log: %{public}@", log: logger, type: .debug, body)
             
@@ -2062,53 +2049,31 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         reloadFromDisk()
     }
 
-    @discardableResult
-    private func reloadFromDisk(force: Bool = false) -> Bool {
-        guard let url = currentURL else { return false }
-        do {
-            let attrs = try FileManager.default.attributesOfItem(atPath: url.path)
-            let newSize = attrs[.size] as? UInt64 ?? 0
-            let newMtime = attrs[.modificationDate] as? Date
-            if !force {
-                guard FileMonitorHelpers.shouldReload(
-                    newSize: newSize, newMtime: newMtime,
-                    knownSize: lastKnownFileSize ?? 0,
-                    knownMtime: lastKnownFileModificationDate
-                ) else { return true }
-            }
-
-            var content: String
-            if newSize > maxPreviewSizeBytes {
-                let fh = try FileHandle(forReadingFrom: url)
-                defer { try? fh.close() }
-                let data = fh.readData(ofLength: Int(maxPreviewSizeBytes))
-                if var s = String(data: data, encoding: .utf8) {
-                    if let last = s.lastIndex(of: "\n") { s = String(s[...last]) }
-                    content = s + "\n\n> **Preview truncated.**"
-                } else {
-                    content = "> **Encoding Error**"
+    private func reloadFromDisk(force: Bool = false, completion: ((Bool) -> Void)? = nil) {
+        guard let url = currentURL else { completion?(false); return }
+        if fileReadInFlight && !force { return }
+        fileReadInFlight = true
+        let version = fileReadVersion.next()
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = Result { try PreviewFileReader.read(url) }
+            DispatchQueue.main.async {
+                guard self.fileReadVersion.isCurrent(version), self.currentURL == url else { completion?(false); return }
+                self.fileReadInFlight = false
+                do {
+                    let snapshot = try result.get()
+                    if force || snapshot.content != self.pendingMarkdown {
+                        self.prevMarkdown = self.pendingMarkdown
+                        self.pendingMarkdown = snapshot.content
+                        if self.isWebViewLoaded { self.renderCurrentMode() }
+                    }
+                    self.lastKnownFileSize = snapshot.size
+                    self.lastKnownFileModificationDate = snapshot.modificationDate
+                    completion?(true)
+                } catch {
+                    os_log("Reload failed: %{public}@", log: self.logger, type: .error, error.localizedDescription)
+                    completion?(false)
                 }
-            } else {
-                content = try String(contentsOf: url, encoding: .utf8)
             }
-
-            if url.pathExtension.lowercased() == "mmd" {
-                content = "```mermaid\n\(content)\n```"
-            }
-
-            // Capture previous content for diff animation
-            if let existing = pendingMarkdown, !existing.isEmpty {
-                prevMarkdown = existing
-            }
-            pendingMarkdown = content
-            lastKnownFileSize = newSize
-            lastKnownFileModificationDate = newMtime
-            if isWebViewLoaded { renderCurrentMode() }
-            os_log("🟢 Reloaded from disk: %{public}@", log: logger, type: .default, url.lastPathComponent)
-            return true
-        } catch {
-            os_log("🔴 reloadFromDisk failed: %{public}@", log: logger, type: .error, error.localizedDescription)
-            return false
         }
     }
 
