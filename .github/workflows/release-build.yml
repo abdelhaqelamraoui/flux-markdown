@@ -30,7 +30,7 @@ jobs:
         run: |
           xcodebuild test -project FluxMarkdown.xcodeproj -scheme Markdown -configuration Debug \
             -destination 'platform=macOS' -skip-testing:MarkdownTests/RenderBenchmarkTests \
-            CODE_SIGN_IDENTITY=- -quiet
+            CODE_SIGN_IDENTITY=- -resultBundlePath build/native-tests.xcresult
       - name: Build universal release
         run: |
           xcodebuild build -project FluxMarkdown.xcodeproj -scheme Markdown -configuration Release \
@@ -50,3 +50,9 @@ jobs:
           name: release-app
           path: build/artifacts/
           retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: native-test-results
+          path: build/native-tests.xcresult
+          retention-days: 7
