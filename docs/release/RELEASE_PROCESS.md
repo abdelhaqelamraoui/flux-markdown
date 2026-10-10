@@ -495,3 +495,15 @@ and all three product deployment targets before locally packaging the DMG.
 `RELEASE_APP_PATH` is only for an already verified matching-version bundle; DMG
 creation rejects version mismatch. Sparkle signing continues to use the local
 Keychain. Do not override the deployment target to publish with a newer Xcode.
+
+To validate the final versioned payload before publication, run:
+
+```bash
+RELEASE_REMOTE_BUILD=1 RELEASE_PREPARE_ONLY=1 make release minor
+# Verify the final package and Homebrew upgrade, then:
+./scripts/publish-release.sh
+```
+
+Preparation writes `build/artifacts/release-manifest.json`, binding the release tag,
+DMG, MacPorts source archive and release notes to their SHA-256 values. Publication
+refuses changed/missing artifacts and does not bump the version a second time.
