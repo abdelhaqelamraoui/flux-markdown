@@ -356,7 +356,6 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             webConfiguration.defaultWebpagePreferences = pagePreferences
         }
         
-        webConfiguration.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
         
         let userContentController = WKUserContentController()
         userContentController.add(self, name: "logger")

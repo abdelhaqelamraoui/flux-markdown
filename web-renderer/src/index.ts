@@ -1,4 +1,6 @@
-import { sanitizeDocumentHTML } from './safe-html';
+import { waitForExportReady } from './export-readiness';
+window.waitForExportReady = waitForExportReady;
+import { sanitizeDocumentHTML, sanitizeDiagramHTML } from './safe-html';
 /**
  * Escapes colons inside Gantt task labels when the metadata delimiter is
  * written as a spaced colon. Mermaid's lexer always splits at the first raw
@@ -271,7 +273,7 @@ import anchor from 'markdown-it-anchor';
 import githubAlerts from 'markdown-it-github-alerts';
 
 import { findSourceLineTarget, DocumentPosition } from './position-navigation';
-import { extractOutline } from './outline';
+import { extractHeadings, buildHeadingTree } from './outline';
 import { TableOfContents } from './table-of-contents';
 import { ReadingStatus } from './reading-status';
 import { ReadingControls, updateReadingControlsLayout, captureReadingAnchor, restoreReadingAnchor } from './reading-controls';
@@ -436,6 +438,12 @@ function buildMd(): MarkdownIt {
 
 const md: MarkdownIt = buildMd();
 let renderGeneration = 0;
+let currentRender: Promise<void> = Promise.resolve();
+window.waitForRenderComplete = async () => {
+    const generation = renderGeneration;
+    await currentRender;
+    if (generation !== renderGeneration) throw new Error("Document changed during export");
+};
 window.invalidateRender = () => { ++renderGeneration; };
 const diffAnimator = new DiffAnimator();
 
@@ -567,6 +575,8 @@ function addLineNumbersToCodeBlocks(container: HTMLElement): void {
 declare global {
     interface Window {
         navigateDocumentPosition: (position: DocumentPosition) => boolean;
+        waitForRenderComplete: () => Promise<void>;
+        waitForExportReady: (timeoutMs?: number) => Promise<void>;
         invalidateRender: () => void;
         renderMarkdown: (text: string, options?: RenderOptions) => Promise<void>;
         renderSource: (text: string, theme: string, prevContent?: string) => void;
@@ -618,7 +628,7 @@ async function renderVegaDiagrams(container: HTMLElement, theme: string, isCurre
             if (!isCurrent()) return;
             const wrapper = document.createElement('div');
             wrapper.className = 'vega-diagram';
-            wrapper.innerHTML = svgStr;
+            wrapper.innerHTML = sanitizeDiagramHTML(svgStr);
             copySourceRange(pre, wrapper);
             pre.replaceWith(wrapper);
         } catch (err: unknown) {
@@ -665,7 +675,7 @@ async function renderGraphvizDiagrams(container: HTMLElement, isCurrent: () => b
             const svgStr = graphvizInstance!.dot(src);
             const wrapper = document.createElement('div');
             wrapper.className = 'graphviz-diagram';
-            wrapper.innerHTML = svgStr;
+            wrapper.innerHTML = sanitizeDiagramHTML(svgStr);
             copySourceRange(pre, wrapper);
             pre.replaceWith(wrapper);
         } catch (err: unknown) {
@@ -903,11 +913,11 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
         document.documentElement.setAttribute('data-line-numbers', showLineNumbers ? 'true' : 'false');
         lastShowLineNumbers = showLineNumbers;
 
-        const outline = extractOutline(parser, renderBody);
-
-
         installSourceRuleWrappers(parser);
-        let html = parser.render(renderBody, { baseUrl: options.baseUrl, imageData: options.imageData, renderVersion: options.renderVersion, sourceLineOffset });
+        const environment = { baseUrl: options.baseUrl, imageData: options.imageData, renderVersion: options.renderVersion, sourceLineOffset };
+        const tokens = parser.parse(renderBody, environment);
+        const outline = buildHeadingTree(extractHeadings(tokens));
+        const html = parser.renderer.render(tokens, parser.options, environment);
 
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = sanitizeDocumentHTML(frontMatterHtml + html);
@@ -931,7 +941,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
 
         logToSwift(`[renderMarkdown:${callId}] UPDATING DOM innerHTML`);
         if (!isCurrent()) return;
-        searchUI?.hide();
+        searchEngine?.clear();
         outputDiv.innerHTML = tempDiv.innerHTML;
         if (toc) toc.render(outline);
         prepareRenderedImages(outputDiv, options);
@@ -979,7 +989,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
                     try {
                         const { svg } = await mermaid.render(id + '-svg', processedCode);
                         if (!isCurrent()) return;
-                        div.innerHTML = svg;
+                        div.innerHTML = sanitizeDiagramHTML(svg);
                     } catch (renderErr: any) {
                         const errorMessage = renderErr?.message || String(renderErr);
                         logToSwift(`JS Mermaid render error for ${id}: ${errorMessage}`);
@@ -1019,7 +1029,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
                         try {
                             const rendered = await renderTypstBlock(decodedSource, context);
                             if (!isCurrent()) return;
-                            placeholder.innerHTML = rendered;
+                            placeholder.innerHTML = sanitizeDiagramHTML(rendered);
                         } catch (err) {
                             logToSwift(`JS Typst render error: ${err}`);
                             placeholder.innerHTML = `<div class="typst-math-block typst-error">
@@ -1035,6 +1045,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
         }
 
         if (!isCurrent()) return;
+        searchUI?.refresh();
         readingStatus?.render(text, options.filename, options.prevContent);
         // Refresh the shared active-heading selection after asynchronous diagrams settle.
         window.dispatchEvent(new Event('scroll'));
@@ -1048,9 +1059,16 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
     }
 };
 
+const renderMarkdown = window.renderMarkdown;
+window.renderMarkdown = (text, options) => {
+    currentRender = renderMarkdown(text, options);
+    return currentRender;
+};
+
 window.renderSource = function(text: string, theme: string, prevContent?: string) {
+    currentRender = Promise.resolve();
     ++renderGeneration;
-    searchUI?.hide();
+    searchEngine?.clear();
     logToSwift(`[renderSource] START textLen=${text.length} theme=${theme}`);
     document.documentElement.setAttribute('data-line-numbers', lastShowLineNumbers ? 'true' : 'false');
     const normalizedTheme = (theme === 'light') ? 'default' : theme;
@@ -1085,6 +1103,7 @@ window.renderSource = function(text: string, theme: string, prevContent?: string
             const row = outputDiv.querySelector<HTMLElement>(`[data-source-line="${token.map[0] + offset + 1}"]`);
             if (row && id) row.id = id;
         }
+        searchUI?.refresh();
         logToSwift(`[Source View] Rendered ${text.length} characters with theme: ${theme}`);
     } catch (e) {
         logToSwift("JS Error during source rendering: " + e);

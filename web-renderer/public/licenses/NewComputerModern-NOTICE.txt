@@ -1,0 +1,6 @@
+Bundled, unmodified NewCM10-Regular.otf and NewCMMath-Regular.otf.
+Source: https://github.com/typst/typst-assets/tree/v0.13.1/files/fonts
+Font metadata: Copyright 2019-2024 / 2019-2021 Antonis Tsolomitis.
+These versions identify the GUST Font License in their embedded copyright metadata.
+The license is included in NewComputerModern.txt.
+Used only for offline native Typst math rendering.

@@ -73,7 +73,6 @@ struct MarkdownWebView: NSViewRepresentable {
             os_log("Failed to find renderer index.html in bundle", log: coordinator.logger, type: .error)
         }
 
-        webConfiguration.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
 
 
         #if DEBUG
@@ -126,6 +125,7 @@ struct MarkdownWebView: NSViewRepresentable {
         private var lastKnownFileModificationDate: Date?
         private var lastViewMode: ViewMode = .preview
         private var lastAppearanceMode: AppearanceMode = .light
+        private var lastRenderedFeatures: RenderFeatureConfiguration?
         private var lastBaseFontSize: Double = 16
         private var lastEnableMermaid: Bool = true
         private var lastEnableKatex: Bool = true
@@ -424,7 +424,8 @@ struct MarkdownWebView: NSViewRepresentable {
         }
 
         private func executeRender(webView: WKWebView, content: String, fileURL: URL?, viewMode: ViewMode, appearanceMode: AppearanceMode, baseFontSize: Double, enableMermaid: Bool, enableKatex: Bool, enableEmoji: Bool, enableTypst: Bool, codeHighlightTheme: String, collapseBlockquotesByDefault: Bool, showLineNumbers: Bool = false) {
-            let onlyThemeChanged = (fileURL == lastRenderedFileURL) && (content == lastRenderedContent) && (viewMode == .preview) && (viewMode == lastViewMode) && (collapseBlockquotesByDefault == lastCollapseBlockquotesByDefault) && (showLineNumbers == lastShowLineNumbers)
+            let features = RenderFeatureConfiguration(fontSize: baseFontSize, mermaid: enableMermaid, katex: enableKatex, emoji: enableEmoji, typst: enableTypst, codeTheme: codeHighlightTheme)
+            let onlyThemeChanged = !renderingPositionContent && lastRenderedFeatures == features && (fileURL == lastRenderedFileURL) && (content == lastRenderedContent) && (viewMode == .preview) && (viewMode == lastViewMode) && (collapseBlockquotesByDefault == lastCollapseBlockquotesByDefault) && (showLineNumbers == lastShowLineNumbers)
             if onlyThemeChanged {
                 os_log("🔵 FAST PATH: only theme changed, viewMode=%{public}@ lastViewMode=%{public}@", log: logger, type: .debug, String(describing: viewMode), String(describing: lastViewMode))
                 let theme: String
@@ -446,6 +447,7 @@ struct MarkdownWebView: NSViewRepresentable {
             // Capture previous content for diff animation before overwriting
             let previousContent = lastRenderedContent
             lastRenderedContent = content
+            lastRenderedFeatures = features
             lastRenderedFileURL = fileURL
             lastViewMode = viewMode
             lastCollapseBlockquotesByDefault = collapseBlockquotesByDefault
@@ -529,6 +531,7 @@ struct MarkdownWebView: NSViewRepresentable {
                       self.currentFileURL == fileURL else { return }
                 self.renderingPositionContent = false
                 if case .failure(let error) = result {
+                    self.lastRenderedFeatures = nil
                     os_log("JS render failed: %{public}@", log: self.logger, type: .error, error.localizedDescription)
                     return
                 }
@@ -618,11 +621,11 @@ struct MarkdownWebView: NSViewRepresentable {
         }
         
         func exportHTML(webView: WKWebView, completion: @escaping (String?) -> Void) {
-            webView.evaluateJavaScript("window.exportHTML()") { [weak self] result, error in
-                if let error = error {
+            webView.callAsyncJavaScript("await window.waitForRenderComplete(); await window.waitForExportReady(); return window.exportHTML();", arguments: [:], in: nil, in: .page) { [weak self] outcome in
+                if case .failure(let error) = outcome {
                     os_log("exportHTML JS error: %{public}@", log: self?.logger ?? .default, type: .error, error.localizedDescription)
                     completion(nil)
-                } else if var html = result as? String {
+                } else if case .success(let result) = outcome, var html = result as? String {
                     // Convert local file URLs (e.g. file:///... or local-md://...) to base64 inline data URIs
                     // to ensure images like GIFs are preserved in the offline HTML.
                     do {
@@ -635,9 +638,10 @@ struct MarkdownWebView: NSViewRepresentable {
                             let range = match.range(at: 1)
                             if let swiftRange = Range(range, in: html), let fullRange = Range(match.range, in: html) {
                                 let path = String(html[swiftRange])
-                                if let decodedPath = path.removingPercentEncoding {
-                                    let fileURL = URL(fileURLWithPath: decodedPath)
-                                    if let data = try? Data(contentsOf: fileURL) {
+                                if let resourceURL = URL(string: "local-md://" + path.replacingOccurrences(of: "&amp;", with: "&")),
+                                   let handler = webView.configuration.urlSchemeHandler(forURLScheme: "local-md") as? LocalSchemeHandler,
+                                   let fileURL = handler.resolveContainedFileURL(from: resourceURL) {
+                                    if let data = try? BoundedFileReader.read(fileURL, maxBytes: Int(MarkdownImageDataCollector.Limits.default.maxImageBytes)) {
                                         let base64 = data.base64EncodedString()
                                         
                                         var mimeType = "image/png"
@@ -671,10 +675,11 @@ struct MarkdownWebView: NSViewRepresentable {
 
             let resolvedSize = fontSize ?? (AppearancePreference.shared.baseFontSize * webView.pageZoom)
             let injectJS = "document.documentElement.style.setProperty('--print-font-size', '\(resolvedSize)px');"
-            webView.evaluateJavaScript(injectJS) { [weak self] _, error in
-                if let error = error {
+            webView.callAsyncJavaScript("await window.waitForRenderComplete(); await window.waitForExportReady(); " + injectJS, arguments: [:], in: nil, in: .page) { [weak self] result in
+                if case .failure(let error) = result {
                     os_log("exportPDF: failed to inject font-size variable: %{public}@",
                            log: self?.logger ?? .default, type: .error, error.localizedDescription)
+                    return
                 }
                 self?.runPrintOperation(webView: webView, to: destinationURL)
             }

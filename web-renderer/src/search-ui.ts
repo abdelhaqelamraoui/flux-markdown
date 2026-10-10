@@ -258,6 +258,10 @@ export class SearchUI {
 		this.searchInput.classList.remove("search-input-error");
 	}
 
+	public refresh(): void {
+		if (this.isVisible) this.performSearch();
+	}
+
 	public show(): void {
 		this.isVisible = true;
 		this.container.style.display = "flex";
