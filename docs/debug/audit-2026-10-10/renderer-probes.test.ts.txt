@@ -1,0 +1,27 @@
+jest.mock('mermaid', () => ({initialize: jest.fn(), render: jest.fn().mockResolvedValue({svg: '<svg/>'})}));
+import '../src/index';
+
+describe('audit probes (confirm current defects)', () => {
+ beforeEach(() => { document.body.innerHTML = '<div id="markdown-preview"></div>'; });
+ test('raw HTML preserves executable event handler', async () => {
+   await window.renderMarkdown('<img src="missing.png" onerror="window.__auditExecuted = true">');
+   const img = document.querySelector('img')!;
+   expect(img.getAttribute('onerror')).toBe('window.__auditExecuted = true');
+   img.dispatchEvent(new Event('error'));
+   expect((window as any).__auditExecuted).toBe(true);
+ });
+ test('older async math render overwrites newer document', async () => {
+   const older = window.renderMarkdown('# OLD\n\n$x$', { enableKatex: true });
+   const newer = window.renderMarkdown('# NEW', { enableKatex: false });
+   await Promise.all([older, newer]);
+   expect(document.querySelector('#markdown-preview h1')?.textContent).toBe('OLD');
+ });
+ test('disabling katex loses enabled emoji for one render', async () => {
+   await window.renderMarkdown('$x$ :smile:', {enableKatex: true, enableEmoji: true});
+   await window.renderMarkdown(':smile:', {enableKatex: false, enableEmoji: true});
+   expect(document.getElementById('markdown-preview')?.textContent).toContain(':smile:');
+ });
+ test('native Typst import.meta construction throws', () => {
+   expect(() => new Function('return import.meta')()).toThrow(SyntaxError);
+ });
+});
