@@ -2,15 +2,16 @@
 
 ### Added
 - **Positioned document links** (#52): Open source lines or heading fragments through markdownpreview URLs, including already-open documents and original line numbers after front matter.
+- **Reading status**: Show the current chapter path and scroll position in spare toolbar space, with responsive truncation, QuickLook filenames and brief content-update notices.
 - **Contents sidebar** (#50): Reserve space beside wide previews for a persistent directory. Keep docked preferences separate from temporary narrow-window navigation; selecting a heading closes the narrow overlay. Choose a persisted left/right directory position with its entrance on the same side. Place right-side contents controls beside the existing top tools with a small gap, retain a centered floating search panel without document reflow, and omit controls and spacing from printed/exported output.
 - **Quick Look recovery** (#49): Add a registration/priority repair action that preserves existing Markdown editor handlers and reports failures.
 - **Feedback diagnostics**: Keep the latest 200 settings changes without time expiration and prepare reviewable bug reports.
 
 
 ### Fixed
-- **YAML date values** (PR #56): Display dates in metadata fields, arrays and nested values.
+- **YAML date values** (thanks [@xluffy](https://github.com/xluffy), [#56](https://github.com/xykong/flux-markdown/pull/56)): Display dates in metadata fields, arrays and nested values.
 - **Homebrew installation** (#53/#55): Prepare a vendor installer with checked registration and rollback, replacing deprecated flight hooks when the new package is published.
-- **Quick Look search** (#54): Route Command-F through native preview responders, focus the search field, preserve handled events, and defer early requests until the document is rendered. Repeated shortcuts keep search open.
+- **Quick Look search alternative** (#54): Use the preview search button to open the current document with focused, editable search in FluxMarkdown. Repeated requests retain the query and inherit the preview display and window position. Direct Command-F inside Finder Quick Look remains constrained by the system; Command-F works in the standalone app.
 - **Bare URL links** (#51): Recognize plain HTTP/HTTPS references as clickable links in the app and Quick Look while preserving code literals and explicit Markdown links.
 - **Quick Look full-screen scrollbar gestures**: Prevented Quick Look's double-click interception from blocking WebKit's native pan recognizer when dragging the full-screen document scrollbar.
   - Three-finger scrollbar drags can now yield to native WebKit scrolling without leaving subsequent trackpad scrolling unresponsive.
