@@ -82,8 +82,8 @@ echo ""
 cd "$(dirname "$CASK_FILE")/.."
 
 CHANGED_FILES=()
-git diff --quiet Casks/flux-markdown.rb || CHANGED_FILES+=("Casks/flux-markdown.rb")
-git diff --quiet Drafts/flux-markdown-official.rb 2>/dev/null || CHANGED_FILES+=("Drafts/flux-markdown-official.rb")
+(git diff --quiet Casks/flux-markdown.rb && git diff --cached --quiet Casks/flux-markdown.rb) || CHANGED_FILES+=("Casks/flux-markdown.rb")
+(git diff --quiet Drafts/flux-markdown-official.rb && git diff --cached --quiet Drafts/flux-markdown-official.rb) 2>/dev/null || CHANGED_FILES+=("Drafts/flux-markdown-official.rb")
 
 if [ ${#CHANGED_FILES[@]} -gt 0 ]; then
     echo "📝 Changes detected in: ${CHANGED_FILES[*]}"
@@ -98,6 +98,7 @@ if [ ${#CHANGED_FILES[@]} -gt 0 ]; then
         echo "   git add ${CHANGED_FILES[*]}"
         echo "   git commit -m 'chore(cask): update flux-markdown to v$VERSION'"
         echo "   git push origin master"
+        exit 2
     else
         read -p "👉 Commit and push changes? (y/n) " -n 1 -r
         echo ""
@@ -113,14 +114,20 @@ if [ ${#CHANGED_FILES[@]} -gt 0 ]; then
             echo "   git add ${CHANGED_FILES[*]}"
             echo "   git commit -m 'chore(cask): update flux-markdown to v$VERSION'"
             echo "   git push origin master"
+            exit 2
         fi
     fi
 else
-    echo "ℹ️  No changes detected in Cask files"
+    git fetch origin master
+    if ! git diff --quiet FETCH_HEAD -- Casks/flux-markdown.rb Drafts/flux-markdown-official.rb; then
+        echo "Cask files differ from the published tap; commit/push the prepared changes before reporting success." >&2
+        exit 2
+    fi
+    echo "Cask files match the published tap."
 fi
 
 echo ""
-echo "🎉 Done! Users can now install v$VERSION with:"
+echo "Cask changes completed. Verify the tap remote before announcing availability. Update command:"
 echo "   brew update && brew upgrade flux-markdown"
 echo ""
 echo "📋 To submit to official homebrew-cask:"

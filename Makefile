@@ -2,8 +2,12 @@
 
 all: app
 
-build_renderer:
-	cd web-renderer && npm install --no-audit --no-fund --loglevel=warn && npm run build
+web-renderer/node_modules/.dependencies-installed: web-renderer/package.json web-renderer/package-lock.json
+	cd web-renderer && npm ci --no-audit --no-fund --loglevel=warn
+	touch $@
+
+build_renderer: web-renderer/node_modules/.dependencies-installed
+	cd web-renderer && npm run build
 
 generate: build_renderer
 	@if ! command -v xcodegen >/dev/null; then \
@@ -16,12 +20,11 @@ generate: build_renderer
 	minor=$$(echo $$full_v | cut -d'.' -f2); \
 	build=$$(echo $$full_v | cut -d'.' -f3); \
 	echo "Generating Project with Version: $$full_v (Major: $$major, Minor: $$minor, Build: $$build)"; \
-	rm -rf FluxMarkdown.xcodeproj; \
 	MARKETING_VERSION=$$full_v CURRENT_PROJECT_VERSION=$$build xcodegen generate --quiet
 
-app: generate
+app: check_toolchain generate
 	@echo "🔨 Building application in $(or $(CONFIGURATION),Release) configuration..."
-	@xcodebuild -project FluxMarkdown.xcodeproj -scheme Markdown -configuration $(or $(CONFIGURATION),Release) -destination 'platform=macOS,arch=arm64' clean build -quiet 2> build_error.log || (cat build_error.log; rm -f build_error.log; exit 1)
+	@xcodebuild -project FluxMarkdown.xcodeproj -scheme Markdown -configuration $(or $(CONFIGURATION),Release) -destination 'platform=macOS,arch=arm64' $(if $(LOCAL_DEPLOYMENT_TARGET),MACOSX_DEPLOYMENT_TARGET=$(LOCAL_DEPLOYMENT_TARGET)) build -quiet 2> build_error.log || (cat build_error.log; rm -f build_error.log; exit 1)
 	@rm -f build_error.log
 	@echo "✅ Build completed: $(or $(CONFIGURATION),Release) configuration"
 
@@ -46,3 +49,10 @@ delete-release:
 
 %:
 	@:
+
+.PHONY: check_toolchain clean
+check_toolchain:
+	@./scripts/check-build-toolchain.sh $(or $(LOCAL_DEPLOYMENT_TARGET),11.0)
+
+clean:
+	xcodebuild -project FluxMarkdown.xcodeproj -scheme Markdown clean

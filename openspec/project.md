@@ -8,10 +8,10 @@ FluxMarkdown 是一个 macOS QuickLook 扩展，让用户在 Finder 中按 Space
 
 - **Swift / AppKit**: QuickLook Extension (`MarkdownPreview`) + Host App (`Markdown`)
 - **WKWebView**: 嵌入在 Extension 中的 WebView，负责展示渲染结果
-- **TypeScript / Vite**: Web 渲染引擎 (`web-renderer/`)，编译为单个 HTML 文件
+- **TypeScript / Vite**: Web 渲染引擎 (`web-renderer/`)，编译为本地 HTML、JS/CSS、字体与 WASM 资源
 - **markdown-it**: Markdown 解析器，配合多个插件（KaTeX、emoji、footnote 等）
-- **highlight.js**: 代码语法高亮（当前全量引入，~400 KB）
-- **mermaid**: 图表渲染（动态 import，每次调用都 re-initialize）
+- **highlight.js**: 代码语法高亮（core + 显式语言注册）
+- **mermaid**: 图表渲染（按需动态 import，仅主题变化时 initialize）
 - **KaTeX**: 数学公式渲染
 - **XcodeGen**: 从 `project.yml` 生成 `.xcodeproj`（`.xcodeproj` 不提交）
 
@@ -19,7 +19,7 @@ FluxMarkdown 是一个 macOS QuickLook 扩展，让用户在 Finder 中按 Space
 
 ### Code Style
 - Swift: 遵循 Swift API Design Guidelines，使用 `os_log` 记录日志（不用 `print`）
-- TypeScript: 严格模式，使用 `logToSwift()` 而非 `console.log` 记录调试信息
+- TypeScript: noImplicitAny + 独立 typecheck 门禁，使用 `logToSwift()` 而非 `console.log` 记录调试信息
 - 不允许 `@ts-ignore`、`as any`、空 catch 块
 
 ### Architecture Patterns
@@ -44,7 +44,7 @@ FluxMarkdown 是一个 macOS QuickLook 扩展，让用户在 Finder 中按 Space
 - **进程复用**: QuickLook framework 会复用 extension 进程，`viewWillDisappear` + `viewDidLoad` 会多次调用
 - **共享 ProcessPool**: 使用 `PreviewViewController.sharedProcessPool` 让所有 WebView 实例共用 Web Content 进程
 - **文件监控**: `DispatchSourceFileSystemObject` 监控文件变化，自动重新渲染
-- **图片处理**: 本地图片通过 `collectImageData()` 读取并 base64 编码后传给 JS；`LocalSchemeHandler.swift` 已实现但未注册
+- **图片处理**: 本地图片通过 `collectImageData()` 读取并 base64 编码后传给 JS；`LocalSchemeHandler.swift` 已注册，仅允许预算内明确引用的图片
 
 ## Important Constraints
 
@@ -57,4 +57,8 @@ FluxMarkdown 是一个 macOS QuickLook 扩展，让用户在 Finder 中按 Space
 
 - **Sparkle**: 自动更新框架（`exactVersion: 2.8.1`）
 - **XcodeGen**: 从 `project.yml` 生成项目文件（`make generate`）
-- **vite-plugin-singlefile**: 当前将所有资源内联为 5.5 MB 单 HTML（P0 优化目标：废弃此插件）
+- **Vite**: 资源分包，通过 flux-renderer scheme 加载；Typst WASM 与字体离线打包。
+
+## Build compatibility and audit remediation
+
+See `docs/dev/BUILD_COMPATIBILITY.md` and `docs/debug/DEBUG_AUDIT_FIXES_2026-10-10.md`. Release deployment remains macOS 11 with Xcode 16.4; local Xcode 27 diagnostics explicitly override the target without changing product configuration.

@@ -26,6 +26,8 @@ jobs:
           npm run build
           cd ..
           MARKETING_VERSION="$(cat .version)" CURRENT_PROJECT_VERSION="$(cut -d. -f3 .version)" xcodegen generate --quiet
+      - name: Test production renderer in WebKit
+        run: scripts/test-renderer-webkit.sh
       - name: Test macOS 11 target
         run: |
           xcodebuild test -project FluxMarkdown.xcodeproj -scheme Markdown -configuration Debug \
