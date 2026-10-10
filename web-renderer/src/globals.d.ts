@@ -9,6 +9,7 @@ declare module '@iktakahiro/markdown-it-katex' {
 }
 
 interface WebkitMessageHandlers {
+    readingToolsLayout?: { postMessage: (layout: { rightInset: number }) => void };
     logger: { postMessage: (msg: string) => void };
     linkClicked: { postMessage: (href: string) => void };
 }

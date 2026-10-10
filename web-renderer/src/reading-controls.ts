@@ -11,6 +11,8 @@ export function readingLabels() {
     return labels[language as keyof typeof labels] || labels.en;
 }
 
+const sentLayout = new WeakMap<HTMLElement, string>();
+
 export function updateReadingControlsLayout(): void {
     const root = document.documentElement;
     const controls = document.getElementById('reading-controls');
@@ -28,9 +30,19 @@ export function updateReadingControlsLayout(): void {
     const slots = toolbar ? Array.from(toolbar.children).filter(e => !(e as HTMLElement).hidden) : [];
     const naturalWidth = slots.reduce((width, slot) => width + slot.getBoundingClientRect().width, 0) + Math.max(0, slots.length - 1) * 12;
     // Reserve the existing native controls on the right; only wrap when necessary.
-    const nativeWidth = root.dataset.context === 'app' ? 280 : 318;
-    root.style.setProperty('--reading-native-reserve', `${nativeWidth}px`);
-    root.dataset.readingShared = String(visible && window.innerWidth >= naturalWidth + nativeWidth + 32);
+    const nativeBase = root.dataset.context === 'app' ? 268 : 306;
+    const shared = visible && window.innerWidth >= naturalWidth + nativeBase + 56;
+    root.dataset.readingShared = String(shared);
+    const directory = document.getElementById('toc-button-container');
+    const rightInset = shared && root.dataset.tocSide !== 'left' && directory && !directory.hidden
+        ? directory.getBoundingClientRect().width + 20 : 0;
+    root.style.setProperty('--reading-native-reserve', `${nativeBase + (rightInset ? rightInset + 14 : 12)}px`);
+    const handler = window.webkit?.messageHandlers.readingToolsLayout;
+    const key = `${rightInset}:${window.innerWidth}:${window.devicePixelRatio}`;
+    if (handler && sentLayout.get(controls) !== key) {
+        sentLayout.set(controls, key);
+        handler.postMessage({ rightInset });
+    }
     const height = visible && toolbar ? Math.ceil(toolbar.getBoundingClientRect().height) : 0;
     root.style.setProperty('--reading-controls-height', `${height}px`);
     const contentTop = Math.max(64, (visible ? controls.getBoundingClientRect().bottom : 0) + 8);

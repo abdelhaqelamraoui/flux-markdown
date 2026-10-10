@@ -40,3 +40,9 @@ See docs/debug/DEBUG_ISSUE_50_CONTENTS_SIDEBAR.md for exact evidence and limits.
 - [x] 5.2 Verify persisted native settings, live side changes and invalid-value fallback.
 - [x] 5.3 Implement localized Appearance picker, app/QuickLook option propagation and same-side layouts.
 - [x] 5.4 Verify geometry, navigation, search centering and native picker before installing the candidate.
+
+## 6. Rightmost entrance order
+- [x] 6.1 Keep the HTML entrance at the far right, after the native circle group.
+- [x] 6.2 Send bounded temporary width metrics and reserve native space in App/QuickLook.
+- [x] 6.3 Verify 336 renderer tests, native metric parsing and 12-point spacing.
+- [x] 6.4 Verify the installed native UI and record the final candidate.

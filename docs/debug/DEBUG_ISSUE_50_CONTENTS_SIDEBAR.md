@@ -122,3 +122,19 @@ the existing document immediately; the shared plist contains Left after debounce
 and restarting the application retains Left. The test restores Right afterward.
 The QuickLook renderer receives the same persisted enum through its existing options;
 full native QuickLook GUI acceptance remains the earlier outstanding platform check.
+
+## Rightmost entrance after native tools
+
+The user requested the order native circle group → 12-point gap → directory entrance.
+The right entrance is now anchored at the viewport's far right; transient bounded
+width messages reserve native trailing space using the actual entrance width and
+WKWebView zoom. The left-side preference retains its previous layout. No metric is
+persisted, and malformed/bool/non-finite/out-of-range values restore the default inset.
+
+336 renderer tests and 283 native tests pass. Browser checks measure a 20 px outer
+right margin and 12 px gaps on both sides of the native group when quote controls
+are present. Native candidate `1.34.475-dev-20261010-103144` visually confirms the
+requested order; a real pointer click on the directory button closes and reopens
+its panel, with aria-expanded read back. Build, signature/entitlement checks and
+installed renderer resource hashes pass. Expanded QuickLook GUI acceptance remains
+an earlier platform limitation; its native constraint uses the same bounded metrics.

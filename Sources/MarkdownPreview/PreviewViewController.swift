@@ -360,6 +360,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         let userContentController = WKUserContentController()
         userContentController.add(self, name: "logger")
         userContentController.add(self, name: "linkClicked")
+        userContentController.add(self, name: "readingToolsLayout")
         webConfiguration.userContentController = userContentController
         
         let schemeHandler = LocalSchemeHandler()
@@ -593,6 +594,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         webView.navigationDelegate = nil
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "logger")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "linkClicked")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "readingToolsLayout")
         
         for recognizer in webView.gestureRecognizers where recognizer is NSClickGestureRecognizer {
             webView.removeGestureRecognizer(recognizer)
@@ -636,6 +638,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     
 
     
+    private var themeTrailingConstraint: NSLayoutConstraint?
+
     private func setupThemeButton() {
         let button = CircularToolbarButton.make(
             systemName: "circle.lefthalf.filled",
@@ -649,9 +653,11 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         self.view.addSubview(button)
         self.themeButton = button
         
+        let trailing = button.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -10)
+        themeTrailingConstraint = trailing
         NSLayoutConstraint.activate([
             button.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 10),
-            button.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -10),
+            trailing,
             button.widthAnchor.constraint(equalToConstant: 30),
             button.heightAnchor.constraint(equalToConstant: 30)
         ])
@@ -1502,6 +1508,9 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                 isWebViewLoaded = true
                 renderCurrentMode()
             }
+        } else if message.name == "readingToolsLayout" {
+            themeTrailingConstraint?.constant = -ReadingToolbarLayout.trailingInset(body: message.body, zoom: message.webView?.pageZoom ?? 1)
+            view.needsLayout = true
         } else if message.name == "linkClicked", let href = message.body as? String {
             os_log("🔵 Link clicked from JS: %{public}@", log: logger, type: .default, href)
             handleLinkClick(href: href)

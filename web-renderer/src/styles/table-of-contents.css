@@ -77,3 +77,7 @@ html[data-toc-side="left"][data-toc-docked="true"] #markdown-preview { grid-colu
 html[data-toc-side="left"][data-toc-docked="true"] #toc-container { grid-column: 1; grid-row: 1; }
 html[data-toc-side="left"] #toc-container[data-layout="sidebar"] .toc-nav { left: 20px; right: auto; border-left: 0; border-right: 1px solid var(--reading-border); }
 html[data-toc-side="left"] #toc-container[data-layout="overlay"] { left: 16px; right: auto; }
+
+html[data-reading-shared="true"]:not([data-toc-side="left"]) #toc-button-container {
+    position: fixed; top: var(--reading-controls-top); right: 20px; width: max-content;
+}
