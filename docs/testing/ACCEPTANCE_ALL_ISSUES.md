@@ -1,5 +1,22 @@
 # Unified acceptance candidate
 
+## Current published status — 2026-10-10
+
+[v1.35.525](https://github.com/xykong/flux-markdown/releases/tag/v1.35.525) is published
+and installed locally. It includes the accepted sidebar/status/navigation/link/search
+work and a verified Homebrew 7 upgrade fix. Public DMG, source archive, Sparkle feed
+and Homebrew tap are verified. Native concurrent-file navigation, real Finder
+search-button handoff, 760-point navigation/focus, dark appearance and zoom are
+verified. Homebrew clean install/reinstall/upgrade preserve actual editor associations.
+
+See [the final release audit](../debug/DEBUG_RELEASE_2026_10.md) for exact evidence
+and remaining platform coverage limits. #49 remains unconfirmed in the reporter's
+Sequoia environment. Direct preview Cmd+F remains excluded by the user's decision;
+#54 received an alternative-workflow explanation, not a shortcut-fix claim.
+The candidate notes below are chronological historical evidence, not the current
+published version or an assertion that every open issue has been resolved.
+
+
 ## Scope
 
 This candidate contains the URL-position feature (#52), responsive contents sidebar

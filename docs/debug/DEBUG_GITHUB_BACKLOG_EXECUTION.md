@@ -1,5 +1,19 @@
 # GitHub backlog execution — 2026-10-08
 
+## Current outcome — 2026-10-10
+
+Release v1.35.525 is published and verified. #50/#51/#52 are implemented in 1.35.521
+and included in the recommended patch; #53/#55 are fixed by the Homebrew 7 migration
+patch in 1.35.525. These five issues have release replies and `done`, and remain open.
+#54 has a released one-click search alternative; direct preview Cmd+F was cancelled
+by the user and is not represented as fixed. #49 still needs reporter-environment
+evidence. The original YAML-date contribution from PR #56 is included with credit;
+the later unrelated fork changes were not merged wholesale.
+
+See [the final release audit](DEBUG_RELEASE_2026_10.md). Older tables below record
+historical investigation states and do not override this outcome.
+
+
 Baseline: `3911a15`. Public release is still `v1.34.475`.
 
 | Item | Outcome | Remaining dependency |
