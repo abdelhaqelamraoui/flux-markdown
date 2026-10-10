@@ -1,4 +1,7 @@
 ## [Unreleased]
+_无待发布的变更_
+
+## [1.35.525] - 2026-10-10
 
 ### Fixed
 - **Homebrew upgrades** (#53/#55): Preserve an explicit FluxMarkdown editor preference while Homebrew temporarily removes the previous application. Avoid mistaking LaunchServices' temporary Xcode fallback for the user's choice, while retaining registration failure checks and rollback.
