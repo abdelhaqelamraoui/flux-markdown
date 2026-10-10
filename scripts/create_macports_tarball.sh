@@ -42,7 +42,7 @@ rm -rf "build/macports-staging"
 mkdir -p "$STAGING_DIR"
 
 # Copy entire project (respecting .gitignore is fine; we'll add what's needed)
-git archive HEAD | tar -x -C "$STAGING_DIR"
+git archive "v$VERSION" | tar -x -C "$STAGING_DIR"
 
 # Overlay pre-built web-renderer/dist (not in git)
 cp -R web-renderer/dist "$STAGING_DIR/web-renderer/dist"
