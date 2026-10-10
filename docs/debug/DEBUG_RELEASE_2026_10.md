@@ -28,3 +28,25 @@ The test required WKWebView to expose a native NSPanGestureRecognizer, an OS-dep
 implementation detail. The override unconditionally permits every NSPan subclass;
 the test now always checks a real AppKit pan and additionally all WebKit pans present
 on that runtime. No production gesture behavior or runtime test is skipped.
+
+## Completed local preflight
+
+- Internal Markdown links, notification tests and four signed installer transaction tests pass.
+- Native concurrent URI opens for `/tmp/flux-release-navigation/first.md` and `second.md`
+  independently retain `Alpha 20` and `Beta 20`; switching windows without another
+  navigation request confirms isolation (both show 67%).
+- Packaging now refuses mismatched versions and development acceptance bundles;
+  both failure paths tested before producing a DMG.
+- Sparkle signing key is available locally (old published DMG signing preflight passed).
+- Scratch Homebrew cask `xykong/release-acceptance/flux-markdown-acceptance` explicitly
+  trusted via `brew trust --cask`; old 1.34.475 app-artifact install succeeded into
+  `/tmp/flux-homebrew-acceptance/Applications`. No global trust checks disabled.
+- Native line-based requests also remain file-scoped: line 19 in first.md lands at
+  Alpha 5 (15%); line 99 in second.md lands at Beta 25 (85%).
+- Real scratch Homebrew migration reinstall, new-installer reinstall, uninstall and
+  clean install all succeeded. Before/after editor snapshots are byte-identical:
+  Markdown UTI remains FluxMarkdown and public.markdown remains Microsoft Word.
+  PluginKit lists the extension enabled. Genuine newer-version upgrade awaits the
+  final versioned payload; no deprecated postflight hook was used by the candidate.
+- Local Sparkle preflight signature exactly matches the published 1.34.475 enclosure,
+  proving the signing key has not silently changed.
