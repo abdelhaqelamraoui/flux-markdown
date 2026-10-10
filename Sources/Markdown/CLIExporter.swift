@@ -42,6 +42,7 @@ final class CLIExporter: NSObject {
     private var webView: WKWebView!
     private var offscreenWindow: NSWindow!
     private var rendererReady = false
+    private var deadline: DispatchWorkItem?
     private var rendererBundleSchemeHandler: RendererBundleSchemeHandler?
 
     init(input: URL, output: URL) {
@@ -50,6 +51,9 @@ final class CLIExporter: NSObject {
     }
 
     func run() {
+        let timeout = DispatchWorkItem { fputs("Error: PDF export timed out\n", stderr); exit(1) }
+        deadline = timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + 60, execute: timeout)
         setupWebView()
         loadRenderer()
     }
@@ -70,7 +74,8 @@ final class CLIExporter: NSObject {
 
         let handler = LocalSchemeHandler()
         handler.baseDirectory = inputURL.deletingLastPathComponent()
-        if let content = try? String(contentsOf: inputURL, encoding: .utf8) {
+        if let data = try? BoundedFileReader.read(inputURL, maxBytes: BoundedFileReader.documentLimit),
+           let content = String(data: data, encoding: .utf8) {
             handler.allowedFileURLs = MarkdownImageDataCollector.referencedLocalImageURLs(
                 from: inputURL,
                 content: content
@@ -83,7 +88,6 @@ final class CLIExporter: NSObject {
             rendererBundleSchemeHandler = rendererHandler
         }
 
-        config.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
 
         // A4 width in points; height is a reasonable viewport for rendering
         let renderWidth: CGFloat  = 595.28
@@ -116,7 +120,8 @@ final class CLIExporter: NSObject {
     }
 
     private func renderAndExport() {
-        guard let content = try? String(contentsOf: inputURL, encoding: .utf8) else {
+        guard let data = try? BoundedFileReader.read(inputURL, maxBytes: BoundedFileReader.documentLimit),
+              let content = String(data: data, encoding: .utf8) else {
             fputs("Error: cannot read \(inputURL.path)\n", stderr)
             exit(1)
         }
@@ -147,16 +152,13 @@ final class CLIExporter: NSObject {
             exit(1)
         }
 
-        let js = "window.renderMarkdown(\(safeArg), \(optJson)); undefined;"
-        webView.evaluateJavaScript(js) { [weak self] _, error in
-            if let error = error {
-                fputs("Error: renderMarkdown JS failed: \(error.localizedDescription)\n", stderr)
+        let js = "await window.renderMarkdown(\(safeArg), \(optJson)); await window.waitForExportReady();"
+        webView.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { [weak self] result in
+            if case .failure(let error) = result {
+                fputs("Error: export rendering failed: \(error.localizedDescription)\n", stderr)
                 exit(1)
             }
-            guard let self else { return }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                self.capturePDF()
-            }
+            self?.capturePDF()
         }
     }
 
@@ -215,16 +217,19 @@ extension CLIExporter: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        defer { exit(1) }
         fputs("CLIExporter: webView didFail: \(error.localizedDescription)\n", stderr)
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation nav: WKNavigation!, withError error: Error) {
+        defer { exit(1) }
         fputs("CLIExporter: didFailProvisional: \(error.localizedDescription)\n", stderr)
     }
 }
 
 extension CLIExporter: WKScriptMessageHandler {
     func userContentController(_ ucc: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard RendererBridgePolicy.accepts(message) else { return }
         guard message.name == "logger", let body = message.body as? String else { return }
         os_log("CLIExporter JS: %{public}@", log: logger, type: .debug, body)
 

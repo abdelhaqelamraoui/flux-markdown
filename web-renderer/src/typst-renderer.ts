@@ -1,3 +1,7 @@
+import mathFontUrl from './assets/typst/NewCMMath-Regular.otf?url';
+import textFontUrl from './assets/typst/NewCM10-Regular.otf?url';
+import compilerWasmUrl from '@myriaddreamin/typst-ts-web-compiler/wasm?url';
+import rendererWasmUrl from '@myriaddreamin/typst-ts-renderer/wasm?url';
 /**
  * Typst math rendering module.
  *
@@ -34,28 +38,22 @@ export async function renderTypstViaTranspilation(
 
 // --- Native WASM path (Host App) ---
 
-let typstInitPromise: Promise<any> | null = null;
+type TypstInstance = InstanceType<typeof import('@myriaddreamin/typst.ts/dist/esm/contrib/snippet.mjs').TypstSnippet>;
+let typstInitPromise: Promise<TypstInstance> | null = null;
+let nativeQueue: Promise<unknown> = Promise.resolve();
 
-async function getTypstInstance(): Promise<any> {
+async function getTypstInstance(): Promise<TypstInstance> {
     if (!typstInitPromise) {
         typstInitPromise = (async () => {
-            const { $typst } = await import(
+            const { TypstSnippet } = await import(
                 '@myriaddreamin/typst.ts/dist/esm/contrib/snippet.mjs'
             );
-            // Vite resolves these URLs at build time; use eval to bypass ts-jest's es6 parser
-            const meta = new Function('return import.meta')() as { url: string };
-            const compilerWasmUrl = new URL(
-                '@myriaddreamin/typst-ts-web-compiler/pkg/typst_ts_web_compiler_bg.wasm',
-                meta.url
-            ).href;
-            const rendererWasmUrl = new URL(
-                '@myriaddreamin/typst-ts-renderer/pkg/typst_ts_renderer_bg.wasm',
-                meta.url
-            ).href;
+            const $typst = new TypstSnippet();
+            $typst.use(TypstSnippet.disableDefaultFontAssets(), TypstSnippet.preloadFonts([mathFontUrl, textFontUrl]));
             $typst.setCompilerInitOptions({ getModule: () => compilerWasmUrl });
             $typst.setRendererInitOptions({ getModule: () => rendererWasmUrl });
             return $typst;
-        })();
+        })().catch(error => { typstInitPromise = null; throw error; });
     }
     return typstInitPromise;
 }
@@ -67,10 +65,19 @@ async function getTypstInstance(): Promise<any> {
 export async function renderTypstViaNative(
     typstCode: string
 ): Promise<string> {
-    const $typst = await getTypstInstance();
-    const mainContent = `#set page(width: auto, height: auto, margin: 0pt)\n$ ${typstCode} $`;
-    const svg = await $typst.svg({ mainContent });
-    return `<div class="typst-math-block typst-native">${svg}</div>`;
+    const operation = nativeQueue.then(async () => {
+        try {
+            const $typst = await getTypstInstance();
+            const mainContent = `#set page(width: auto, height: auto, margin: 0pt)\n$ ${typstCode} $`;
+            const svg = await $typst.svg({ mainContent });
+            return `<div class="typst-math-block typst-native">${svg}</div>`;
+        } catch (error) {
+            typstInitPromise = null;
+            throw error;
+        }
+    });
+    nativeQueue = operation.catch((): void => {});
+    return operation;
 }
 
 // --- Public API ---
@@ -91,7 +98,7 @@ export async function renderTypstBlock(
             return await renderTypstViaNative(typstCode);
         } catch (err) {
             // Fallback to transpilation if WASM fails to load
-            console.warn('Typst WASM failed, falling back to transpilation:', err);
+            window.webkit?.messageHandlers.logger.postMessage('Typst native fallback: ' + String(err));
         }
     }
     try {
@@ -100,8 +107,12 @@ export async function renderTypstBlock(
     } catch (err) {
         return `<div class="typst-math-block typst-error">
             <div class="typst-error-title">⚠️ Typst Render Error</div>
-            <pre class="typst-error-source">${typstCode}</pre>
-            <pre class="typst-error-message">${String(err)}</pre>
+            <pre class="typst-error-source">${escapeHtml(typstCode)}</pre>
+            <pre class="typst-error-message">${escapeHtml(String(err))}</pre>
         </div>`;
     }
+}
+
+function escapeHtml(value: string): string {
+    return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

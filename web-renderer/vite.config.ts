@@ -3,7 +3,12 @@ import path from 'path';
 
 export default defineConfig({
   base: './',
+  plugins: [{
+    name: 'webkit-bundle-attributes',
+    transformIndexHtml: { order: 'post', handler: (html) => html.replace(/\s+crossorigin(?:="[^"]*")?/g, '') },
+  }],
   build: {
+    target: 'safari14',
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,

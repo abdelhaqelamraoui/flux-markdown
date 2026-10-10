@@ -45,3 +45,12 @@ test('active HTML and unsafe URLs are removed', async () => {
  await window.renderMarkdown('<iframe srcdoc="x"></iframe><svg onload="alert(1)"></svg><a href="javascript:alert(1)">x</a><style>body{display:none}</style>');
  expect(document.querySelector('iframe, style, [onload], [href^="javascript:"]')).toBeNull();
 });
+
+import { sanitizeDiagramHTML } from '../src/safe-html';
+test('generated SVG links are safe while Mermaid HTML labels survive', () => {
+ const root = document.createElement('div');
+ root.innerHTML = sanitizeDiagramHTML('<svg xmlns="http://www.w3.org/2000/svg"><a href="javascript:alert(1)"><text>link</text></a><foreignObject><div xmlns="http://www.w3.org/1999/xhtml" onmouseover="alert(1)">Label</div></foreignObject></svg>');
+ expect(root.querySelector('a')?.hasAttribute('href')).toBe(false);
+ expect(root.querySelector('[onmouseover]')).toBeNull();
+ expect(root.querySelector('foreignObject div')?.textContent).toBe('Label');
+});
