@@ -12,13 +12,13 @@ Baseline: 1447335; 36 local commits beyond origin/master. User authorizes pre-re
 
 ## Acceptance checklist
 
-- [ ] Full frontend/native suites and release macOS 11 build
-- [ ] Runtime URL routing across concurrent documents, sidebar/status and retained search route
-- [ ] Signed payload, both architectures, deployment target, package resources
-- [ ] Real Homebrew install, reinstall and upgrade; preserve editor choices
-- [ ] Release notes accurately reflect scope and contributors
-- [ ] Published DMG/source archive, tag, Sparkle feed and Homebrew verified
-- [ ] Released fixes receive matching-language replies and done labels; unresolved reports remain explicit
+- [x] Full frontend/native suites and release macOS 11 build
+- [x] Runtime URL routing across concurrent documents, sidebar/status and retained search route
+- [x] Signed payload, both architectures, deployment target, package resources
+- [x] Real Homebrew install, reinstall and upgrade; preserve editor choices
+- [x] Release notes accurately reflect scope and contributors
+- [x] Published DMG/source archive, tag, Sparkle feed and Homebrew verified
+- [x] Released fixes receive matching-language replies and done labels; unresolved reports remain explicit
 
 ## Toolchain validation follow-up
 
@@ -113,3 +113,33 @@ still fails/rolls back on a real mismatch; errors are not suppressed.
   UTI and com.microsoft.Word for public.markdown.
 - The patch will supersede 1.35.521 for recommended installation. Feature fixes in
   1.35.521 remain valid; installation issues #53/#55 are only resolved by this patch.
+
+## Published outcome — 2026-10-10
+
+Recommended release: [v1.35.525](https://github.com/xykong/flux-markdown/releases/tag/v1.35.525).
+
+- DMG SHA256 `abba51a66a00f7b914c4d0d80940d2ecd2358867e0c215bc5ecac93ba6d45c6d`.
+  Downloaded the public asset and matched its bytes to the prepared package.
+- Source archive SHA256 `0ba3a31e2704d22189613ec7dfc66f71b5a18092ab0398b5af28bba2c45b0762`.
+  GitHub's uploaded asset digest matches the prepared archive.
+- Public Sparkle feed's version, URL, size, EdDSA signature and macOS 11 minimum
+  match the shipped DMG. Tap commit `1eee259` publishes the same version/checksum.
+- Homebrew 7 online reinstall and isolated clean install passed after the real
+  1.21.266 → 1.35.525 production upgrade. Independent resolved editor snapshots
+  stayed unchanged. Scratch installation/tap/trust entry were removed afterwards.
+- Final installed app reports v1.35.525; PluginKit reports its extension enabled.
+  Installed app/extension renderer hashes match the verified remote build.
+- Native 760-point window acceptance now uses the existing validated search-handoff
+  frame URL instead of unreliable border dragging. Directory defaults closed;
+  selecting Alpha 10 closes the overlay, updates the breadcrumb and returns focus
+  to the directory button. Restoring 1279×812 brings back the docked sidebar.
+  Dark appearance and native zoom were visually checked; system appearance and
+  zoom 1 were restored. Evidence is in `build/release-acceptance/` (local only).
+- Release build ran 340 renderer tests and 285 native tests with zero failures;
+  one native environment skip concerns the absent adjacent tap checkout, whose
+  condition was independently verified locally. macOS 11 and Intel compatibility
+  are build-validated, not a claim of testing on physical macOS 11/Intel machines.
+- #50/#51/#52/#53/#55 received English release replies and `done`; all remain open.
+  The first three replies recommend the installation patch as well. #54 received
+  an accurate released-alternative explanation without `done`; #49 remains an
+  unconfirmed reporter-environment issue. No issue was closed.

@@ -9,7 +9,7 @@
 - [x] 2.3 保持标题导航、阅读位置及会话显隐选择
 - [ ] 2.4 打印/导出/Finder 布局回归
 - [ ] 2.5 App/QuickLook 全屏、主题、缩放和截图验证
-- [ ] 2.6 用户说明、CHANGELOG 和发布后 issue 回复
+- [x] 2.6 用户说明、CHANGELOG 和发布后 issue 回复
 
 ## 3. 2026-10-10 design refinement (implemented; platform acceptance pending)
 - [x] 3.1 整理原始诉求与附议，完成工具区、侧栏和响应式交互设计。
@@ -46,3 +46,12 @@ See docs/debug/DEBUG_ISSUE_50_CONTENTS_SIDEBAR.md for exact evidence and limits.
 - [x] 6.2 Send bounded temporary width metrics and reserve native space in App/QuickLook.
 - [x] 6.3 Verify 336 renderer tests, native metric parsing and 12-point spacing.
 - [x] 6.4 Verify the installed native UI and record the final candidate.
+
+
+### Release update — 2026-10-10
+
+Shipped in v1.35.521 and included in recommended v1.35.525; #50 has a release reply
+and done label and remains open. Actual Finder wide preview/search-button handoff
+and native 760-point overlay navigation/focus are now verified. Earlier pending
+platform-matrix entries remain conservative: see DEBUG_RELEASE_2026_10.md for
+specific coverage rather than assuming every OS/fullscreen combination was run.
