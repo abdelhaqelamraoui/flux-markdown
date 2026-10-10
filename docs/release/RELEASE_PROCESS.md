@@ -484,3 +484,14 @@ brew update && brew upgrade --cask flux-markdown
 - [Semantic Versioning](https://semver.org/)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [GitHub CLI Manual](https://cli.github.com/manual/)
+
+## Building when the local Xcode no longer supports macOS 11
+
+Use `RELEASE_REMOTE_BUILD=1 make release minor` to build the tagged commit with
+`.github/workflows/release-build.yml` (Xcode 16.4 on macos-15), retaining the macOS
+11 deployment target and both arm64/x86_64 architectures. The downloader verifies
+the workflow SHA, bundled provenance/version, archive checksum, nested signatures
+and all three product deployment targets before locally packaging the DMG.
+`RELEASE_APP_PATH` is only for an already verified matching-version bundle; DMG
+creation rejects version mismatch. Sparkle signing continues to use the local
+Keychain. Do not override the deployment target to publish with a newer Xcode.
