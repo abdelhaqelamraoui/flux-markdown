@@ -73,3 +73,22 @@ on that runtime. No production gesture behavior or runtime test is skipped.
   identical. Installation is isolated in /tmp/flux-homebrew-acceptance/Applications.
 - MacPorts source archive is now generated from the immutable release tag, not
   whichever administrative commit happens to be HEAD during packaging.
+
+## Homebrew 7 production upgrade regression
+
+`brew update` moved the local Homebrew from 5.1 to 7.0.9. Unlike the scratch
+installation, the production upgrade from recorded 1.21.266 removes the app at
+/Applications before invoking the new installer. A temporary bash trace (local
+cask only, restored afterwards) captured the cause: the snapshot returned Xcode
+for net.daringfireball.markdown while the application was absent, although the
+persisted explicit LSHandlerRoleAll remained com.xykong.markdown. Registration
+then restored the real FluxMarkdown association; the installer incorrectly tried
+to preserve the transient Xcode fallback and rejected its own result. Homebrew
+rolled back. Original editor choices remained intact. #53/#55 have not received
+done labels or release replies.
+
+Fix criterion: preserve an explicit preference for this application through its
+own temporary removal, without overriding explicit other-editor choices, ignoring
+errors, or disabling restoration checks. Conflicting role-specific preferences
+must keep the system-resolved choice. Re-test the actual production upgrade on
+Homebrew 7 before publishing a patch.

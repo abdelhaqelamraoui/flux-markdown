@@ -54,4 +54,24 @@ final class QuickLookRegistrationTests: XCTestCase {
         XCTAssertEqual(errors, ["editor-restore-unconfirmed"])
     }
 
+    func testInstallerSnapshotPreservesExplicitSelfDuringTemporaryRemoval() {
+        let handlers: [[String: Any]] = [["LSHandlerContentType": "net.daringfireball.markdown", "LSHandlerRoleAll": "com.xykong.markdown"]]
+        let state = QuickLookRegistration.editorState(current: { type in
+            type == "net.daringfireball.markdown" ? "com.apple.dt.Xcode" : "com.microsoft.Word"
+        }, handlers: handlers)
+        XCTAssertEqual(state["net.daringfireball.markdown"], "com.xykong.Markdown")
+        XCTAssertEqual(state["public.markdown"], "com.microsoft.Word")
+    }
+
+    func testSnapshotDoesNotOverrideOtherEditorsOrConflictingSpecificRoles() {
+        for handlers: [[String: Any]] in [
+            [["LSHandlerContentType": "net.daringfireball.markdown", "LSHandlerRoleAll": "com.microsoft.VSCode"]],
+            [["LSHandlerContentType": "net.daringfireball.markdown", "LSHandlerRoleAll": "com.xykong.Markdown", "LSHandlerRoleViewer": "com.microsoft.VSCode"]],
+            []
+        ] {
+            let state = QuickLookRegistration.editorState(current: { _ in "com.microsoft.VSCode" }, handlers: handlers)
+            XCTAssertEqual(state["net.daringfireball.markdown"], "com.microsoft.VSCode")
+        }
+    }
+
 }
