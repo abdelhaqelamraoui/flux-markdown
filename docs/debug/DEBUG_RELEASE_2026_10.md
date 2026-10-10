@@ -92,3 +92,24 @@ own temporary removal, without overriding explicit other-editor choices, ignorin
 errors, or disabling restoration checks. Conflicting role-specific preferences
 must keep the system-resolved choice. Re-test the actual production upgrade on
 Homebrew 7 before publishing a patch.
+
+## Homebrew 7 patch acceptance
+
+The new snapshot honors an unambiguous persisted LSHandlerRoleAll preference for
+FluxMarkdown when Homebrew's temporary removal causes a resolved fallback. Other
+editor and conflicting role-specific preferences continue to use the system's
+resolved handler. Restoration still checks the actual LaunchServices result and
+still fails/rolls back on a real mismatch; errors are not suppressed.
+
+- Added two regressions (temporary self-removal and other/conflicting roles), with
+  the unchanged failed-restoration regression retained. Seven focused tests pass.
+- v1.35.525 / 9a21bac0197cf146ff80c449f5c8959176268a4f was built by release run
+  38022936344 with macOS 11 target, both architectures and verified nested signatures.
+- Temporarily pointed only the local production cask to the exact prepared DMG,
+  then restored its original text. The real Homebrew 7 upgrade from the recorded
+  1.21.266 into /Applications succeeded. This reproduces the earlier failing path.
+- Independent raw LSCopyDefaultRoleHandlerForContentType reads (not the modified
+  snapshot helper) before/after are identical: com.xykong.Markdown for the Markdown
+  UTI and com.microsoft.Word for public.markdown.
+- The patch will supersede 1.35.521 for recommended installation. Feature fixes in
+  1.35.521 remain valid; installation issues #53/#55 are only resolved by this patch.
