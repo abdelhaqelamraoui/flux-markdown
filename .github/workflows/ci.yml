@@ -30,13 +30,19 @@ jobs:
       - name: Test Feishu notification payloads
         run: node --test scripts/tests/feishu-notify.test.cjs
 
+      - name: Test release failure and retry behavior
+        run: python3 scripts/tests/release-publication.test.py
+
       - name: Install renderer dependencies
         working-directory: web-renderer
         run: npm ci
 
       - name: Run renderer unit tests
         working-directory: web-renderer
-        run: npm test
+        run: |
+          npm run typecheck
+          npm test
+          npm run build
 
   macos-build-test:
     name: macOS build + XCTest
@@ -65,6 +71,9 @@ jobs:
         run: |
           npm ci
           npm run build
+
+      - name: Test production renderer in WebKit
+        run: scripts/test-renderer-webkit.sh
 
       - name: Generate Xcode project
         run: |

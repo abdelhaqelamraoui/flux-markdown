@@ -507,3 +507,13 @@ RELEASE_REMOTE_BUILD=1 RELEASE_PREPARE_ONLY=1 make release minor
 Preparation writes `build/artifacts/release-manifest.json`, binding the release tag,
 DMG, MacPorts source archive and release notes to their SHA-256 values. Publication
 refuses changed/missing artifacts and does not bump the version a second time.
+
+## Recovering interrupted preparation and publication
+
+`./scripts/release.sh --resume` reuses the version/tag and preserved release notes after a failed build. It verifies the tag's version and ancestry before rebuilding; it does not bump again. Initial preparation requires a clean tracked worktree on master and rejects an existing target tag before changing version files.
+
+`./scripts/publish-release.sh` verifies the prepared manifest and entitlements and generates the signed appcast before creating a release. If the release already exists, it downloads and byte-compares each asset; mismatches fail instead of replacing published artifacts. Notes remain available because the manifest and retries require them.
+
+Each stage records progress in `build/artifacts/publication-status.txt`. A Sparkle push or Homebrew error exits unsuccessfully and names the failed stage. Rerun publication after resolving it; it verifies the existing release and retries channel updates. This is resumable publication, not an atomic transaction across services. The GitHub release may already be public when a later channel fails.
+
+The Homebrew updater returns status 2 when cask changes are prepared but not committed/pushed. In non-interactive use, complete that explicit tap publication step and rerun; unchanged cask files are compared with the fetched tap remote before reporting completion.

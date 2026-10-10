@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 VERSION_FILE=".version"
 CHANGELOG_FILE="CHANGELOG.md"
@@ -10,7 +10,12 @@ if ! command -v gh &> /dev/null; then
     exit 1
 fi
 
+RESUME=false
+if [ "${1:-}" = "--resume" ]; then RESUME=true; fi
 BUMP_TYPE=${1:-patch}
+if $RESUME; then BUMP_TYPE=patch; fi
+if [ "$(git branch --show-current)" != "master" ]; then echo "Release requires master" >&2; exit 1; fi
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then echo "Commit tracked changes before release preparation" >&2; exit 1; fi
 
 if [[ "$BUMP_TYPE" == "minus" ]]; then
     BUMP_TYPE="minor"
@@ -47,6 +52,21 @@ fi
 
 NEW_FULL_VERSION="$major.$minor.$build"
 
+if $RESUME; then
+    NEW_FULL_VERSION=$CURRENT_FULL_VERSION
+    git rev-parse "v$NEW_FULL_VERSION^{commit}" >/dev/null
+    [ "$(git show "v$NEW_FULL_VERSION:.version")" = "$NEW_FULL_VERSION" ] || exit 1
+    git merge-base --is-ancestor "v$NEW_FULL_VERSION" HEAD
+    if ! git diff --quiet "v$NEW_FULL_VERSION" -- Sources web-renderer project.yml Makefile scripts; then
+        echo "Build inputs differ from the prepared tag; resume from an isolated checkout of that tag." >&2
+        exit 1
+    fi
+    [ -f release_notes_tmp.md ] || { echo "Missing prepared release notes; recover them before resuming" >&2; exit 1; }
+else
+    if git rev-parse --verify "refs/tags/v$NEW_FULL_VERSION" >/dev/null 2>&1; then
+        echo "Tag already exists. Use scripts/release.sh --resume to rebuild the prepared version." >&2
+        exit 1
+    fi
 echo "🎯 Target Version: $NEW_FULL_VERSION"
 
 echo "$NEW_FULL_VERSION" > "$VERSION_FILE"
@@ -124,10 +144,11 @@ fi
 git commit -m "chore(release): bump version to $NEW_FULL_VERSION"
 git tag "v$NEW_FULL_VERSION"
 
-echo "☁️ Pushing to remote..."
+
+fi
+# Both first preparation and resume synchronize the existing tag before building.
 git push origin master
 git push origin "v$NEW_FULL_VERSION"
-
 echo "🔨 Building project and DMG..."
 if [ "${RELEASE_REMOTE_BUILD:-0}" = 1 ]; then
     RELEASE_APP_PATH=$(./scripts/build-release-remotely.sh "v$NEW_FULL_VERSION")
@@ -146,8 +167,10 @@ if ./scripts/create_macports_tarball.sh "$NEW_FULL_VERSION"; then
     echo "✅ MacPorts tarball created: $MACPORTS_TARBALL"
     if [ -f "macports/Portfile" ]; then
         git add macports/Portfile
-        git commit -m "chore(macports): update Portfile checksums for v$NEW_FULL_VERSION" || true
-        git push origin master || true
+        if ! git diff --cached --quiet; then
+            git commit -m "chore(macports): update Portfile checksums for v$NEW_FULL_VERSION"
+        fi
+        git push origin master
         echo "✅ macports/Portfile committed"
     fi
 else
