@@ -18,11 +18,31 @@ enum QuickLookRegistration {
     static let types = ["net.daringfireball.markdown", "public.markdown", "net.ia.markdown"]
     typealias Runner = (String, [String]) -> RegistrationCommandResult
 
-    static func editorState() -> [String: String] {
+    static func savedEditorHandlers() -> [[String: Any]] {
+        UserDefaults.standard.persistentDomain(forName: "com.apple.LaunchServices/com.apple.launchservices.secure")?["LSHandlers"] as? [[String: Any]] ?? []
+    }
+
+    static func editorState(current: (String) -> String? = currentEditor,
+                            handlers: [[String: Any]] = savedEditorHandlers()) -> [String: String] {
         var state: [String: String] = [:]
+        let appIdentifier = "com.xykong.Markdown"
         for type in types {
-            if let value = LSCopyDefaultRoleHandlerForContentType(type as CFString, .all)?.takeRetainedValue() {
-                state[type] = value as String
+            // Homebrew removes the old app before invoking the installer. During
+            // that gap LaunchServices resolves a fallback (e.g. Xcode), although
+            // the user's explicit preference still points to this application.
+            // Retain only that unambiguous self preference; never reinterpret a
+            // different editor's or a conflicting role-specific preference.
+            let entries = handlers.filter { ($0["LSHandlerContentType"] as? String) == type }
+            let explicitSelf = entries.contains {
+                ($0["LSHandlerRoleAll"] as? String)?.caseInsensitiveCompare(appIdentifier) == .orderedSame
+            }
+            let roles = entries.flatMap { entry in
+                ["LSHandlerRoleAll", "LSHandlerRoleViewer", "LSHandlerRoleEditor", "LSHandlerRoleShell"].compactMap { entry[$0] }
+            }
+            if explicitSelf && roles.allSatisfy({ ($0 as? String)?.caseInsensitiveCompare(appIdentifier) == .orderedSame }) {
+                state[type] = appIdentifier
+            } else if let value = current(type) {
+                state[type] = value
             }
         }
         return state
