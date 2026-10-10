@@ -11,43 +11,21 @@ echo "🚀 Starting DMG creation for ${APP_NAME}..."
 
 # 1. Ensure clean build
 echo "📦 Building application..."
-make app
+if [ -z "${RELEASE_APP_PATH:-}" ]; then make app; fi
 
 # 2. Locate the built app
 EXPECTED_VERSION="$(cat .version 2>/dev/null || true)"
-APP_PATH=""
-
-if [ -n "$EXPECTED_VERSION" ]; then
-    while IFS= read -r candidate; do
-        info_plist="$candidate/Contents/Info.plist"
-        if [ ! -f "$info_plist" ]; then
-            continue
-        fi
-
-        candidate_version=$(/usr/bin/defaults read "$info_plist" CFBundleShortVersionString 2>/dev/null || true)
-        candidate_build=$(/usr/bin/defaults read "$info_plist" CFBundleVersion 2>/dev/null || true)
-
-        if [ "$candidate_version" = "$EXPECTED_VERSION" ]; then
-            APP_PATH="$candidate"
-            break
-        fi
-
-        expected_build="$(echo "$EXPECTED_VERSION" | awk -F. '{print $3}')"
-        if [ -n "$expected_build" ] && [ "$candidate_build" = "$expected_build" ]; then
-            APP_PATH="$candidate"
-            break
-        fi
-    done < <(find "$HOME/Library/Developer/Xcode/DerivedData" -name "${APP_BUNDLE}" -path "*/Build/Products/Release/*" 2>/dev/null)
-fi
-
+APP_PATH="${RELEASE_APP_PATH:-}"
 if [ -z "$APP_PATH" ]; then
-    APP_PATH=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "${APP_BUNDLE}" -path "*/Build/Products/Release/*" | head -n 1)
+    APP_PATH="$(xcodebuild -project FluxMarkdown.xcodeproj -scheme Markdown -configuration Release -showBuildSettings -json 2>/dev/null | python3 -c 'import json,sys; s=next(x["buildSettings"] for x in json.load(sys.stdin) if x["target"]=="Markdown"); print(s["TARGET_BUILD_DIR"]+"/"+s["FULL_PRODUCT_NAME"])')"
 fi
-
-if [ -z "$APP_PATH" ]; then
-    echo "❌ Error: Could not find built ${APP_BUNDLE}"
-    exit 1
+[ -d "$APP_PATH" ] || { echo "Missing release application: $APP_PATH" >&2; exit 1; }
+actual_version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_PATH/Contents/Info.plist")
+[ "$actual_version" = "$EXPECTED_VERSION" ] || { echo 'Release application version mismatch' >&2; exit 1; }
+if /usr/libexec/PlistBuddy -c 'Print :FMDisplayVersion' "$APP_PATH/Contents/Info.plist" >/dev/null 2>&1; then
+    echo 'Refusing to package a development acceptance application' >&2; exit 1
 fi
+./scripts/verify-release-entitlements.sh "$APP_PATH"
 
 echo "✅ Found app at: $APP_PATH"
 

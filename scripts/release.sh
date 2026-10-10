@@ -129,6 +129,10 @@ git push origin master
 git push origin "v$NEW_FULL_VERSION"
 
 echo "🔨 Building project and DMG..."
+if [ "${RELEASE_REMOTE_BUILD:-0}" = 1 ]; then
+    RELEASE_APP_PATH=$(./scripts/build-release-remotely.sh "v$NEW_FULL_VERSION")
+    export RELEASE_APP_PATH
+fi
 make dmg
 
 if [ ! -f "$DMG_PATH" ]; then
