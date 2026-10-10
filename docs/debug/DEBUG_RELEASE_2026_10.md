@@ -50,3 +50,26 @@ on that runtime. No production gesture behavior or runtime test is skipped.
   final versioned payload; no deprecated postflight hook was used by the candidate.
 - Local Sparkle preflight signature exactly matches the published 1.34.475 enclosure,
   proving the signing key has not silently changed.
+
+## Final package and runtime acceptance
+
+- CI 38021901527: 340 frontend tests pass; 283 native tests, zero failures, one
+  environment skip (adjacent tap checkout absent). The skipped draft-placement
+  condition was independently checked against the real adjacent checkout.
+- Release build 38022209755 for tag v1.35.521 / 873222ec6c1523796987814b94402444cb008e3f
+  passed tests and produced the signed universal app. App, extension and launch
+  service each have arm64 + x86_64 slices with minos 11.0 / SDK 15.5.
+- Xcode 27's local lipo rejects multiple verify_arch values despite its help text;
+  verifying each architecture separately succeeds. No binary changes required.
+- Real Finder preview became observable by selecting its CoreGraphics layer-3
+  window ID, which the normal window list omits. Wide screenshot confirms separate
+  document/sidebar, status and rightmost contents entrance. Actual search-button
+  click opened first.md in the app, focused the field and accepted Alpha (1/31).
+  Full-size remote renderer was also captured; host compositing and transition
+  screenshots must not be confused with settled document layout.
+- Final DMG SHA256: ae24257526fcb0c78fb571f9c616da55f75623e1780d3061c4bcc676d8350d4c.
+- Real Homebrew upgrade of the scratch cask from 1.34.475 to the final 1.35.521
+  payload succeeded with no deprecated flight hooks. Editor snapshots remained
+  identical. Installation is isolated in /tmp/flux-homebrew-acceptance/Applications.
+- MacPorts source archive is now generated from the immutable release tag, not
+  whichever administrative commit happens to be HEAD during packaging.
