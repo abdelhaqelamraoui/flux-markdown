@@ -1,4 +1,7 @@
 ## [Unreleased]
+_无待发布的变更_
+
+## [1.35.521] - 2026-10-10
 
 ### Added
 - **Positioned document links** (#52): Open source lines or heading fragments through markdownpreview URLs, including already-open documents and original line numbers after front matter.
