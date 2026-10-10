@@ -19,3 +19,12 @@ Baseline: 1447335; 36 local commits beyond origin/master. User authorizes pre-re
 - [ ] Release notes accurately reflect scope and contributors
 - [ ] Published DMG/source archive, tag, Sparkle feed and Homebrew verified
 - [ ] Released fixes receive matching-language replies and done labels; unresolved reports remain explicit
+
+## Toolchain validation follow-up
+
+Release build 38021740061 compiled the macOS 11 target on Xcode 16.4 but failed
+`QuickLookGestureArbitrationTests.testDoubleClickRecognizerCannotPreventWebViewPan`.
+The test required WKWebView to expose a native NSPanGestureRecognizer, an OS-dependent
+implementation detail. The override unconditionally permits every NSPan subclass;
+the test now always checks a real AppKit pan and additionally all WebKit pans present
+on that runtime. No production gesture behavior or runtime test is skipped.

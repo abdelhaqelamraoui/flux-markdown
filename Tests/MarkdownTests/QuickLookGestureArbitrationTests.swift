@@ -7,14 +7,16 @@ final class QuickLookGestureArbitrationTests: XCTestCase {
     func testDoubleClickRecognizerCannotPreventWebViewPan() throws {
         let webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
         let recognizer = QuickLookDoubleClickGestureRecognizer()
-        let panRecognizer = try XCTUnwrap(
-            webView.gestureRecognizers.first { $0 is NSPanGestureRecognizer }
-        )
-
-        XCTAssertFalse(
-            recognizer.canPrevent(panRecognizer),
-            "Quick Look double-click interception must not block WebKit scrollbar dragging"
-        )
+        // WebKit exposes a pan recognizer on newer macOS releases, but not on
+        // every supported OS. Test arbitration unconditionally, plus every
+        // native WebKit pan recognizer that this runtime actually exposes.
+        let pans = [NSPanGestureRecognizer()] + webView.gestureRecognizers.compactMap { $0 as? NSPanGestureRecognizer }
+        for panRecognizer in pans {
+            XCTAssertFalse(
+                recognizer.canPrevent(panRecognizer),
+                "Quick Look double-click interception must not block WebKit scrollbar dragging"
+            )
+        }
     }
 
     func testWebViewPanCanCancelPendingDoubleClickRecognition() {
