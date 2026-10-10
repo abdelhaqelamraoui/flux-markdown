@@ -19,3 +19,14 @@ final class RenderVersionTests: XCTestCase {
         }
     }
 }
+
+extension RenderVersionTests {
+    func testOnlyLatestRequestCanCommit() {
+        let counter = RenderVersionCounter()
+        let old = counter.next()
+        XCTAssertTrue(counter.isCurrent(old))
+        let new = counter.next()
+        XCTAssertFalse(counter.isCurrent(old))
+        XCTAssertTrue(counter.isCurrent(new))
+    }
+}

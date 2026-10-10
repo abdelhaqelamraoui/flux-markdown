@@ -1,3 +1,4 @@
+import { sanitizeDocumentHTML } from './safe-html';
 /**
  * Escapes colons inside Gantt task labels when the metadata delimiter is
  * written as a spaced colon. Mermaid's lexer always splits at the first raw
@@ -376,7 +377,7 @@ function buildMd(): MarkdownIt {
                         '</code></pre>';
                 } catch (__) { }
             }
-            const codeClass = lang ? 'language-' + lang : '';
+            const codeClass = lang ? 'language-' + escapeHtml(lang) : '';
             return '<pre class="hljs"><code class="' + codeClass + '">' + instance.utils.escapeHtml(str) + '</code></pre>';
         }
     });
@@ -433,12 +434,10 @@ function buildMd(): MarkdownIt {
     return instance;
 }
 
-let md: MarkdownIt = buildMd();
+const md: MarkdownIt = buildMd();
+let renderGeneration = 0;
+window.invalidateRender = () => { ++renderGeneration; };
 const diffAnimator = new DiffAnimator();
-
-function rebuildMd(): void {
-    md = buildMd();
-}
 
 let toc: TableOfContents | null = null;
 let readingControls: ReadingControls | null = null;
@@ -450,8 +449,6 @@ let blockquoteCollapse: BlockquoteCollapse | null = null;
 let mermaidInstance: typeof import('mermaid')['default'] | null = null;
 let mermaidCurrentTheme: string | null = null;
 let katexPlugin: ((md: MarkdownIt) => void) | null = null;
-let katexEnabled = false;
-let emojiEnabled = false;
 let graphvizInstance: { dot: (src: string) => string } | null = null;
 let lastShowLineNumbers: boolean = false;
 
@@ -570,6 +567,7 @@ function addLineNumbersToCodeBlocks(container: HTMLElement): void {
 declare global {
     interface Window {
         navigateDocumentPosition: (position: DocumentPosition) => boolean;
+        invalidateRender: () => void;
         renderMarkdown: (text: string, options?: RenderOptions) => Promise<void>;
         renderSource: (text: string, theme: string, prevContent?: string) => void;
         clearDiffMarks: () => void;
@@ -588,7 +586,7 @@ declare global {
     }
 }
 
-async function renderVegaDiagrams(container: HTMLElement, theme: string): Promise<void> {
+async function renderVegaDiagrams(container: HTMLElement, theme: string, isCurrent: () => boolean): Promise<void> {
     const vegaBlocks = container.querySelectorAll('pre.hljs code.language-vega, pre.hljs code.language-vega-lite');
     if (vegaBlocks.length === 0) return;
 
@@ -596,6 +594,7 @@ async function renderVegaDiagrams(container: HTMLElement, theme: string): Promis
     let vegaLiteModule: typeof import('vega-lite') | null = null;
     try {
         [vegaModule, vegaLiteModule] = await Promise.all([import('vega'), import('vega-lite')]);
+        if (!isCurrent()) return;
     } catch (err) {
         logToSwift('[Vega] Failed to load modules: ' + err);
         return;
@@ -614,7 +613,9 @@ async function renderVegaDiagrams(container: HTMLElement, theme: string): Promis
             vegaSpec.config.background = isDark ? '#0d1117' : '#ffffff';
             const runtime = vegaModule!.parse(vegaSpec);
             const view = new vegaModule!.View(runtime, { renderer: 'svg' });
-            const svgStr = await view.toSVG();
+            let svgStr: string;
+            try { svgStr = await view.toSVG(); } finally { view.finalize(); }
+            if (!isCurrent()) return;
             const wrapper = document.createElement('div');
             wrapper.className = 'vega-diagram';
             wrapper.innerHTML = svgStr;
@@ -631,14 +632,16 @@ async function renderVegaDiagrams(container: HTMLElement, theme: string): Promis
     }
 }
 
-async function renderGraphvizDiagrams(container: HTMLElement): Promise<void> {
+async function renderGraphvizDiagrams(container: HTMLElement, isCurrent: () => boolean): Promise<void> {
     const dotBlocks = container.querySelectorAll('pre.hljs code.language-dot, pre.hljs code.language-graphviz');
     if (dotBlocks.length === 0) return;
 
     if (!graphvizInstance) {
         try {
             const { Graphviz } = await import('@hpcc-js/wasm-graphviz');
+            if (!isCurrent()) return;
             graphvizInstance = await Graphviz.load() as unknown as { dot: (src: string) => string };
+            if (!isCurrent()) return;
         } catch (err) {
             logToSwift('[Graphviz] Failed to load wasm module: ' + err);
             return;
@@ -782,7 +785,8 @@ window.setContentsSide = function(side: string) {
 };
 
 window.renderMarkdown = async function (text: string, options: RenderOptions = {}) {
-    const callId = Date.now();
+    const callId = ++renderGeneration;
+    const isCurrent = () => callId === renderGeneration;
     logToSwift(`[renderMarkdown:${callId}] START textLen=${text.length}`);
     const outputDiv = document.getElementById('markdown-preview');
     const loadingDiv = document.getElementById('loading-status');
@@ -881,32 +885,16 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
         const sourceLineOffset = text.slice(0, text.length - body.length).split('\n').length - 1;
         const frontMatterHtml = yaml ? `<div data-source-line="1" data-source-line-end="${sourceLineOffset}">${renderFrontMatterHtml(yaml)}</div>` : '';
 
-        const enableEmoji = options.enableEmoji !== false;
-        if (enableEmoji && !emojiEnabled) {
-            md.use(emoji);
-            emojiEnabled = true;
-        }
-        if (!enableEmoji && emojiEnabled) {
-            rebuildMd();
-            emojiEnabled = false;
-            katexEnabled = false;
-        }
-
-        const enableKatex = options.enableKatex !== false;
+        const parser = buildMd();
+        if (options.enableEmoji !== false) parser.use(emoji);
         const enableTypst = options.enableTypst !== false;
-        if (enableKatex && !katexEnabled && /\$[\s\S]+?\$|\$\$[\s\S]+?\$\$/.test(body)) {
+        if (options.enableKatex !== false && /\$[\s\S]+?\$/.test(body)) {
             if (!katexPlugin) {
                 const m = await import('@iktakahiro/markdown-it-katex');
-                katexPlugin = (m as any).default ?? m;
+                if (!isCurrent()) return;
+                katexPlugin = m.default;
             }
-            md.use(katexPlugin as (md: MarkdownIt) => void);
-            katexEnabled = true;
-        }
-
-        if (!enableKatex && katexEnabled) {
-            rebuildMd();
-            katexEnabled = false;
-            emojiEnabled = false;
+            parser.use(katexPlugin);
         }
 
         const renderBody = body;
@@ -915,14 +903,14 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
         document.documentElement.setAttribute('data-line-numbers', showLineNumbers ? 'true' : 'false');
         lastShowLineNumbers = showLineNumbers;
 
-        const outline = extractOutline(md, renderBody);
+        const outline = extractOutline(parser, renderBody);
 
 
-        installSourceRuleWrappers(md);
-        let html = md.render(renderBody, { baseUrl: options.baseUrl, imageData: options.imageData, renderVersion: options.renderVersion, sourceLineOffset });
+        installSourceRuleWrappers(parser);
+        let html = parser.render(renderBody, { baseUrl: options.baseUrl, imageData: options.imageData, renderVersion: options.renderVersion, sourceLineOffset });
 
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = frontMatterHtml + html;
+        tempDiv.innerHTML = sanitizeDocumentHTML(frontMatterHtml + html);
 
         const enableMermaid = options.enableMermaid !== false;
         const mermaidBlocks = enableMermaid
@@ -935,13 +923,15 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
                 const div = document.createElement('div');
                 div.classList.add('mermaid');
                 div.textContent = block.textContent || '';
-                div.id = `mermaid-${index}`;
+                div.id = `mermaid-${callId}-${index}`;
                 copySourceRange(pre, div);
                 pre.replaceWith(div);
             }
         });
 
         logToSwift(`[renderMarkdown:${callId}] UPDATING DOM innerHTML`);
+        if (!isCurrent()) return;
+        searchUI?.hide();
         outputDiv.innerHTML = tempDiv.innerHTML;
         if (toc) toc.render(outline);
         prepareRenderedImages(outputDiv, options);
@@ -970,6 +960,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
             try {
                 if (!mermaidInstance) {
                     const mermaidModule = await import('mermaid');
+                    if (!isCurrent()) return;
                     mermaidInstance = mermaidModule.default;
                 }
                 const mermaid = mermaidInstance;
@@ -987,6 +978,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
                     const id = div.id || `mermaid-${Date.now()}`;
                     try {
                         const { svg } = await mermaid.render(id + '-svg', processedCode);
+                        if (!isCurrent()) return;
                         div.innerHTML = svg;
                     } catch (renderErr: any) {
                         const errorMessage = renderErr?.message || String(renderErr);
@@ -1004,8 +996,11 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
             }
         }
 
-        await renderVegaDiagrams(outputDiv, currentTheme);
-        await renderGraphvizDiagrams(outputDiv);
+        if (!isCurrent()) return;
+        await renderVegaDiagrams(outputDiv, currentTheme, isCurrent);
+        if (!isCurrent()) return;
+        await renderGraphvizDiagrams(outputDiv, isCurrent);
+        if (!isCurrent()) return;
 
         // Render Typst math blocks
         if (enableTypst) {
@@ -1013,6 +1008,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
             if (typstPlaceholders.length > 0) {
                 try {
                     const { renderTypstBlock } = await import('./typst-renderer');
+                    if (!isCurrent()) return;
                     const context = options.context || 'quicklook';
                     for (const placeholder of typstPlaceholders) {
                         const source = placeholder.getAttribute('data-typst-source') || '';
@@ -1022,6 +1018,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
                             .replace(/&amp;/g, '&');
                         try {
                             const rendered = await renderTypstBlock(decodedSource, context);
+                            if (!isCurrent()) return;
                             placeholder.innerHTML = rendered;
                         } catch (err) {
                             logToSwift(`JS Typst render error: ${err}`);
@@ -1037,25 +1034,23 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
             }
         }
 
-        setTimeout(() => {
-            if (!mermaidInstance) {
-                import('mermaid').then(m => { mermaidInstance = m.default; });
-            }
-        }, 0);
-
+        if (!isCurrent()) return;
         readingStatus?.render(text, options.filename, options.prevContent);
         // Refresh the shared active-heading selection after asynchronous diagrams settle.
         window.dispatchEvent(new Event('scroll'));
         logToSwift(`[renderMarkdown:${callId}] COMPLETE`);
     } catch (e) {
+        if (!isCurrent()) return;
         logToSwift(`[renderMarkdown:${callId}] ERROR: ` + e);
         if (outputDiv) {
-            outputDiv.innerHTML = `<div style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>Rendering Error</h3><pre>${e}</pre></div>`;
+            outputDiv.innerHTML = `<div style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>Rendering Error</h3><pre>${escapeHtml(String(e))}</pre></div>`;
         }
     }
 };
 
 window.renderSource = function(text: string, theme: string, prevContent?: string) {
+    ++renderGeneration;
+    searchUI?.hide();
     logToSwift(`[renderSource] START textLen=${text.length} theme=${theme}`);
     document.documentElement.setAttribute('data-line-numbers', lastShowLineNumbers ? 'true' : 'false');
     const normalizedTheme = (theme === 'light') ? 'default' : theme;
@@ -1094,7 +1089,7 @@ window.renderSource = function(text: string, theme: string, prevContent?: string
     } catch (e) {
         logToSwift("JS Error during source rendering: " + e);
         if (outputDiv) {
-            outputDiv.innerHTML = `<div style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>Source Rendering Error</h3><pre>${e}</pre></div>`;
+            outputDiv.innerHTML = `<div style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>Source Rendering Error</h3><pre>${escapeHtml(String(e))}</pre></div>`;
         }
     }
 };

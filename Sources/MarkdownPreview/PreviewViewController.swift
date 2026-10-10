@@ -528,6 +528,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     
     public override func viewWillDisappear() {
         super.viewWillDisappear()
+        renderVersion.next()
+        webView.evaluateJavaScript("window.invalidateRender && window.invalidateRender();", completionHandler: nil)
         logScreenEnvironment(context: "viewWillDisappear")
 
         stopFileMonitoring()
@@ -985,6 +987,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
     
     private func renderSourceView() {
+        renderVersion.next()
         guard let content = pendingMarkdown else {
             os_log("🟡 renderSourceView called but pendingMarkdown is nil", log: logger, type: .debug)
             return
@@ -1214,6 +1217,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
 
     public func preparePreviewOfFile(at url: URL, completionHandler handler: @escaping (Error?) -> Void) {
         os_log("🔵 preparePreviewOfFile called for: %{public}@", log: logger, type: .default, url.path)
+        renderVersion.next()
         self.currentURL = url
         
         stopSecurityScopedAccessIfNeeded()
@@ -1348,6 +1352,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             : AppearancePreference.shared.baseFontSize
         self.prevMarkdown = nil
         let capturedRenderVersion = renderVersion.next()
+        webView.evaluateJavaScript("window.invalidateRender && window.invalidateRender();", completionHandler: nil)
 
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self = self else { return }
@@ -1377,12 +1382,14 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             let callJs = "return window.renderMarkdown(\(safeContentArg), \(optionsJson));"
             
             await MainActor.run {
+                guard self.renderVersion.isCurrent(capturedRenderVersion), self.currentURL == capturedURL else { return }
                 self.webView.callAsyncJavaScript(
                     callJs,
                     arguments: [:],
                     in: nil,
                     in: WKContentWorld.page
                 ) { result in
+                    guard self.renderVersion.isCurrent(capturedRenderVersion), self.currentURL == capturedURL else { return }
                     switch result {
                     case .failure(let error):
                         os_log("🔴 JS Execution Error (renderMarkdown): %{public}@", log: self.logger, type: .error, error.localizedDescription)
@@ -1397,6 +1404,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                        savedScrollY > 0 {
                         
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            guard self.renderVersion.isCurrent(capturedRenderVersion), self.currentURL == capturedURL else { return }
                             let scrollJS = "window.scrollTo({ top: \(savedScrollY), behavior: 'auto' });"
                             self.webView.evaluateJavaScript(scrollJS) { _, error in
                                 if error == nil {
