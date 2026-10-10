@@ -25,7 +25,7 @@ scripts/verify-release-entitlements.sh "$app" >&2
 for binary in "$app/Contents/MacOS/FluxMarkdown" \
     "$app/Contents/PlugIns/MarkdownPreview.appex/Contents/MacOS/MarkdownPreview" \
     "$app/Contents/PlugIns/MarkdownPreview.appex/Contents/XPCServices/FluxMarkdownSearchLauncher.xpc/Contents/MacOS/FluxMarkdownSearchLauncher"; do
-    lipo -verify_arch arm64 x86_64 "$binary"
+    lipo "$binary" -verify_arch arm64 x86_64
     xcrun vtool -show-build "$binary" > "$output/deployment-check.txt"
     [ "$(awk '$1 == "minos" && $2 == "11.0" {n++} END {print n+0}' "$output/deployment-check.txt")" -eq 2 ] || { echo "Unexpected deployment target: $binary" >&2; exit 1; }
 done
