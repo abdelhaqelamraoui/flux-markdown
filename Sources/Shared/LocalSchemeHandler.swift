@@ -5,6 +5,10 @@ class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
     private let logger = OSLog(subsystem: "com.markdownquicklook.app", category: "LocalSchemeHandler")
     private let allowedFilesLock = NSLock()
     private var allowedFilePaths = Set<String>()
+    private let resourceQueue = DispatchQueue(label: "com.xykong.Markdown.images", qos: .userInitiated)
+    private var activeTasks: [ObjectIdentifier: UUID] = [:]
+    private var loadedBytes: [String: Int] = [:]
+    private var resourceGeneration = 0
     var baseDirectory: URL?
     var allowedFileURLs: Set<URL> {
         get {
@@ -13,6 +17,8 @@ class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
             return Set(allowedFilePaths.map { URL(fileURLWithPath: $0) })
         }
         set {
+            resourceGeneration += 1
+            loadedBytes.removeAll()
             allowedFilesLock.lock()
             allowedFilePaths = Set(newValue.map { $0.standardizedFileURL.path })
             allowedFilesLock.unlock()
@@ -38,45 +44,41 @@ class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
         
-        var coordinatorError: NSError?
-        var resultData: Data?
-        var accessError: Error?
-        
-        let coordinator = NSFileCoordinator()
-        coordinator.coordinate(readingItemAt: fileUrl, options: [], error: &coordinatorError) { url in
-            let _ = baseDir.startAccessingSecurityScopedResource()
-            defer {
-                baseDir.stopAccessingSecurityScopedResource()
+        let key = ObjectIdentifier(urlSchemeTask)
+        let token = UUID()
+        let generation = resourceGeneration
+        activeTasks[key] = token
+        resourceQueue.async {
+            let granted = baseDir.startAccessingSecurityScopedResource()
+            defer { if granted { baseDir.stopAccessingSecurityScopedResource() } }
+            let result = Result { try BoundedFileReader.read(fileUrl, maxBytes: Int(MarkdownImageDataCollector.Limits.default.maxImageBytes)) }
+            DispatchQueue.main.async {
+                guard self.activeTasks[key] == token else { return }
+                self.activeTasks.removeValue(forKey: key)
+                guard self.resourceGeneration == generation else {
+                    urlSchemeTask.didFailWithError(CocoaError(.userCancelled))
+                    return
+                }
+                do {
+                    let data = try result.get()
+                    var budget = self.loadedBytes
+                    budget[fileUrl.standardizedFileURL.path] = data.count
+                    let limits = MarkdownImageDataCollector.Limits.default
+                    guard budget.count <= limits.maxImageCount,
+                          budget.values.reduce(0, +) <= Int(limits.maxTotalBytes) else {
+                        throw CocoaError(.fileReadTooLarge)
+                    }
+                    self.loadedBytes = budget
+                    urlSchemeTask.didReceive(self.buildResponse(for: url, data: data))
+                    urlSchemeTask.didReceive(data)
+                    urlSchemeTask.didFinish()
+                } catch { urlSchemeTask.didFailWithError(error) }
             }
-            
-            do {
-                resultData = try Data(contentsOf: url)
-            } catch {
-                accessError = error
-            }
-        }
-        
-        if let error = coordinatorError ?? accessError {
-            os_log("🔴 Failed to load resource: %{public}@. Error: %{public}@", log: logger, type: .error, filePath, error.localizedDescription)
-            urlSchemeTask.didFailWithError(error)
-            return
-        }
-        
-        if let data = resultData {
-            let response = buildResponse(for: url, data: data)
-            urlSchemeTask.didReceive(response)
-            urlSchemeTask.didReceive(data)
-            urlSchemeTask.didFinish()
-            os_log("🟢 Successfully loaded: %{public}@", log: logger, type: .debug, filePath)
-        } else {
-            let error = NSError(domain: "LocalSchemeHandler", code: -2, userInfo: [NSLocalizedDescriptionKey: "No data"])
-            os_log("🔴 Failed to load resource: %{public}@. No data", log: logger, type: .error, filePath)
-            urlSchemeTask.didFailWithError(error)
         }
     }
 
     func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
-        os_log("Stopped loading: %{public}@", log: logger, type: .debug, urlSchemeTask.request.url?.path ?? "unknown")
+        activeTasks.removeValue(forKey: ObjectIdentifier(urlSchemeTask))
     }
 
     func resolveFilePath(from url: URL) -> String {
@@ -92,10 +94,11 @@ class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
     }
 
     func resolveContainedFileURL(from url: URL) -> URL? {
-        guard let baseDirectory else { return nil }
+        guard baseDirectory != nil else { return nil }
 
         let fileURL = URL(fileURLWithPath: resolveFilePath(from: url))
-        if isContained(fileURL, in: baseDirectory) || isExplicitlyAllowed(fileURL) {
+        guard ["png", "jpg", "jpeg", "gif", "svg", "webp"].contains(fileURL.pathExtension.lowercased()) else { return nil }
+        if isExplicitlyAllowed(fileURL) {
             return fileURL
         }
         return nil
@@ -130,8 +133,7 @@ class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
         case "jpg", "jpeg": return "image/jpeg"
         case "gif": return "image/gif"
         case "svg": return "image/svg+xml"
-        case "css": return "text/css"
-        case "js": return "application/javascript"
+        case "webp": return "image/webp"
         default: return "application/octet-stream"
         }
     }

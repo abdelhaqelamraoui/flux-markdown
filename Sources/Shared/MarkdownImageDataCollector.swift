@@ -21,7 +21,7 @@ enum MarkdownImageDataCollector {
         var imageData: [String: String] = [:]
         var collectedImageCount = 0
         var collectedBytes: UInt64 = 0
-        for reference in localImageReferences(from: markdownURL, content: content) {
+        for reference in budgetedReferences(from: markdownURL, content: content, limits: limits) {
             guard collectedImageCount < limits.maxImageCount else { break }
             let imagePath = reference.path
             let imageURL = reference.url
@@ -30,12 +30,12 @@ enum MarkdownImageDataCollector {
             guard fileSize <= limits.maxImageBytes else { continue }
             guard fileSize <= limits.maxTotalBytes else { continue }
             guard collectedBytes <= limits.maxTotalBytes - fileSize else { continue }
-            guard let data = try? Data(contentsOf: imageURL) else { continue }
+            guard let data = try? BoundedFileReader.read(imageURL, maxBytes: Int(limits.maxImageBytes)) else { continue }
 
             let dataURL = "data:\(mimeType);base64,\(data.base64EncodedString())"
             imageData[imagePath] = dataURL
             collectedImageCount += 1
-            collectedBytes += fileSize
+            collectedBytes += UInt64(data.count)
 
             if imagePath.hasPrefix("./") {
                 imageData[String(imagePath.dropFirst(2))] = dataURL
@@ -48,7 +48,21 @@ enum MarkdownImageDataCollector {
     }
 
     static func referencedLocalImageURLs(from markdownURL: URL, content: String) -> Set<URL> {
-        Set(localImageReferences(from: markdownURL, content: content).map(\.url))
+        Set(budgetedReferences(from: markdownURL, content: content, limits: .default).map(\.url))
+    }
+
+    private static func budgetedReferences(from url: URL, content: String, limits: Limits) -> [LocalImageReference] {
+        var sizes: [URL: UInt64] = [:]
+        var total: UInt64 = 0
+        return localImageReferences(from: url, content: content).filter { reference in
+            if sizes[reference.url] != nil { return true }
+            guard sizes.count < limits.maxImageCount,
+                  let bytes = fileSize(of: reference.url), bytes <= limits.maxImageBytes,
+                  bytes <= limits.maxTotalBytes, total <= limits.maxTotalBytes - bytes else { return false }
+            sizes[reference.url] = bytes
+            total += bytes
+            return true
+        }
     }
 
     private struct LocalImageReference {
@@ -62,12 +76,33 @@ enum MarkdownImageDataCollector {
         let fullRange = NSRange(location: 0, length: nsContent.length)
         var pathMatches: [(location: Int, path: String)] = []
 
-        let markdownPattern = #"!\[[^\]]*\]\(([^)\"]+(?:\s+\"[^\"]*\")?)\)"#
+        let markdownPattern = #"!\[[^\]]*\]\(\s*(<[^>\r\n]+>|(?:\\.|[^()\\\r\n]|\([^()\r\n]*\))+)\s*\)"#
         if let regex = try? NSRegularExpression(pattern: markdownPattern) {
             for match in regex.matches(in: content, range: fullRange) where match.numberOfRanges >= 2 {
                 let originalReference = nsContent.substring(with: match.range(at: 1))
                     .trimmingCharacters(in: .whitespacesAndNewlines)
                 pathMatches.append((match.range.location, stripMarkdownImageTitle(from: originalReference)))
+            }
+        }
+
+        // Reference-style images use the same resolved source as markdown-it.
+        func label(_ value: String) -> String {
+            value.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ").lowercased()
+        }
+        var definitions: [String: String] = [:]
+        let definitionPattern = #"(?m)^[ \t]{0,3}\[([^\]\r\n]+)\]:[ \t]*(<[^>\r\n]+>|[^\s]+)"#
+        if let regex = try? NSRegularExpression(pattern: definitionPattern) {
+            for match in regex.matches(in: content, range: fullRange) {
+                let key = label(nsContent.substring(with: match.range(at: 1)))
+                if definitions[key] == nil { definitions[key] = stripMarkdownImageTitle(from: nsContent.substring(with: match.range(at: 2))) }
+            }
+        }
+        let referencePattern = #"!\[([^\]]*)\](?:\[([^\]]*)\])?(?!\()"#
+        if let regex = try? NSRegularExpression(pattern: referencePattern) {
+            for match in regex.matches(in: content, range: fullRange) {
+                let alternate = match.range(at: 2).location != NSNotFound ? nsContent.substring(with: match.range(at: 2)) : ""
+                let key = label(alternate.isEmpty ? nsContent.substring(with: match.range(at: 1)) : alternate)
+                if let path = definitions[key] { pathMatches.append((match.range.location, path)) }
             }
         }
 
@@ -105,9 +140,14 @@ enum MarkdownImageDataCollector {
     }
 
     private static func stripMarkdownImageTitle(from reference: String) -> String {
-        guard let quoteIndex = reference.firstIndex(of: "\"") else { return reference }
-        let prefix = reference[..<quoteIndex].trimmingCharacters(in: .whitespacesAndNewlines)
-        return prefix.isEmpty ? reference : prefix
+        var path = reference.trimmingCharacters(in: .whitespacesAndNewlines)
+        if path.hasPrefix("<"), let end = path.firstIndex(of: ">") {
+            return String(path[path.index(after: path.startIndex)..<end])
+        }
+        if let range = path.range(of: #"\s+(?:"[^"]*"|'[^']*')$"#, options: .regularExpression) {
+            path.removeSubrange(range)
+        }
+        return path.replacingOccurrences(of: #"\([() ])"#, with: "$1", options: .regularExpression)
     }
 
     private static func shouldInline(_ imagePath: String) -> Bool {

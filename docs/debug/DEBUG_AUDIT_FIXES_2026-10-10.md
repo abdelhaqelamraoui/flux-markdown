@@ -13,3 +13,11 @@ Implementation and validation in progress.
 Three regression tests failed before implementation. DOMPurify now removes active document content before DOM insertion while preserving task checkboxes, details, tables and math presentation. Per-request parser configuration avoids Emoji/KaTeX state drift. JS generations invalidate pending work for preview/source changes; QuickLook checks native generations before async image results, completion and scroll restoration. Removed unconditional Mermaid prefetch; Vega views are finalized.
 
 Validation: 37 Jest suites / 346 tests passed, production build passed, RenderVersion XCTest passed with the documented local target override. Added separate passive-HTML compatibility tests. Native safety verification will be repeated against the final bundle.
+
+### Native resources and export
+
+Typst now uses Vite-resolved compiler/renderer WASM, bundled New Computer Modern fonts with the embedded versions' GUST license, independent retryable initialization and serialized compiler access. Eight production WebKit checks passed, including offline native Typst SVG, all three other diagram engines, CSP, bridge origin validation and export readiness.
+
+CLI export awaits render completion and bounded font/image readiness, with a 60-second process deadline and explicit navigation failures. QuickLook reads and refreshes are asynchronous and UTF8-safe. App refreshes are asynchronous, and full App documents have a 32 MiB rejection limit (never silently truncate an editable document). Local image routes only serve explicitly referenced, budget-approved image files. Collector and scheme routes share 32-image / 2 MiB per image / 8 MiB source-byte policies, and cancelled scheme tasks cannot receive callbacks. Reference-style and parenthesized image names are covered.
+
+Validation: native suite passed after the asynchronous toolbar feedback integration was updated; new resource syntax/budget test first failed and then passed. Production dependencies currently have zero npm audit findings. Remaining test-tool dependencies are being upgraded separately.

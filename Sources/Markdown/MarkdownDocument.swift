@@ -17,7 +17,9 @@ struct MarkdownDocument: FileDocument {
     }
 
     init(configuration: ReadConfiguration) throws {
-        guard let data = configuration.file.regularFileContents,
+        guard let data = configuration.file.regularFileContents else { throw CocoaError(.fileReadCorruptFile) }
+        guard data.count <= BoundedFileReader.documentLimit else { throw CocoaError(.fileReadTooLarge) }
+        guard
               let string = String(data: data, encoding: .utf8)
         else {
             throw CocoaError(.fileReadCorruptFile)
