@@ -1,4 +1,7 @@
 ## [Unreleased]
+_无待发布的变更_
+
+## [1.35.537] - 2026-10-11
 
 ### Fixed
 - **Document safety**: Prevent scripts and unsafe links embedded in Markdown HTML or generated diagrams from executing, while preserving passive HTML, task lists and formulas.
