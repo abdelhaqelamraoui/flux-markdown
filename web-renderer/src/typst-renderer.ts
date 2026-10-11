@@ -70,7 +70,20 @@ export async function renderTypstViaNative(
             const $typst = await getTypstInstance();
             const mainContent = `#set page(width: auto, height: auto, margin: 0pt)\n$ ${typstCode} $`;
             const svg = await $typst.svg({ mainContent });
-            return `<div class="typst-math-block typst-native">${svg}</div>`;
+            // Typst includes a global `svg { fill: none }` stylesheet and an
+            // invisible HTML selection layer. Keep this static SVG independent
+            // of other diagrams; scoped glyph rules live in typst.css.
+            const template = document.createElement('template');
+            template.innerHTML = svg;
+            const graphicElement = template.content.querySelector('svg');
+            if (!graphicElement) throw new Error('Typst returned no SVG');
+            graphicElement.querySelectorAll('style, foreignObject').forEach(node => node.remove());
+            // Typst's default text size is 11pt; match the surrounding document
+            // font instead of treating its point dimensions as fixed CSS pixels.
+            const width = Number(graphicElement.getAttribute('data-width') || graphicElement.getAttribute('width'));
+            if (Number.isFinite(width) && width > 0) graphicElement.style.width = `${width / 11}em`;
+            const graphic = graphicElement.outerHTML;
+            return `<div class="typst-math-block typst-native">${graphic}</div>`;
         } catch (error) {
             typstInitPromise = null;
             throw error;

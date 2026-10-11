@@ -76,3 +76,11 @@
     color: #718096;
     font-style: italic;
 }
+
+/* Scoped equivalents of the native SVG glyph rules. Never style all SVGs. */
+.typst-native svg { fill: none; }
+.typst-native .outline_glyph path,
+.typst-native path.outline_glyph {
+    fill: var(--glyph_fill, #000);
+    stroke: var(--glyph_stroke, none);
+}

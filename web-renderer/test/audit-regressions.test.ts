@@ -54,3 +54,10 @@ test('generated SVG links are safe while Mermaid HTML labels survive', () => {
  expect(root.querySelector('[onmouseover]')).toBeNull();
  expect(root.querySelector('foreignObject div')?.textContent).toBe('Label');
 });
+
+test('diagram glyph references survive while external use references are removed', () => {
+ const root = document.createElement('div');
+ root.innerHTML = sanitizeDiagramHTML('<svg><defs><path id="glyph" d="M0 0L1 1"/></defs><use href="#glyph"/><use href="https://example.com/external.svg#glyph"/></svg>');
+ expect(root.querySelectorAll('use')).toHaveLength(1);
+ expect(root.querySelector('use')?.getAttribute('href')).toBe('#glyph');
+});

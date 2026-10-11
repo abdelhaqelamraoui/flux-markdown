@@ -12,3 +12,12 @@ test('a failed native compile can be retried', async () => {
  await expect(renderTypstViaNative('bad')).rejects.toThrow('failed');
  await expect(renderTypstViaNative('a/b')).resolves.toContain('typst-native');
 });
+
+test('native SVG selection metadata does not require well formed XML', async () => {
+ mockTypst.svg.mockResolvedValueOnce('<svg><style>svg {fill:none}</style><defs><path id="g"/></defs><use href="#g"/><foreignObject data-label="a & b">hidden selection</foreignObject></svg>');
+ const result = await renderTypstViaNative('sum_(i=1)^n i');
+ expect(result).toContain('<use');
+ expect(result).not.toContain('parsererror');
+ expect(result).not.toContain('foreignObject');
+ expect(result).not.toContain('<style');
+});
