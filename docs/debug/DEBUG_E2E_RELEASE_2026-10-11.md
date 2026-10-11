@@ -11,7 +11,7 @@ Environment: macOS 27.0.1, arm64, Xcode 27. Local diagnostics use an explicit ma
 - [x] Finder QuickLook rendering and search handoff from the final payload.
 - [x] Universal release signatures, entitlements, minos, resource provenance, DMG.
 - [x] Final local installation, editor preference preservation and PDF/export checks.
-- [ ] Public assets, Sparkle feed and Homebrew version/checksum verification.
+- [x] Public assets, Sparkle feed and Homebrew version/checksum verification.
 
 Evidence is retained under build/e2e-20261011 (local artifacts). Results will be recorded before publication.
 
@@ -45,3 +45,14 @@ The SVG fix now retains only fragment-local use references, removes Typst's glob
 - Source SHA256: 20fcf718c918698c48761112736d359df5f4ae4c928b588c97ca2ed05a02f6db.
 
 Physical macOS 11/Intel and hardware-only trackpad gestures are not claimed verified on this arm64 macOS 27 host. Direct Finder Command-F remains the explicitly excluded system behavior; the supported search-button handoff passed.
+
+
+## Published outcome
+
+Published [v1.35.539](https://github.com/xykong/flux-markdown/releases/tag/v1.35.539). Both public asset digests match the prepared SHA256 values above. The public Sparkle feed's version, macOS minimum, enclosure URL/length and EdDSA signature match the locally signed feed. Homebrew tap commit e9931fe publishes the same version and DMG checksum; the official-compliant draft was updated alongside the tap.
+
+The real Homebrew upgrade from its recorded 1.35.525 to 1.35.539 succeeded, including removal/reinstallation, registration and strict nested signature checks. Brew metadata reports installed=1.35.539 and the expected checksum. Default editor snapshots before testing, after vendor installation and after Homebrew upgrade are identical.
+
+Publication was resumed after the tap commit: the script downloaded and byte-compared both existing GitHub assets, completed feed/tap checks and exited successfully. Publication status is complete. The source archive was additionally extracted and built without Sparkle locally (explicit macOS 12 diagnostic target on Xcode 27); shipping macOS 11 universal checks remain those of the verified remote build.
+
+Temporary acceptance plug-in registrations created during this task were removed; the installed production extension remains enabled. No issue comments or closures were performed.
