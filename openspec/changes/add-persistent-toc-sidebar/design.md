@@ -36,3 +36,7 @@ share the native top area whenever their measured widths fit. A compact row is
 used only when necessary. Search is centered over the document column, floats
 without changing document height or reading position, and navigation scroll margins
 clear its temporary overlay. Wide-view first content starts at 80 CSS px (was 155).
+
+## Visual refinement 2026-10-11
+
+The user requested a more integrated appearance. See [visual refinement](../../../docs/design/DESIGN_TOC_VISUAL_REFINEMENT.md): same-surface docked navigation, fading separator, quiet current-heading indicator and circular close control. Existing layout/navigation contracts remain in effect.
