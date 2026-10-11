@@ -125,6 +125,7 @@ struct MarkdownWebView: NSViewRepresentable {
         private var lastKnownFileModificationDate: Date?
         private var lastViewMode: ViewMode = .preview
         private var lastAppearanceMode: AppearanceMode = .light
+        private var contentState = DocumentContentState()
         private var lastRenderedFeatures: RenderFeatureConfiguration?
         private var lastBaseFontSize: Double = 16
         private var lastEnableMermaid: Bool = true
@@ -376,6 +377,7 @@ struct MarkdownWebView: NSViewRepresentable {
 
         func render(webView: WKWebView, content: String, fileURL: URL?, viewMode: ViewMode, appearanceMode: AppearanceMode, baseFontSize: Double, enableMermaid: Bool, enableKatex: Bool, enableEmoji: Bool, enableTypst: Bool, codeHighlightTheme: String, collapseBlockquotesByDefault: Bool, showLineNumbers: Bool = false) {
             print("🟢 Coordinator.render called with viewMode=\(viewMode)")
+            let content = contentState.resolve(modelText: content, fileURL: fileURL)
             lastAppearanceMode = appearanceMode
             lastBaseFontSize = baseFontSize
             lastEnableMermaid = enableMermaid
@@ -824,6 +826,7 @@ struct MarkdownWebView: NSViewRepresentable {
                     self.fileReadInFlight = false
                     do {
                         let (newContent, attrs) = try result.get()
+                        self.contentState.receivedDiskText(newContent, for: url)
                         self.lastKnownFileSize = attrs[.size] as? UInt64 ?? 0
                         self.lastKnownFileModificationDate = attrs[.modificationDate] as? Date
                         guard let webView = self.currentWebView else { completion?(false); return }
