@@ -23,3 +23,10 @@ Evidence is retained under build/e2e-20261011 (local artifacts). Results will be
 - Expanded real-WebKit integration to search/refresh, outline/source positions, RTL, theme/font/zoom, help, QuickLook Typst and clean HTML export. The first help check used the wrong class selector; corrected it to the actual help-overlay ID (no product change).
 
 The corrected signed local Release was opened by its exact path. A further disk edit added Alpha final refresh; native source and preview accessibility snapshots both retain it. All 16 production-WebKit cases pass and 297 native tests pass locally. Final-payload checks follow below.
+
+## PDF visual release blocker
+
+The mixed-diagram PDF was rendered page by page. Native Typst glyphs were effectively absent and Graphviz node labels were invisible. The sanitized Typst SVG lacked use elements (only glyph defs/selection text survived); its embedded global svg { fill: none } rule affected subsequent diagrams. Candidate v1.35.537 is not approved for publication. Cancel its in-progress remote build and prepare a new immutable version after fixing and visually verifying this regression.
+
+
+The SVG fix now retains only fragment-local use references, removes Typst's global styles/selection overlay in an inert HTML template, and applies scoped glyph styling. Rendering Typst as a standalone block also avoids code-block backgrounds. A sum formula exposed non-XML selection metadata, so the implementation deliberately avoids strict XML parsing. Actual PDF pages now show the Typst sum, Graphviz a/b labels, Mermaid and Vega together; native math dimensions track the surrounding font. Renderer regressions and strengthened real-WebKit checks cover these failures.

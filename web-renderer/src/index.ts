@@ -1029,7 +1029,15 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
                         try {
                             const rendered = await renderTypstBlock(decodedSource, context);
                             if (!isCurrent()) return;
-                            placeholder.innerHTML = sanitizeDiagramHTML(rendered);
+                            const block = document.createElement('div');
+                            block.innerHTML = sanitizeDiagramHTML(rendered);
+                            const fence = placeholder.closest('pre');
+                            if (fence) {
+                                copySourceRange(fence, block);
+                                fence.replaceWith(block);
+                            } else {
+                                placeholder.replaceWith(block);
+                            }
                         } catch (err) {
                             logToSwift(`JS Typst render error: ${err}`);
                             placeholder.innerHTML = `<div class="typst-math-block typst-error">
