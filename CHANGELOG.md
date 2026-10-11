@@ -1,5 +1,16 @@
 ## [Unreleased]
-_无待发布的变更_
+
+### Fixed
+- **Document safety**: Prevent scripts and unsafe links embedded in Markdown HTML or generated diagrams from executing, while preserving passive HTML, task lists and formulas.
+- **Live previews**: Keep the latest document when asynchronous rendering finishes out of order. Preserve external file updates when switching source/preview or changing display settings, and keep search results synchronized.
+- **Math and diagrams**: Restore native Typst rendering with bundled offline WASM and fonts; fix Emoji rendering after KaTeX is disabled.
+- **Exports**: Wait for diagrams, fonts and images before exporting. Report missing resources and timeouts instead of silently creating incomplete output.
+- **Local files**: Preserve valid UTF-8 when truncating large QuickLook previews; load file changes asynchronously and enforce consistent local-image limits.
+
+### Changed
+- **Rendering**: Reuse one Markdown parse for the contents outline and rendered document; load Mermaid only when needed.
+- **Dependencies**: Update runtime and test dependencies to resolve all reported npm audit findings at release verification.
+- **Offline resources**: Native Typst fonts and WASM are now included in the app, increasing download/install size. QuickLook retains its lightweight math path.
 
 ## [1.35.525] - 2026-10-10
 
