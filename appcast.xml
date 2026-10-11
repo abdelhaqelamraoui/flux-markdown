@@ -7,6 +7,23 @@
         <language>zh-CN</language>
 
         <item>
+            <title>Version 1.35.539</title>
+            <link>https://github.com/xykong/flux-markdown/releases/tag/v1.35.539</link>
+            <sparkle:version>539</sparkle:version>
+            <sparkle:shortVersionString>1.35.539</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+            <pubDate>Sun, 11 Oct 2026 02:09:00 +0000</pubDate>
+            <enclosure
+                url="https://github.com/xykong/flux-markdown/releases/download/v1.35.539/FluxMarkdown.dmg"
+                sparkle:edSignature="ot8vQI2Ne+cSvXNg+FJSrr/Dtz8AqLKfdYheUC/HwfQLbxp1kGxgL7Jvx1u+Bn5GTfpbCEVpuDMh8iO50+XqAQ=="
+                length="36613922"
+                type="application/octet-stream" />
+            <description><![CDATA[
+                <h2>更新内容</h2><h3>Fixed</h3><ul><li><strong>Document safety</strong>: Prevent scripts and unsafe links embedded in Markdown HTML or generated diagrams from executing, while preserving passive HTML, task lists and formulas.</li><li><strong>Live previews</strong>: Keep the latest document when asynchronous rendering finishes out of order. Preserve external file updates when switching source/preview or changing display settings, and keep search results synchronized.</li><li><strong>Mixed-diagram output</strong>: Preserve native Typst SVG glyphs and prevent its styles from hiding Graphviz labels; show rendered Typst formulas outside code-block containers.</li><li><strong>Math and diagrams</strong>: Restore native Typst rendering with bundled offline WASM and fonts; fix Emoji rendering after KaTeX is disabled.</li><li><strong>Exports</strong>: Wait for diagrams, fonts and images before exporting. Report missing resources and timeouts instead of silently creating incomplete output.</li><li><strong>Local files</strong>: Preserve valid UTF-8 when truncating large QuickLook previews; load file changes asynchronously and enforce consistent local-image limits.</li></ul><h3>Changed</h3><ul><li><strong>Rendering</strong>: Reuse one Markdown parse for the contents outline and rendered document; load Mermaid only when needed.</li><li><strong>Dependencies</strong>: Update runtime and test dependencies to resolve all reported npm audit findings at release verification.</li><li><strong>Offline resources</strong>: Native Typst fonts and WASM are now included in the app, increasing download/install size. QuickLook retains its lightweight math path.</li></ul><p><a href="https://github.com/xykong/flux-markdown/releases/tag/v1.35.539">查看完整更新日志</a></p>
+            ]]></description>
+        </item>
+        
+        <item>
             <title>Version 1.35.525</title>
             <link>https://github.com/xykong/flux-markdown/releases/tag/v1.35.525</link>
             <sparkle:version>525</sparkle:version>
