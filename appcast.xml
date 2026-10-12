@@ -7,6 +7,23 @@
         <language>zh-CN</language>
 
         <item>
+            <title>Version 1.36.556</title>
+            <link>https://github.com/xykong/flux-markdown/releases/tag/v1.36.556</link>
+            <sparkle:version>556</sparkle:version>
+            <sparkle:shortVersionString>1.36.556</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+            <pubDate>Mon, 12 Oct 2026 13:31:33 +0000</pubDate>
+            <enclosure
+                url="https://github.com/xykong/flux-markdown/releases/download/v1.36.556/FluxMarkdown.dmg"
+                sparkle:edSignature="hu1PmNe+X3dpse5+BYQLeUQRMCQhubm40MaznHxCo1QnGxtQeSIYb223TnziW+vTyL+FJYqW0CudprBC9tmKBA=="
+                length="36738769"
+                type="application/octet-stream" />
+            <description><![CDATA[
+                <h2>更新内容</h2><h3>Added</h3><ul><li><strong>Star reminders</strong>: Offer an optional, nonmodal support invitation after seven days and three active reading dates. Retry after 14 days, then every 30 days while enabled; preserve cooldowns across upgrades, stop after a successful support link handoff or opt-out, and provide a settings switch. QuickLook remains free of proactive prompts.</li><li><strong>Project support</strong>: Add localized GitHub Star links to the welcome page, Help menu and App/QuickLook feature guide. Open the repository in the default browser, including a trusted fixed-target launcher for QuickLook.</li></ul><p><a href="https://github.com/xykong/flux-markdown/releases/tag/v1.36.556">查看完整更新日志</a></p>
+            ]]></description>
+        </item>
+        
+        <item>
             <title>Version 1.35.547</title>
             <link>https://github.com/xykong/flux-markdown/releases/tag/v1.35.547</link>
             <sparkle:version>547</sparkle:version>
