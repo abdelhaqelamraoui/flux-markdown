@@ -5,8 +5,8 @@ The user requests a design for proactive recurring invitations to support the pr
 
 ## What Changes
 - Propose a localized, nonmodal main-app reminder after seven days and three active reading dates.
-- Retry after 14 and then 30 days, capped at three displays per user-enabled cycle.
-- Stop after a successful main-app support link handoff, self-reported star, opt-out or exhaustion; provide a settings switch.
+- Retry after 14 days, then recur at intervals of at least 30 days with no total display limit until a stop condition is met.
+- Stop after a successful main-app support link handoff, self-reported star or opt-out; provide a settings switch.
 - Keep QuickLook free of proactive prompts in the first iteration.
 
 ## Impact
