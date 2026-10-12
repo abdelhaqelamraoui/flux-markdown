@@ -28,6 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        _ = StarReminderStore.shared
         preferenceObservationTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
             AppearancePreference.shared.observePreferenceChanges()
         }
@@ -231,6 +232,7 @@ private struct DocumentPreviewScene: View {
     let file: FileDocumentConfiguration<MarkdownDocument>
     @ObservedObject var preference: AppearancePreference
     @Binding var viewMode: ViewMode
+    @StateObject private var starReminder = StarReminderSession()
     @State private var toolbarToast: ToolbarToastState?
     @State private var nativeToolbarTrailingInset: CGFloat = 10
 
@@ -248,6 +250,7 @@ private struct DocumentPreviewScene: View {
     }
 
     var body: some View {
+        VStack(spacing: 0) {
         ZStack(alignment: .topTrailing) {
             MarkdownWebView(
                 content: file.document.text,
@@ -262,7 +265,8 @@ private struct DocumentPreviewScene: View {
                 codeHighlightTheme: preference.codeHighlightTheme,
                 collapseBlockquotesByDefault: preference.collapseBlockquotesByDefault,
                 showLineNumbers: preference.showLineNumbers,
-                contentsSide: preference.contentsSide
+                contentsSide: preference.contentsSide,
+                starReminder: starReminder
             )
 
             if let version = DisplayVersion.text(in: .main) {
@@ -352,6 +356,10 @@ private struct DocumentPreviewScene: View {
                 .allowsHitTesting(false)
                 .zIndex(3)
         }
+        StarReminderCard(session: starReminder)
+            .preferredColorScheme(preference.currentMode == .system ? nil : (preference.currentMode == .dark ? .dark : .light))
+        }
+        .onDisappear { starReminder.invalidate() }
         .onReceive(NotificationCenter.default.publisher(for: ReadingToolbarLayout.notification)) { note in
             guard (note.object as? URL)?.standardizedFileURL == file.fileURL?.standardizedFileURL,
                   let inset = note.userInfo?["inset"] as? CGFloat else { return }

@@ -137,3 +137,11 @@
 "Star on GitHub" = "在 GitHub 点个 Star";
 "Open GitHub and click Star to support FluxMarkdown." = "打开 GitHub，点击 Star 支持 FluxMarkdown。";
 "Could not open GitHub" = "无法打开 GitHub";
+
+/* Optional GitHub support invitations */
+"Enjoying FluxMarkdown?" = "觉得 FluxMarkdown 好用吗？";
+"If FluxMarkdown makes reading easier, give it a Star on GitHub to support development." = "如果它帮你更方便地阅读 Markdown，欢迎在 GitHub 点个 Star，支持项目继续改进。";
+"Remind Me Later" = "以后再说";
+"Don't Remind Me" = "不再提醒";
+"I've Already Starred" = "我已 Star";
+"Invite me to support the project on GitHub" = "邀请我在 GitHub 支持项目";

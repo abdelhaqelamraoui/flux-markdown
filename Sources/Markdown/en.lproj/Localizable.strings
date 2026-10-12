@@ -137,3 +137,11 @@
 "Star on GitHub" = "Star on GitHub";
 "Open GitHub and click Star to support FluxMarkdown." = "Open GitHub and click Star to support FluxMarkdown.";
 "Could not open GitHub" = "Could not open GitHub";
+
+/* Optional GitHub support invitations */
+"Enjoying FluxMarkdown?" = "Enjoying FluxMarkdown?";
+"If FluxMarkdown makes reading easier, give it a Star on GitHub to support development." = "If FluxMarkdown makes reading easier, give it a Star on GitHub to support development.";
+"Remind Me Later" = "Remind Me Later";
+"Don't Remind Me" = "Don't Remind Me";
+"I've Already Starred" = "I've Already Starred";
+"Invite me to support the project on GitHub" = "Invite me to support the project on GitHub";
