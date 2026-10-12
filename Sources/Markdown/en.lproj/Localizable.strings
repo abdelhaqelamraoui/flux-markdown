@@ -132,3 +132,8 @@
 "Right" = "Right";
 
 "Keep contents and its button on the same side" = "Keep contents and its button on the same side";
+
+/* GitHub project support */
+"Star on GitHub" = "Star on GitHub";
+"Open GitHub and click Star to support FluxMarkdown." = "Open GitHub and click Star to support FluxMarkdown.";
+"Could not open GitHub" = "Could not open GitHub";

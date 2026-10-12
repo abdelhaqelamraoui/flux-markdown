@@ -1513,6 +1513,18 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
     
     private func handleLinkClick(href: String) {
+        if href == GitHubStar.repository.absoluteString {
+            SearchLaunchClient.openGitHubRepository { [weak self] success in
+                guard let self else { return }
+                os_log("GitHub repository browser handoff: %{public}@", log: self.logger,
+                       type: .default, success ? "SUCCESS" : "FAILED")
+                if !success {
+                    self.showToast(message: NSLocalizedString("Could not open GitHub", comment: "GitHub support browser error"),
+                                   hint: GitHubStar.repository.absoluteString, iconName: "info.circle.fill")
+                }
+            }
+            return
+        }
         if href.starts(with: "http://") || href.starts(with: "https://") {
             if let url = URL(string: href) {
                 os_log("🔵 Opening external URL: %{public}@", log: logger, type: .default, href)

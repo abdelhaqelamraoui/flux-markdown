@@ -22,6 +22,8 @@ interface I18n {
     toastText: string;
     closeLabel: string;
     cmdHoldCheckboxLabel: string;
+    starLabel: string;
+    starHint: string;
     groups: {
         searchNav: { title: string; items: string[] };
         zoom: { title: string; items: string[] };
@@ -33,6 +35,8 @@ interface I18n {
 
 const STRINGS: Record<Lang, I18n> = {
     zh: {
+        starLabel: "在 GitHub 点个 Star",
+        starHint: "打开 GitHub，点击 Star 支持 FluxMarkdown。",
         title: '⌨️ FluxMarkdown 功能指南',
         contextBadgeQL: 'QuickLook 预览',
         contextBadgeApp: 'FluxMarkdown App',
@@ -67,6 +71,8 @@ const STRINGS: Record<Lang, I18n> = {
         },
     },
     en: {
+        starLabel: "Star on GitHub",
+        starHint: "Open GitHub and click Star to support FluxMarkdown.",
         title: '⌨️ FluxMarkdown Feature Guide',
         contextBadgeQL: 'QuickLook Preview',
         contextBadgeApp: 'FluxMarkdown App',
@@ -101,6 +107,8 @@ const STRINGS: Record<Lang, I18n> = {
         },
     },
     de: {
+        starLabel: "Stern auf GitHub geben",
+        starHint: "GitHub öffnen und FluxMarkdown mit einem Stern unterstützen.",
         title: '⌨️ FluxMarkdown Funktionsübersicht',
         contextBadgeQL: 'QuickLook-Vorschau',
         contextBadgeApp: 'FluxMarkdown-App',
@@ -135,6 +143,8 @@ const STRINGS: Record<Lang, I18n> = {
         },
     },
     fr: {
+        starLabel: "Soutenir sur GitHub",
+        starHint: "Ouvrez GitHub et cliquez sur Star pour soutenir FluxMarkdown.",
         title: '⌨️ Guide des fonctionnalités de FluxMarkdown',
         contextBadgeQL: 'Aperçu Coup d’œil',
         contextBadgeApp: 'FluxMarkdown App',
@@ -354,6 +364,9 @@ export class HelpOverlay {
                 <div class="help-footer">
                     ${footerText}
                     ${cmdHoldCheckbox}
+                    <a class="help-github-star" href="https://github.com/xykong/flux-markdown" title="${s.starHint}">
+                        <span aria-hidden="true">☆</span> ${s.starLabel}
+                    </a>
                 </div>
             </div>
         `;

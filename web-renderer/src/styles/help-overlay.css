@@ -449,3 +449,14 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* User-initiated support link, using the same palette as the reading controls. */
+.help-github-star {
+    align-self: center; display: inline-flex; align-items: center; gap: 6px;
+    min-height: 30px; padding: 3px 10px; box-sizing: border-box; border-radius: 15px;
+    color: var(--reading-link, #0969da); background: var(--toc-hover, rgba(31,35,40,.045));
+    font: 500 12px/1.5 -apple-system, BlinkMacSystemFont, sans-serif; text-decoration: none;
+}
+.help-github-star:hover { background: var(--toc-active, rgba(9,105,218,.065)); }
+.help-github-star:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.help-github-star > span { font-size: 17px; }

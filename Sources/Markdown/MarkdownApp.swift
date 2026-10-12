@@ -167,6 +167,10 @@ struct MarkdownApp: App {
                 
                 Divider()
                 
+                Button(action: GitHubStar.showRepository) {
+                    Label(NSLocalizedString("Star on GitHub", comment: "Support project"), systemImage: "star")
+                }
+
                 Button(NSLocalizedString("Release Notes", comment: "Release notes menu item")) {
                     if let url = URL(string: "https://github.com/xykong/flux-markdown/releases") {
                         NSWorkspace.shared.open(url)
