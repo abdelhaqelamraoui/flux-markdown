@@ -23,6 +23,7 @@ struct MarkdownWebView: NSViewRepresentable {
     var collapseBlockquotesByDefault: Bool = false
     var showLineNumbers: Bool = true
     var contentsSide: ContentsSidebarSide = .right
+    var starReminder: StarReminderSession? = nil
     
     private let localSchemeHandler = LocalSchemeHandler()
     
@@ -103,12 +104,15 @@ struct MarkdownWebView: NSViewRepresentable {
             webView.appearance = nil
         }
 
+        context.coordinator.starReminder = starReminder
+        starReminder?.attach(webView, url: fileURL, preview: viewMode == .preview)
         context.coordinator.updateContentsSide(webView: webView, side: contentsSide)
         context.coordinator.render(webView: webView, content: content, fileURL: fileURL, viewMode: viewMode, appearanceMode: appearanceMode, baseFontSize: baseFontSize, enableMermaid: enableMermaid, enableKatex: enableKatex, enableEmoji: enableEmoji, enableTypst: enableTypst, codeHighlightTheme: codeHighlightTheme, collapseBlockquotesByDefault: collapseBlockquotesByDefault, showLineNumbers: showLineNumbers)
     }
 
     class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         let logger = OSLog(subsystem: "com.markdownquicklook.app", category: "MarkdownWebView")
+        weak var starReminder: StarReminderSession?
         var isWebViewLoaded = false
         var pendingRender: (() -> Void)?
         weak var currentWebView: WKWebView?
@@ -314,6 +318,7 @@ struct MarkdownWebView: NSViewRepresentable {
             guard let webView = currentWebView,
                   let win = webView.window,
                   win.isKeyWindow || win.windowController?.document === NSDocumentController.shared.currentDocument else { return }
+            starReminder?.cancelOpportunity()
             exportHTML(webView: webView) { [weak self] htmlString in
                 DispatchQueue.main.async {
                     guard let htmlString = htmlString else {
@@ -341,6 +346,7 @@ struct MarkdownWebView: NSViewRepresentable {
                   let win = webView.window,
                   win.isKeyWindow || win.windowController?.document === NSDocumentController.shared.currentDocument else { return }
 
+            starReminder?.cancelOpportunity()
             let effectiveFontSize = AppearancePreference.shared.baseFontSize * webView.pageZoom
 
             let panel = NSSavePanel()
@@ -528,6 +534,7 @@ struct MarkdownWebView: NSViewRepresentable {
             navigationRenderVersion += 1
             let generation = navigationRenderVersion
             renderingPositionContent = true
+            starReminder?.rendering()
             webView.callAsyncJavaScript("return " + js, arguments: [:], in: nil, in: .page) { [weak self] result in
                 guard let self, generation == self.navigationRenderVersion,
                       self.currentFileURL == fileURL else { return }
@@ -537,6 +544,7 @@ struct MarkdownWebView: NSViewRepresentable {
                     os_log("JS render failed: %{public}@", log: self.logger, type: .error, error.localizedDescription)
                     return
                 }
+                self.starReminder?.rendered()
                 if let fileURL { self.applyPendingPosition(in: webView, for: fileURL) }
             }
         }
@@ -860,6 +868,10 @@ struct MarkdownWebView: NSViewRepresentable {
         }
 
         private func handleLinkClick(href: String) {
+            if href == GitHubStar.repository.absoluteString {
+                GitHubStar.showRepository()
+                return
+            }
             if href.starts(with: "http://") || href.starts(with: "https://") {
                 if let url = URL(string: href) {
                     os_log("🔵 Opening external URL: %{public}@", log: logger, type: .default, href)

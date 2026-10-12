@@ -126,6 +126,8 @@ struct AppearanceSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            StarReminderSetting()
+            Divider()
             SettingsSectionHeader(
                 title: NSLocalizedString("Theme", comment: "Theme section title"),
                 description: NSLocalizedString("Choose your preferred interface style", comment: "Theme section description")

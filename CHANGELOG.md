@@ -1,5 +1,6 @@
 ## [Unreleased]
 ### Added
+- **Star reminders**: Offer an optional, nonmodal support invitation after seven days and three active reading dates. Retry after 14 days, then every 30 days while enabled; preserve cooldowns across upgrades, stop after a successful support link handoff or opt-out, and provide a settings switch. QuickLook remains free of proactive prompts.
 - **Project support**: Add localized GitHub Star links to the welcome page, Help menu and App/QuickLook feature guide. Open the repository in the default browser, including a trusted fixed-target launcher for QuickLook.
 
 ## [1.35.547] - 2026-10-12
