@@ -1,4 +1,7 @@
 ## [Unreleased]
+_无待发布的变更_
+
+## [1.35.547] - 2026-10-12
 
 ### Changed
 - **Contents appearance**: Blend docked navigation into the reading surface with a fading separator, quieter chapter highlights and circular controls; soften the narrow-window panel edges.
