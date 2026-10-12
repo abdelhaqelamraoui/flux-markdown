@@ -25,3 +25,14 @@
 ## 本机安装验证
 
 2026-10-11 已将包含此样式的本机预览版 `1.35.539-dev-20261011-221017` 安装到 /Applications/FluxMarkdown.app，并重启旧的 App/QuickLook 进程。App 和扩展均带相同预览版标识；安装资源与新构建的 CSS 字节一致，实际窗口截图确认透明目录背景和渐淡分隔线已生效。默认编辑器快照保持一致。构建使用本机 Xcode 27 的显式 macOS 12 诊断目标；正式发布仍为 1.35.539。安装证据位于 build/toc-local-install。
+
+
+## 正式发布 2026-10-12
+
+目录视觉改进已在 [v1.35.547](https://github.com/xykong/flux-markdown/releases/tag/v1.35.547) 发布。远程构建 38232300668 使用 Xcode 16.4，验证 macOS 11 目标、arm64/x86_64、签名与权限；355 个前端用例、16 项真实 WebKit 检查通过，297 个原生用例零失败（CI 缺少相邻 tap 仓库的一项环境检查跳过）。最终包的目录 CSS 与已验收预览版逐字节一致。
+
+GitHub 的 DMG 和源码附件摘要与本地产物一致，公开 Sparkle feed 的版本、URL、长度和签名匹配；Homebrew tap 提交 7f146a8 更新了正式 cask 与官方草稿。本机真实 Homebrew 升级 1.35.539 → 1.35.547 成功，App/扩展均无开发版标识，默认编辑器快照不变，原生窗口已读回 v1.35.547。发布恢复流程也已成功完成。
+
+- DMG SHA256：a74e526f40e91a2e3768e4d4f2a97a96e728ffba90ffb9f327a3e6f1161d40d4
+- 源码 SHA256：9c7c4b3d098fbecce7df10a619055666e2e320e0396c2a5fa7f893a9abacec94
+- 本机证据：build/release-toc-20261012。
