@@ -132,3 +132,8 @@
 "Right" = "右侧";
 
 "Keep contents and its button on the same side" = "目录与按钮始终保持同侧";
+
+/* GitHub project support */
+"Star on GitHub" = "在 GitHub 点个 Star";
+"Open GitHub and click Star to support FluxMarkdown." = "打开 GitHub，点击 Star 支持 FluxMarkdown。";
+"Could not open GitHub" = "无法打开 GitHub";

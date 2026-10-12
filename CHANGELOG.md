@@ -1,5 +1,6 @@
 ## [Unreleased]
-_无待发布的变更_
+### Added
+- **Project support**: Add localized GitHub Star links to the welcome page, Help menu and App/QuickLook feature guide. Open the repository in the default browser, including a trusted fixed-target launcher for QuickLook.
 
 ## [1.35.547] - 2026-10-12
 
@@ -587,10 +588,12 @@ _无待发布的变更_
   - 同步更新中英文 README（README.md 和 README_ZH.md）
 
 ## [1.13.158] - 2026-02-16
-_无待发布的变更_
+### Added
+- **Project support**: Add localized GitHub Star links to the welcome page, Help menu and App/QuickLook feature guide. Open the repository in the default browser, including a trusted fixed-target launcher for QuickLook.
 
 ## [1.13.156] - 2026-02-16
-_无待发布的变更_
+### Added
+- **Project support**: Add localized GitHub Star links to the welcome page, Help menu and App/QuickLook feature guide. Open the repository in the default browser, including a trusted fixed-target launcher for QuickLook.
 
 ## [1.13.150] - 2026-02-13
 

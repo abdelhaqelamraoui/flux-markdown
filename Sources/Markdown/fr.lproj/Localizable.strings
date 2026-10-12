@@ -132,3 +132,8 @@
 "Right" = "Droite";
 
 "Keep contents and its button on the same side" = "Placer le sommaire et son bouton du même côté";
+
+/* GitHub project support */
+"Star on GitHub" = "Soutenir sur GitHub";
+"Open GitHub and click Star to support FluxMarkdown." = "Ouvrez GitHub et cliquez sur Star pour soutenir FluxMarkdown.";
+"Could not open GitHub" = "Impossible d’ouvrir GitHub";

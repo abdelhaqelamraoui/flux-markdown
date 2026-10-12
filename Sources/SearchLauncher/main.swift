@@ -28,6 +28,12 @@ private func trustedPreview(_ connection: NSXPCConnection) -> Bool {
 }
 
 private final class Launcher: NSObject, SearchLaunchServing {
+    func openGitHubRepository(reply: @escaping (Bool) -> Void) {
+        DispatchQueue.main.async {
+            reply(NSWorkspace.shared.open(URL(string: "https://github.com/xykong/flux-markdown")!))
+        }
+    }
+
     func openDocumentSearch(_ value: String, reply: @escaping (Bool) -> Void) {
         guard SearchLaunchPolicy.request(value) != nil, let url = URL(string: value),
               Bundle(url: appURL)?.bundleIdentifier == "com.xykong.Markdown" else { reply(false); return }

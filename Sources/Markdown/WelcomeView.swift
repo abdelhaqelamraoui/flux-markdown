@@ -162,6 +162,13 @@ struct WelcomeView: View {
                 .foregroundColor(.accentColor)
 
                 Spacer()
+
+                Button(action: GitHubStar.showRepository) {
+                    Label(NSLocalizedString("Star on GitHub", comment: "Support project"), systemImage: "star")
+                }
+                .buttonStyle(BorderlessButtonStyle())
+                .foregroundColor(.accentColor)
+                .help(NSLocalizedString("Open GitHub and click Star to support FluxMarkdown.", comment: "GitHub star hint"))
             }
             .font(.system(size: 12, weight: .semibold))
         }
