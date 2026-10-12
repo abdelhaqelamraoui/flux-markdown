@@ -7,6 +7,23 @@
         <language>zh-CN</language>
 
         <item>
+            <title>Version 1.35.547</title>
+            <link>https://github.com/xykong/flux-markdown/releases/tag/v1.35.547</link>
+            <sparkle:version>547</sparkle:version>
+            <sparkle:shortVersionString>1.35.547</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+            <pubDate>Mon, 12 Oct 2026 09:54:59 +0000</pubDate>
+            <enclosure
+                url="https://github.com/xykong/flux-markdown/releases/download/v1.35.547/FluxMarkdown.dmg"
+                sparkle:edSignature="A2uV+LULdxuLmNzYoaOut31wM/JgY2tX90bjGYhqP/M210HkUWVIJmqevmBpuvz4+DyIYFp6JSW04I2FLLukDw=="
+                length="36615334"
+                type="application/octet-stream" />
+            <description><![CDATA[
+                <h2>更新内容</h2><h3>Changed</h3><ul><li><strong>Contents appearance</strong>: Blend docked navigation into the reading surface with a fading separator, quieter chapter highlights and circular controls; soften the narrow-window panel edges.</li></ul><p><a href="https://github.com/xykong/flux-markdown/releases/tag/v1.35.547">查看完整更新日志</a></p>
+            ]]></description>
+        </item>
+        
+        <item>
             <title>Version 1.35.539</title>
             <link>https://github.com/xykong/flux-markdown/releases/tag/v1.35.539</link>
             <sparkle:version>539</sparkle:version>
