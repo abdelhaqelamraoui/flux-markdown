@@ -33,5 +33,5 @@
 - 渲染器入口、现有帮助面板回归共 22 项通过；原生 GitHubStar 和 SearchLaunchPolicy 共 4 项通过。TypeScript/Vite 构建和本地 Release 构建成功。
 - 欢迎页、App 功能指南、Finder QuickLook 功能指南均已实机点击并确认默认浏览器的地址为官方仓库。QuickLook 修正后日志 `GitHub repository browser handoff: SUCCESS`（2026-10-12 20:37:50）。
 - 欢迎页及深浅主题功能指南截图确认按钮完整可见，无正文遮挡。
-- 安装预览版 `1.35.547-dev-20261012-203651` 到 `/Applications/FluxMarkdown.app`，安装脚本确认默认编辑器偏好保留。本次没有发布正式版本、没有修改 GitHub Star 状态。
+- 安装预览版 `1.35.547-dev-20261012-203651` 到 `/Applications/FluxMarkdown.app`，安装脚本确认默认编辑器偏好保留。实现验收时没有发布正式版本、没有修改 GitHub Star 状态。后续已随 1.36.556 发布，详见 [发布验证记录](../release/RELEASE_1.36.556.md)。
 - 本机 Xcode 27 验证使用 macOS 12 deployment override；项目声明的 macOS 11 最低版本未改。
