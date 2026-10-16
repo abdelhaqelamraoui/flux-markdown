@@ -1,5 +1,6 @@
 ## [Unreleased]
-_无待发布的变更_
+### Fixed
+- **Reading width**: Let Markdown and wide tables use the full available window width in App and QuickLook, with modest margins and space reserved only for the open contents sidebar.
 
 ## [1.36.556] - 2026-10-12
 ### Added
