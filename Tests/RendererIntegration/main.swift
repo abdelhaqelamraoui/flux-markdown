@@ -24,6 +24,32 @@ final class RendererIntegration: NSObject, WKScriptMessageHandler {
         ("help controls", "window.showHelp();const open=!!document.querySelector('#help-overlay');window.hideHelp();return open;"),
         ("QuickLook Typst path", "await window.renderMarkdown('```typst\\na/b\\n```',{context:'quicklook'});return !!document.querySelector('.typst-transpiled .katex');"),
         ("export excludes application controls", "await window.renderMarkdown('# Export\\n\\n**Bold**',{context:'app',theme:'light'});const html=window.exportHTML();return html.includes('<strong>Bold</strong>')&&!html.includes('id=\"reading-controls\"')&&!html.includes('id=\"toc-container\"');"),
+        ("wide reading layout", """
+        for (const context of ['app','quicklook']) {
+          const cols = Array.from({length:16},(_,i)=>'Column_'+i+'_'+ 'LongValue'.repeat(10)).join('|');
+          await window.renderMarkdown('# Width\\n\\nParagraph fills available space.\\n\\n|'+cols+'|\\n|'+Array(16).fill('---').join('|')+'|\\n|'+cols+'|',{context});
+          for (const docked of [false,true]) {
+            document.documentElement.dataset.tocDocked=String(docked);
+            const layout=document.getElementById('reading-layout');
+            const root=document.getElementById('markdown-preview');
+            const available=layout.clientWidth-(docked?264:0);
+            const paragraph=root.querySelector('p'); const table=root.querySelector('table');
+            const style=getComputedStyle(root); const insets=parseFloat(style.paddingLeft)+parseFloat(style.paddingRight)+parseFloat(style.borderLeftWidth)+parseFloat(style.borderRightWidth);
+            if(Math.abs(root.getBoundingClientRect().width-available)>2 || insets>100 || paragraph.getBoundingClientRect().width<available-insets-2 || table.clientWidth<available-insets-2 || table.scrollWidth<=table.clientWidth) throw new Error(JSON.stringify({context,docked,available,root:root.getBoundingClientRect().width,paragraph:paragraph.getBoundingClientRect().width,table:table.clientWidth,scroll:table.scrollWidth,viewport:window.innerWidth,padding:getComputedStyle(root).padding,box:getComputedStyle(root).boxSizing,zoom:getComputedStyle(root).zoom}));
+            if(document.documentElement.scrollWidth>window.innerWidth+1) return false;
+          }
+        }
+        document.documentElement.dataset.tocDocked='false'; return true;
+        """),
+        ("narrow reading layout", """
+        for (const context of ['app','quicklook']) {
+          await window.renderMarkdown('# Narrow\\n\\nReading text.',{context});
+          document.documentElement.dataset.tocDocked='false';
+          const root=document.getElementById('markdown-preview');
+          if(Math.abs(root.getBoundingClientRect().width-document.getElementById('reading-layout').clientWidth)>2 || document.documentElement.scrollWidth>window.innerWidth+1) return false;
+        }
+        return true;
+        """),
     ]
     func run() {
         let config = WKWebViewConfiguration()
@@ -49,6 +75,8 @@ final class RendererIntegration: NSObject, WKScriptMessageHandler {
     private func next() {
         if index == cases.count { print("PASS all \(cases.count) real WebKit cases"); exit(0) }
         let (name, js) = cases[index]
+        if name == "wide reading layout" { webView.setFrameSize(NSSize(width: 1800, height: 900)) }
+        if name == "narrow reading layout" { webView.setFrameSize(NSSize(width: 600, height: 600)) }
         webView.callAsyncJavaScript(js, arguments: ["imageBase": CommandLine.arguments[2]], in: nil, in: .page) { result in
             switch result {
             case .success(let value) where value as? Bool == true:

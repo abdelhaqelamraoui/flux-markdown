@@ -51,7 +51,12 @@ html[data-reading-controls="true"] body, html[data-context="app"] body, html[dat
 .reading-tool-button:focus-visible, .toc-link:focus-visible { outline: 2px solid var(--reading-link); outline-offset: 2px; }
 .toc-toggle[aria-expanded="true"], .blockquote-collapse-toggle.active { background: var(--reading-active); color: var(--reading-link); }
 #reading-layout { min-width: 0; }
-#markdown-preview { min-width: 0; max-width: 980px; width: 100%; margin: 0 auto; padding-top: 16px; }
+#markdown-preview { min-width: 0; max-width: none; width: 100%; margin: 0; padding-top: 16px; }
+/* Keep source-mode spacing owned by source-view.css. */
+#markdown-preview:not(.source-mode) { padding-right: 20px; padding-left: 20px; }
+@media (max-width: 767px) { #markdown-preview:not(.source-mode) { padding-right: 15px; padding-left: 15px; } }
+/* Finder preview panes retain their compact spacing. */
+html[data-context="finder"] #markdown-preview:not(.source-mode) { padding: 8px; }
 #markdown-preview.source-mode { max-width: none; margin: 0; }
 html[data-toc-docked="true"] #reading-layout { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 24px; align-items: start; }
 #toc-container { display: none; color: var(--reading-text); }
