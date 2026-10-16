@@ -11,3 +11,7 @@ Regression checks use the production bundle in real WKWebView at 1800px and 600p
 The new wide-layout case failed against the previous bundle, then passed after removing the cap. All 18 production WebKit cases and 10 directory tests pass. The geometry checks cover App and QuickLook contexts at 1800px and 600px, open/closed sidebar space, full-width paragraphs and oversized tables with local overflow. Line-number gutters are included in the measured insets. TypeScript/Vite and native Release builds pass. Actual App inspection at 1800px confirms the text fills the column beside the directory. No arbitrary width preference was added.
 
 Horizontal padding is reduced to 20px (15px in narrow windows); source mode retains its own spacing and Finder compact mode retains 8px. Local preview installation preserves default editor preferences. This change has not been published as a formal release. Local Xcode 27 verification uses the documented macOS 12 override; the project minimum remains macOS 11.
+
+## Published
+
+Released and installed as 1.36.561 after user acceptance on 2026-10-16. See [release verification](../release/RELEASE_1.36.561.md).
