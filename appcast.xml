@@ -7,6 +7,23 @@
         <language>zh-CN</language>
 
         <item>
+            <title>Version 1.36.568</title>
+            <link>https://github.com/xykong/flux-markdown/releases/tag/v1.36.568</link>
+            <sparkle:version>568</sparkle:version>
+            <sparkle:shortVersionString>1.36.568</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+            <pubDate>Fri, 16 Oct 2026 08:59:20 +0000</pubDate>
+            <enclosure
+                url="https://github.com/xykong/flux-markdown/releases/download/v1.36.568/FluxMarkdown.dmg"
+                sparkle:edSignature="o9typv7L9jWnPJVOvY91N38ca6i8Pyh+ug8iI2FqZ3QTIi+vrMxeyyHL+XvTz5NVLBGSXuCwz/vYH58HoqnsCg=="
+                length="36799732"
+                type="application/octet-stream" />
+            <description><![CDATA[
+                <h2>更新内容</h2><h3>Fixed</h3><ul><li><strong>QuickLook local images</strong> (#59): Restore portable read-only access for referenced images in the user home folder; retain image limits and report actual read failures. Locations outside the home directory still depend on host/system permissions.</li><li><strong>Incomplete previews</strong>: Keep a persistent native notice when a document exceeds the 500 KiB QuickLook limit, even when truncation occurs inside a code block or image URI.</li></ul><h3>Added</h3><ul><li><strong>QuickLook troubleshooting</strong>: Add an actual preview self-test and registration diagnostics to issue reports; distinguish registration repair from verified rendering. The original fallback reports #49/#58 still require confirmation on affected systems.</li></ul><p><a href="https://github.com/xykong/flux-markdown/releases/tag/v1.36.568">查看完整更新日志</a></p>
+            ]]></description>
+        </item>
+        
+        <item>
             <title>Version 1.36.561</title>
             <link>https://github.com/xykong/flux-markdown/releases/tag/v1.36.561</link>
             <sparkle:version>561</sparkle:version>
