@@ -57,3 +57,7 @@ At the user's explicit request, added and verified optional AI prompts in Englis
 - #49: https://github.com/xykong/flux-markdown/issues/49#issuecomment-6211673017
 
 The replies distinguish diagnosis-only from voluntary developer/PR work, disclose token/quota/cost and non-developer difficulty, recommend small tool-enforced budgets, require evidence rather than guesses, and require reporter review before posting or pushing a PR. A manual report remains sufficient. Reusable copy is in docs/support/AI_ASSISTED_QUICKLOOK_REPORT.md. These comments do not establish that either fallback issue is fixed.
+
+## #59 published
+
+At user request, released 1.36.568, verified the formal package and actual Homebrew upgrade, and installed it locally. #59 received the `done` label and https://github.com/xykong/flux-markdown/issues/59#issuecomment-6211966535; it remains open. See docs/release/RELEASE_1.36.568.md for checks and limitations. #49/#58 are still awaiting affected-machine evidence; the self-test and diagnostics requested earlier are now available in the published build.
