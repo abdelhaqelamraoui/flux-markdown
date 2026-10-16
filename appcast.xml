@@ -7,6 +7,23 @@
         <language>zh-CN</language>
 
         <item>
+            <title>Version 1.36.573</title>
+            <link>https://github.com/xykong/flux-markdown/releases/tag/v1.36.573</link>
+            <sparkle:version>573</sparkle:version>
+            <sparkle:shortVersionString>1.36.573</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+            <pubDate>Fri, 16 Oct 2026 15:22:13 +0000</pubDate>
+            <enclosure
+                url="https://github.com/xykong/flux-markdown/releases/download/v1.36.573/FluxMarkdown.dmg"
+                sparkle:edSignature="EMKl5lxdEmhgSnAv/ZhLbX5NawYfDWoEOp6aQ6eN9Ko3Ed6eCO8RM4q4dvsnEhJVUM9u1llcLDK0I7SzbQjJBA=="
+                length="36806735"
+                type="application/octet-stream" />
+            <description><![CDATA[
+                <h2>更新内容</h2><h3>Fixed</h3><ul><li><strong>Window sizing</strong>: Preserve the current App window width and height when dragging a document between displays with different scaling or usable areas; only the window origin follows the drag.</li></ul><p><a href="https://github.com/xykong/flux-markdown/releases/tag/v1.36.573">查看完整更新日志</a></p>
+            ]]></description>
+        </item>
+        
+        <item>
             <title>Version 1.36.568</title>
             <link>https://github.com/xykong/flux-markdown/releases/tag/v1.36.568</link>
             <sparkle:version>568</sparkle:version>
