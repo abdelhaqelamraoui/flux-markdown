@@ -7,6 +7,23 @@
         <language>zh-CN</language>
 
         <item>
+            <title>Version 1.36.561</title>
+            <link>https://github.com/xykong/flux-markdown/releases/tag/v1.36.561</link>
+            <sparkle:version>561</sparkle:version>
+            <sparkle:shortVersionString>1.36.561</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+            <pubDate>Fri, 16 Oct 2026 07:42:03 +0000</pubDate>
+            <enclosure
+                url="https://github.com/xykong/flux-markdown/releases/download/v1.36.561/FluxMarkdown.dmg"
+                sparkle:edSignature="3UJHKcmP8ikGnXxdmkWcEb3xnp/i7wVtGUCgVItSmaZx1g1saaphafIn78pI/vof9+M5J5XSaLWbs7lGEqp8Dw=="
+                length="36740358"
+                type="application/octet-stream" />
+            <description><![CDATA[
+                <h2>更新内容</h2><h3>Fixed</h3><ul><li><strong>Reading width</strong>: Let Markdown and wide tables use the full available window width in App and QuickLook, with modest margins and space reserved only for the open contents sidebar.</li></ul><p><a href="https://github.com/xykong/flux-markdown/releases/tag/v1.36.561">查看完整更新日志</a></p>
+            ]]></description>
+        </item>
+        
+        <item>
             <title>Version 1.36.556</title>
             <link>https://github.com/xykong/flux-markdown/releases/tag/v1.36.556</link>
             <sparkle:version>556</sparkle:version>
