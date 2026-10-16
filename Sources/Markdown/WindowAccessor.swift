@@ -220,6 +220,32 @@ struct WindowAccessor: NSViewRepresentable {
         window.setFrame(frame, display: true)
     }
 
+    static func screenIdentifier(for screen: NSScreen?) -> UInt32? {
+        (screen?.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
+    }
+
+    /// Returns a frame that preserves the pre-move size when AppKit changes it
+    /// while crossing displays with different backing scales or visible areas.
+    /// The origin comes from the current drag position; only the size is restored.
+    static func framePreservingSizeAcrossScreens(
+        currentFrame: CGRect,
+        frameBeforeMove: CGRect?,
+        previousScreenID: UInt32?,
+        currentScreenID: UInt32?,
+        isLiveResize: Bool,
+        isFullScreen: Bool
+    ) -> CGRect? {
+        guard !isLiveResize, !isFullScreen,
+              let frameBeforeMove,
+              let previousScreenID, let currentScreenID,
+              previousScreenID != currentScreenID,
+              isFrameValidForRestore(frameBeforeMove),
+              !framesApproximatelyEqual(currentFrame, frameBeforeMove),
+              abs(currentFrame.width - frameBeforeMove.width) >= 0.5 ||
+              abs(currentFrame.height - frameBeforeMove.height) >= 0.5 else { return nil }
+        return CGRect(origin: currentFrame.origin, size: frameBeforeMove.size)
+    }
+
     static func shouldSaveFrame(for window: NSWindow, isFullScreenTransitionInProgress: Bool = false) -> Bool {
         guard !isFullScreenTransitionInProgress, !isInFullScreenContext(window) else { return false }
         return window.title.hasSuffix(".md") || window.representedURL != nil
@@ -260,6 +286,10 @@ struct WindowAccessor: NSViewRepresentable {
         var observers: [NSObjectProtocol] = []
         private var startupPhase: StartupPhase = .settled
         private var isFullScreenTransitionInProgress = false
+        private var lastScreenID: UInt32?
+        private var frameBeforeScreenMove: CGRect?
+        private var screenBeforeMoveID: UInt32?
+        private var isRestoringCrossScreenSize = false
         
         deinit {
             observers.forEach { NotificationCenter.default.removeObserver($0) }
@@ -268,6 +298,7 @@ struct WindowAccessor: NSViewRepresentable {
         func monitor(window: NSWindow, startupPhase: StartupPhase) {
             self.window = window
             self.startupPhase = startupPhase
+            self.lastScreenID = WindowAccessor.screenIdentifier(for: window.screen)
             
             // Clean up old observers
             observers.forEach { NotificationCenter.default.removeObserver($0) }
@@ -279,8 +310,16 @@ struct WindowAccessor: NSViewRepresentable {
                 MainActor.assumeIsolated { self?.saveFrame() }
             })
 
+            observers.append(center.addObserver(forName: NSWindow.willMoveNotification, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, !window.inLiveResize, !WindowAccessor.isInFullScreenContext(window) else { return }
+                    self.frameBeforeScreenMove = window.frame
+                    self.screenBeforeMoveID = self.lastScreenID ?? WindowAccessor.screenIdentifier(for: window.screen)
+                }
+            })
+
             observers.append(center.addObserver(forName: NSWindow.didMoveNotification, object: window, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.saveFrame() }
+                MainActor.assumeIsolated { self?.handleWindowMove(window) }
             })
 
             observers.append(center.addObserver(forName: NSWindow.willEnterFullScreenNotification, object: window, queue: .main) { [weak self] _ in
@@ -305,6 +344,29 @@ struct WindowAccessor: NSViewRepresentable {
             settleStartupPersistenceGate(after: 1.0)
         }
 
+        @MainActor
+        private func handleWindowMove(_ window: NSWindow) {
+            let currentScreenID = WindowAccessor.screenIdentifier(for: window.screen)
+            let previousScreenID = screenBeforeMoveID ?? lastScreenID
+            if let restored = WindowAccessor.framePreservingSizeAcrossScreens(
+                currentFrame: window.frame,
+                frameBeforeMove: frameBeforeScreenMove,
+                previousScreenID: previousScreenID,
+                currentScreenID: currentScreenID,
+                isLiveResize: window.inLiveResize,
+                isFullScreen: WindowAccessor.isInFullScreenContext(window)
+            ) {
+                isRestoringCrossScreenSize = true
+                window.setFrame(restored, display: true)
+                isRestoringCrossScreenSize = false
+                os_log("Preserved window size across screen change: %.0fx%.0f", log: WindowAccessor.logger, type: .debug, restored.width, restored.height)
+            }
+            lastScreenID = currentScreenID
+            frameBeforeScreenMove = nil
+            screenBeforeMoveID = nil
+            saveFrame()
+        }
+
         private func settleStartupPersistenceGate(after delay: TimeInterval) {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 MainActor.assumeIsolated { self?.startupPhase = .settled }
@@ -314,7 +376,8 @@ struct WindowAccessor: NSViewRepresentable {
         @MainActor
         private func saveFrame() {
             guard let window = window else { return }
-            guard WindowAccessor.shouldSaveFrame(
+            guard !isRestoringCrossScreenSize,
+                  WindowAccessor.shouldSaveFrame(
                 for: window,
                 isFullScreenTransitionInProgress: isFullScreenTransitionInProgress
             ) else { return }

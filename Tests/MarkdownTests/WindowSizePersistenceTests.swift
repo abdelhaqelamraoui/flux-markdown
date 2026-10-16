@@ -587,3 +587,32 @@ final class WindowSizePersistenceTests: XCTestCase {
         )
     }
 }
+
+extension WindowSizePersistenceTests {
+    func testCrossScreenMoveRestoresPreMoveSizeAndKeepsDraggedOrigin() {
+        let before = CGRect(x: 100, y: 100, width: 1200, height: 800)
+        let systemAdjusted = CGRect(x: 2100, y: 120, width: 600, height: 400)
+        let preserved = WindowAccessor.framePreservingSizeAcrossScreens(
+            currentFrame: systemAdjusted,
+            frameBeforeMove: before,
+            previousScreenID: 1,
+            currentScreenID: 2,
+            isLiveResize: false,
+            isFullScreen: false
+        )
+        XCTAssertEqual(preserved, CGRect(x: 2100, y: 120, width: 1200, height: 800))
+    }
+
+    func testCrossScreenPolicyDoesNotOverrideUserResizeOrSameScreenMove() {
+        let before = CGRect(x: 100, y: 100, width: 1200, height: 800)
+        XCTAssertNil(WindowAccessor.framePreservingSizeAcrossScreens(
+            currentFrame: CGRect(x: 200, y: 100, width: 900, height: 700), frameBeforeMove: before,
+            previousScreenID: 1, currentScreenID: 1, isLiveResize: false, isFullScreen: false))
+        XCTAssertNil(WindowAccessor.framePreservingSizeAcrossScreens(
+            currentFrame: CGRect(x: 200, y: 100, width: 900, height: 700), frameBeforeMove: before,
+            previousScreenID: 1, currentScreenID: 2, isLiveResize: true, isFullScreen: false))
+        XCTAssertNil(WindowAccessor.framePreservingSizeAcrossScreens(
+            currentFrame: CGRect(x: 200, y: 100, width: 900, height: 700), frameBeforeMove: before,
+            previousScreenID: 1, currentScreenID: 2, isLiveResize: false, isFullScreen: true))
+    }
+}
