@@ -39,3 +39,12 @@ Their original failing machines/state are not available. This system's working r
 - External-volume image permission failure was observed in an earlier acceptance build. After reinstall, the same mounted-volume file sometimes remained at Finder's icon/metadata preview despite a passing QLPreviewView self-test; cache reset did not resolve that particular fixture. This is a separate unresolved host-selection/access observation, not evidence that all Finder hosts are repaired. Home-folder Finder previews continue rendering. Retain this limitation in further investigation.
 - Existing default editor was preserved in the controlled disable → repair → rendered cycle. The extension was re-enabled after the negative test.
 - #59's home-folder regression is locally fixed. #58/#49 reporter root causes and universal external-volume support remain unconfirmed. Goal is not complete until affected-state evidence supports their resolution.
+
+## Reporter evidence requested
+
+The user authorized requesting help directly from the reporters. Posted and read back English diagnostic requests on 2026-10-16:
+
+- #58: https://github.com/xykong/flux-markdown/issues/58#issuecomment-6211497244
+- #49: https://github.com/xykong/flux-markdown/issues/49#issuecomment-6211497747
+
+Requests use checks available in the published version: exact OS/build, non-private fixture screenshot, extension registrations/versions, strict signature verification, file UTI and logs from one Finder attempt. They explicitly state that the new self-test is not published, that 1.36.561 is not a confirmed fallback fix, and that private paths should be redacted. No issues were closed or marked done. Await affected-state evidence before claiming #49/#58 resolved.
