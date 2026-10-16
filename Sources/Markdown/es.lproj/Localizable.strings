@@ -145,3 +145,11 @@
 "Don't Remind Me" = "No volver a recordar";
 "I've Already Starred" = "Ya le di una estrella";
 "Invite me to support the project on GitHub" = "Invitarme a apoyar el proyecto en GitHub";
+
+"Preview limited to 500 KiB. Use Open with FluxMarkdown above to read the complete document." = "Vista previa limitada a 500 KiB. Usa «Abrir con FluxMarkdown» arriba para leer el documento completo.";
+"Test Quick Look" = "Probar Quick Look";
+"Quick Look preview verified" = "Vista previa Quick Look verificada";
+"Quick Look preview not confirmed" = "Vista previa Quick Look sin confirmar";
+"The installed extension rendered the test document. Your default editor was preserved." = "La extensión instalada ha renderizado el documento de prueba. Se ha conservado el editor predeterminado.";
+"The test did not confirm a rendered preview. Include Quick Look diagnostics when reporting this issue." = "La prueba no confirmó la vista previa. Incluye el diagnóstico de Quick Look al informar del problema.";
+"Some local images could not be read. Use Open with FluxMarkdown above to view the document." = "No se pudieron leer algunas imágenes locales. Usa «Abrir con FluxMarkdown» arriba.";

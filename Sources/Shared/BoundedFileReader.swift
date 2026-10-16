@@ -21,6 +21,7 @@ enum PreviewFileReader {
         let content: String
         let size: UInt64
         let modificationDate: Date?
+        let isTruncated: Bool
     }
     static let previewLimit = 500 * 1024
 
@@ -49,8 +50,7 @@ enum PreviewFileReader {
             }
         }
         guard var content = decoded else { throw CocoaError(.fileReadInapplicableStringEncoding) }
-        if truncated { content += "\n\n> **Preview truncated.**" }
         if url.pathExtension.lowercased() == "mmd" { content = "```mermaid\n\(content)\n```" }
-        return Snapshot(content: content, size: UInt64(values.fileSize ?? data.count), modificationDate: values.contentModificationDate)
+        return Snapshot(content: content, size: UInt64(values.fileSize ?? data.count), modificationDate: values.contentModificationDate, isTruncated: truncated)
     }
 }

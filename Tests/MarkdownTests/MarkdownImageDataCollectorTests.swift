@@ -289,3 +289,12 @@ extension MarkdownImageDataCollectorTests {
         XCTAssertTrue(MarkdownImageDataCollector.referencedLocalImageURLs(from: document, content: "![large](large.png)").isEmpty)
     }
 }
+
+final class LocalResourceDiagnosticsTests: XCTestCase {
+    func testReadFailuresAreClassifiedWithoutPaths() {
+        XCTAssertEqual(LocalResourceDiagnostics.category(CocoaError(.fileReadNoPermission)), "permission-denied")
+        XCTAssertEqual(LocalResourceDiagnostics.category(CocoaError(.fileReadNoSuchFile)), "missing-file")
+        XCTAssertEqual(LocalResourceDiagnostics.category(CocoaError(.fileReadTooLarge)), "resource-limit")
+        XCTAssertEqual(LocalResourceDiagnostics.category(NSError(domain: NSPOSIXErrorDomain, code: 13)), "permission-denied")
+    }
+}

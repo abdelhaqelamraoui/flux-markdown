@@ -145,3 +145,11 @@
 "Don't Remind Me" = "不再提醒";
 "I've Already Starred" = "我已 Star";
 "Invite me to support the project on GitHub" = "邀请我在 GitHub 支持项目";
+
+"Preview limited to 500 KiB. Use Open with FluxMarkdown above to read the complete document." = "预览仅显示前 500 KiB。请使用上方“通过 FluxMarkdown 打开”阅读完整文档。";
+"Test Quick Look" = "验证快速预览";
+"Quick Look preview verified" = "快速预览验证通过";
+"Quick Look preview not confirmed" = "尚未确认快速预览正常";
+"The installed extension rendered the test document. Your default editor was preserved." = "已安装的扩展成功渲染测试文档。默认编辑器设置已保留。";
+"The test did not confirm a rendered preview. Include Quick Look diagnostics when reporting this issue." = "未能确认测试文档已渲染。反馈问题时请附上 Quick Look 诊断信息。";
+"Some local images could not be read. Use Open with FluxMarkdown above to view the document." = "部分本地图片无法读取。请使用上方“通过 FluxMarkdown 打开”查看文档。";

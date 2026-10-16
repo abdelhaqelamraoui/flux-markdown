@@ -119,6 +119,15 @@ struct FeedbackView: View {
         if preference.history == nil { history.warning = "history-unavailable-or-incomplete" }
         diagnostics = FeedbackReport.markdown(settings: preference.diagnosticSettings,
                                                environment: DiagnosticEnvironment.current(), history: history)
+        let base = diagnostics
+        let fileURL = NSDocumentController.shared.currentDocument?.fileURL
+        DispatchQueue.global(qos: .utility).async {
+            let summary = QuickLookRegistration.diagnosticSummary(fileURL: fileURL)
+            DispatchQueue.main.async {
+                // Do not overwrite user edits while the read-only checks are running.
+                if diagnostics == base { diagnostics = base + summary }
+            }
+        }
     }
 
     private func save() {

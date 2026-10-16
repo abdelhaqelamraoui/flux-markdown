@@ -75,3 +75,22 @@ final class QuickLookRegistrationTests: XCTestCase {
     }
 
 }
+
+final class QuickLookRegistrationDiagnosticTests: XCTestCase {
+    func testDuplicateAndDisabledCopiesDoNotCountAsInstalledEnabled() {
+        let ext = URL(fileURLWithPath: "/Applications/FluxMarkdown.app/Contents/PlugIns/MarkdownPreview.appex")
+        let output = "+ com.xykong.Markdown.QuickLook(1.0) id date /Users/private/old/MarkdownPreview.appex\n- com.xykong.Markdown.QuickLook(2.0) id date " + ext.path
+        let report = QuickLookRegistration.registrationSummary(output, expectedExtension: ext)
+        XCTAssertEqual(report["registeredCopies"], "2")
+        XCTAssertEqual(report["installedCopyEnabled"], "false")
+        XCTAssertEqual(report["otherRegisteredCopies"], "1")
+    }
+    func testDiagnosticOutputDoesNotIncludeRegistrationPathsOrClaimRuntimeSuccess() {
+        let text = QuickLookRegistration.diagnosticSummary(appURL: URL(fileURLWithPath: "/tmp/private-name.app"), runner: { _,_ in
+            RegistrationCommandResult(status: 0, output: "+ com.xykong.Markdown.QuickLook(1.0) id date /Users/private-person/MarkdownPreview.appex")
+        })
+        XCTAssertFalse(text.contains("private-person"))
+        XCTAssertFalse(text.contains("private-name"))
+        XCTAssertTrue(text.contains("unknown-registration-is-not-runtime-proof"))
+    }
+}
