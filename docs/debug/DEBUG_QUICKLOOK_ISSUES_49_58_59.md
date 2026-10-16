@@ -48,3 +48,12 @@ The user authorized requesting help directly from the reporters. Posted and read
 - #49: https://github.com/xykong/flux-markdown/issues/49#issuecomment-6211497747
 
 Requests use checks available in the published version: exact OS/build, non-private fixture screenshot, extension registrations/versions, strict signature verification, file UTI and logs from one Finder attempt. They explicitly state that the new self-test is not published, that 1.36.561 is not a confirmed fallback fix, and that private paths should be redacted. No issues were closed or marked done. Await affected-state evidence before claiming #49/#58 resolved.
+
+## Optional AI-assisted investigation
+
+At the user's explicit request, added and verified optional AI prompts in English:
+
+- #58: https://github.com/xykong/flux-markdown/issues/58#issuecomment-6211672385
+- #49: https://github.com/xykong/flux-markdown/issues/49#issuecomment-6211673017
+
+The replies distinguish diagnosis-only from voluntary developer/PR work, disclose token/quota/cost and non-developer difficulty, recommend small tool-enforced budgets, require evidence rather than guesses, and require reporter review before posting or pushing a PR. A manual report remains sufficient. Reusable copy is in docs/support/AI_ASSISTED_QUICKLOOK_REPORT.md. These comments do not establish that either fallback issue is fixed.
