@@ -1,5 +1,6 @@
 ## [Unreleased]
-_无待发布的变更_
+### Fixed
+- **Window sizing**: Preserve the current App window width and height when dragging a document between displays with different scaling or usable areas; only the window origin follows the drag.
 
 ## [1.36.568] - 2026-10-16
 ### Fixed
