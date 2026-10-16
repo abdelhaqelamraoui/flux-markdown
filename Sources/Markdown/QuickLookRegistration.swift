@@ -80,6 +80,9 @@ enum QuickLookRegistration {
         process.standardOutput = pipe; process.standardError = pipe
         do {
             try process.run()
+            let timeout = DispatchWorkItem { if process.isRunning { process.terminate() } }
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 15, execute: timeout)
+            defer { timeout.cancel() }
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             process.waitUntilExit()
             return RegistrationCommandResult(status: process.terminationStatus, output: String(decoding: data, as: UTF8.self))
@@ -136,6 +139,43 @@ enum QuickLookRegistration {
         return result
     }
 
+    static func registrationSummary(_ output: String, expectedExtension: URL) -> [String: String] {
+        let entries = output.split(separator: "\n").filter { $0.contains(identifier + "(") }
+        let expected = expectedExtension.standardizedFileURL.path
+        let matching = entries.filter { $0.hasSuffix(expected) }
+        return ["registeredCopies": String(entries.count),
+                "installedCopyRegistered": String(!matching.isEmpty),
+                "installedCopyEnabled": String(matching.contains { $0.trimmingCharacters(in: .whitespaces).hasPrefix("+") }),
+                "otherRegisteredCopies": String(entries.count - matching.count)]
+    }
+
+    static func diagnosticSummary(appURL: URL = Bundle.main.bundleURL, fileURL: URL? = nil,
+                                  runner: Runner = run) -> String {
+        let ext = appURL.appendingPathComponent("Contents/PlugIns/MarkdownPreview.appex")
+        let registration = runner("/usr/bin/pluginkit", ["-m", "-A", "-D", "-v", "-i", identifier])
+        var fields = registrationSummary(registration.output, expectedExtension: ext)
+        if registration.status != 0 { fields["registrationQuery"] = "failed" }
+        fields["signature"] = runner("/usr/bin/codesign", ["--verify", "--deep", "--strict", appURL.path]).status == 0 ? "valid" : "invalid"
+        fields["extensionVersion"] = Bundle(url: ext)?.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
+        fields["firstInSavedOrder"] = String(currentOrder().first == identifier)
+        fields["defaultMarkdownEditor"] = currentEditor("net.daringfireball.markdown") ?? "unknown"
+        fields["actualFinderProvider"] = "unknown-registration-is-not-runtime-proof"
+        fields["lastExplicitPreviewTest"] = UserDefaults.standard.string(forKey: "quickLookLastProbeResult") ?? "not-run"
+        fields["lastExplicitPreviewTestVersion"] = UserDefaults.standard.string(forKey: "quickLookLastProbeVersion") ?? "unknown"
+        if let date = UserDefaults.standard.object(forKey: "quickLookLastProbeDate") as? Date {
+            fields["lastExplicitPreviewTestAt"] = ISO8601DateFormatter().string(from: date)
+        }
+        if let fileURL {
+            fields["documentUTI"] = (try? fileURL.resourceValues(forKeys: [.typeIdentifierKey]))?.typeIdentifier ?? "unknown"
+        }
+        // All exported values are scalar identifiers/status; never include command output or paths.
+        return "\n\n## Quick Look diagnostics\n" + fields.keys.sorted().map { key in
+            let value = fields[key]!
+            let safe = value.count <= 160 && value.range(of: "^[A-Za-z0-9_.:+-]+$", options: .regularExpression) != nil
+            return "- \(key): \(safe ? value : "invalid")"
+        }.joined(separator: "\n")
+    }
+
     static func currentOrder() -> [String] {
         UserDefaults.standard.persistentDomain(forName: "com.apple.preferences.extensions.QuickLook")?["displayOrder"] as? [String] ?? []
     }
@@ -160,7 +200,13 @@ final class QuickLookRepairController {
                 alert.informativeText = result.succeeded
                     ? NSLocalizedString("Try selecting the file in Finder and pressing Space. Your default editor was preserved.", comment: "QuickLook repair advice")
                     : result.errors.joined(separator: "\n")
-                alert.runModal()
+                if result.succeeded {
+                    alert.addButton(withTitle: NSLocalizedString("Test Quick Look", comment: "QuickLook self-test"))
+                    alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel"))
+                }
+                if alert.runModal() == .alertFirstButtonReturn, result.succeeded {
+                    NotificationCenter.default.post(name: Notification.Name("FluxMarkdown.TestQuickLook"), object: nil)
+                }
             }
         }
     }

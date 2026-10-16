@@ -29,6 +29,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         _ = StarReminderStore.shared
+        NotificationCenter.default.addObserver(forName: Notification.Name("FluxMarkdown.TestQuickLook"), object: nil, queue: .main) { _ in
+            QuickLookSelfTest.shared.show()
+        }
         preferenceObservationTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { _ in
             AppearancePreference.shared.observePreferenceChanges()
         }
@@ -168,6 +171,8 @@ struct MarkdownApp: App {
                 
                 Divider()
                 
+                Button(NSLocalizedString("Test Quick Look", comment: "QuickLook self-test")) { QuickLookSelfTest.shared.show() }
+
                 Button(action: GitHubStar.showRepository) {
                     Label(NSLocalizedString("Star on GitHub", comment: "Support project"), systemImage: "star")
                 }

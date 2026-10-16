@@ -1,5 +1,10 @@
 ## [Unreleased]
-_无待发布的变更_
+### Fixed
+- **QuickLook local images** (#59): Restore portable read-only access for referenced images in the user home folder; retain image limits and report actual read failures. Locations outside the home directory still depend on host/system permissions.
+- **Incomplete previews**: Keep a persistent native notice when a document exceeds the 500 KiB QuickLook limit, even when truncation occurs inside a code block or image URI.
+
+### Added
+- **QuickLook troubleshooting**: Add an actual preview self-test and registration diagnostics to issue reports; distinguish registration repair from verified rendering. The original fallback reports #49/#58 still require confirmation on affected systems.
 
 ## [1.36.561] - 2026-10-16
 ### Fixed

@@ -73,16 +73,17 @@ The Quick Look extension is sandboxed.
 Example entitlement:
 
 ```xml
-<key>com.apple.security.temporary-exception.files.absolute-path.read-only</key>
+<key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
 <array>
-  <string>$HOME/</string>
+  <string>/</string>
 </array>
 ```
 
-This constrains which absolute-path images can be read. The custom scheme handler additionally
-requires a path to remain inside the Markdown file's directory or exactly match a local image
-reference extracted from the current document. Symlinked image references are not added to the
-explicit allowlist.
+Release builds use a portable user-home read-only exception for relative local images. It does not grant filesystem-root access or bypass macOS privacy protections. External volumes and locations outside the home directory still depend on the host's access grant; open in the main application when the host cannot supply access.
+
+The loader only serves supported image references extracted from the current document, rejects symlinked references, and enforces 32 images, 2 MiB per image and 8 MiB combined. Debug acceptance must be repeated with Release entitlements. A false security-scope activation return is not a substitute for checking the actual read result.
+
+Failures are logged by LocalResources with operation, reason, error domain and code, without document paths. QuickLook reads only the first 500 KiB; a native notice explains truncation even if the Markdown ends inside a fenced block or data URI.
 
 ---
 

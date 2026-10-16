@@ -1,0 +1,6 @@
+- [x] Reproduce #59 in Finder using installed release 1.36.561.
+- [x] Validate portable sandbox permission recovery with bounded image loading.
+- [x] Add read failures and persistent truncation feedback with tests.
+- [ ] Investigate and repair reproducible extension selection/launch failures for #58/#49.
+- [x] Integrate reviewable diagnostics and honest repair outcome.
+- [x] Complete release-entitlement local acceptance of implemented fixes and document limits.

@@ -1,4 +1,5 @@
 import Foundation
+import os.log
 
 enum MarkdownImageDataCollector {
     struct Limits {
@@ -30,7 +31,9 @@ enum MarkdownImageDataCollector {
             guard fileSize <= limits.maxImageBytes else { continue }
             guard fileSize <= limits.maxTotalBytes else { continue }
             guard collectedBytes <= limits.maxTotalBytes - fileSize else { continue }
-            guard let data = try? BoundedFileReader.read(imageURL, maxBytes: Int(limits.maxImageBytes)) else { continue }
+            let data: Data
+            do { data = try BoundedFileReader.read(imageURL, maxBytes: Int(limits.maxImageBytes)) }
+            catch { LocalResourceDiagnostics.log(error, operation: "inline-read"); continue }
 
             let dataURL = "data:\(mimeType);base64,\(data.base64EncodedString())"
             imageData[imagePath] = dataURL
@@ -56,9 +59,12 @@ enum MarkdownImageDataCollector {
         var total: UInt64 = 0
         return localImageReferences(from: url, content: content).filter { reference in
             if sizes[reference.url] != nil { return true }
-            guard sizes.count < limits.maxImageCount,
-                  let bytes = fileSize(of: reference.url), bytes <= limits.maxImageBytes,
-                  bytes <= limits.maxTotalBytes, total <= limits.maxTotalBytes - bytes else { return false }
+            guard let bytes = fileSize(of: reference.url) else { return false }
+            guard sizes.count < limits.maxImageCount, bytes <= limits.maxImageBytes,
+                  bytes <= limits.maxTotalBytes, total <= limits.maxTotalBytes - bytes else {
+                LocalResourceDiagnostics.log(CocoaError(.fileReadTooLarge), operation: "image-budget")
+                return false
+            }
             sizes[reference.url] = bytes
             total += bytes
             return true
@@ -189,11 +195,39 @@ enum MarkdownImageDataCollector {
     }
 
     private static func fileSize(of url: URL) -> UInt64? {
-        guard let values = try? url.resourceValues(forKeys: [.fileSizeKey]),
-              let fileSize = values.fileSize,
-              fileSize >= 0
-        else { return nil }
+        do {
+            let values = try url.resourceValues(forKeys: [.fileSizeKey])
+            guard let size = values.fileSize, size >= 0 else { return nil }
+            return UInt64(size)
+        } catch {
+            LocalResourceDiagnostics.log(error, operation: "image-stat")
+            return nil
+        }
+    }
+}
 
-        return UInt64(fileSize)
+/// Never publish document paths or error userInfo in diagnostic logs.
+enum LocalResourceDiagnostics {
+    static func category(_ error: Error) -> String {
+        let e = error as NSError
+        if e.domain == NSCocoaErrorDomain {
+            switch e.code {
+            case NSFileReadNoPermissionError, NSFileWriteNoPermissionError: return "permission-denied"
+            case NSFileNoSuchFileError, NSFileReadNoSuchFileError: return "missing-file"
+            case NSFileReadTooLargeError: return "resource-limit"
+            default: break
+            }
+        }
+        if e.domain == NSPOSIXErrorDomain {
+            if e.code == 1 || e.code == 13 { return "permission-denied" }
+            if e.code == 2 { return "missing-file" }
+        }
+        return "read-failed"
+    }
+    static func log(_ error: Error, operation: String) {
+        let e = error as NSError
+        os_log("Local image failure operation=%{public}@ reason=%{public}@ domain=%{public}@ code=%{public}ld",
+               log: OSLog(subsystem: "com.markdownquicklook.app", category: "LocalResources"),
+               type: .error, operation, category(error), e.domain, e.code)
     }
 }

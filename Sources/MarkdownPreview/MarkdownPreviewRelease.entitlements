@@ -14,10 +14,10 @@
     <key>com.apple.security.files.bookmarks.document-scope</key>
     <true/>
 
-    <!-- Read main-app preferences without embedding a build-machine absolute home path. -->
+    <!-- Read explicitly referenced local images and shared preferences without a build-machine path. -->
     <key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
     <array>
-        <string>/Library/Application Support/FluxMarkdown/</string>
+        <string>/</string>
     </array>
 
     <!-- Allow network access for WebView and remote images. -->

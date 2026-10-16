@@ -21,13 +21,28 @@ if CommandLine.arguments.contains("--repair-quicklook") {
     exit(result.succeeded ? 0 : 1)
 }
 
+if CommandLine.arguments.contains("--quicklook-diagnostics") {
+    print(QuickLookRegistration.diagnosticSummary())
+    exit(0)
+}
+
 let applicationLanguagesBeforeBootstrap = DiagnosticEnvironment.applicationLanguages()
 
 // Install the runtime localization swizzle and apply the persisted language
 // preference before any view, menu or scene is built.
 LocalizationManager.bootstrap(initialPreference: AppearancePreference.shared.uiLanguage)
 
-if CommandLine.arguments.contains("--export-pdf") {
+if CommandLine.arguments.contains("--quicklook-self-test") {
+    let app = NSApplication.shared
+    app.setActivationPolicy(.regular)
+    DispatchQueue.main.async {
+        QuickLookSelfTest.shared.start { passed in
+            print("quicklook_preview=\(passed ? "rendered" : "unconfirmed")")
+            exit(passed ? 0 : 1)
+        }
+    }
+    app.run()
+} else if CommandLine.arguments.contains("--export-pdf") {
     let delegate = CLIAppDelegate()
     let app = NSApplication.shared
     app.delegate = delegate

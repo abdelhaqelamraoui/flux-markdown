@@ -88,6 +88,36 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
 
     var statusLabel: NSTextField!
     var webView: InteractiveWebView!
+    private var truncationNotice: NSTextField?
+    private var previewIsTruncated = false
+    private var previewHasUnreadableImages = false
+
+    private func updateTruncationNotice(_ truncated: Bool) {
+        previewIsTruncated = truncated
+        if truncationNotice == nil {
+            let label = NSTextField(wrappingLabelWithString: NSLocalizedString("Preview limited to 500 KiB. Use Open with FluxMarkdown above to read the complete document.", comment: "QuickLook truncation notice"))
+            label.font = .systemFont(ofSize: 12)
+            label.textColor = .secondaryLabelColor
+            label.setAccessibilityLabel(label.stringValue)
+            view.addSubview(label)
+            truncationNotice = label
+        }
+        truncationNotice?.stringValue = truncated
+            ? NSLocalizedString("Preview limited to 500 KiB. Use Open with FluxMarkdown above to read the complete document.", comment: "QuickLook truncation notice")
+            : NSLocalizedString("Some local images could not be read. Use Open with FluxMarkdown above to view the document.", comment: "QuickLook resource notice")
+        truncationNotice?.setAccessibilityLabel(truncationNotice?.stringValue)
+        truncationNotice?.isHidden = !truncated && !previewHasUnreadableImages
+        layoutTruncationNotice()
+    }
+
+    private func layoutTruncationNotice() {
+        guard let webView else { return }
+        let height: CGFloat = (previewIsTruncated || previewHasUnreadableImages) ? 52 : 0
+        // Native chrome stays visible even when truncated Markdown ends in a code fence or image URI.
+        webView.frame = NSRect(x: 0, y: height, width: view.bounds.width, height: max(0, view.bounds.height - height))
+        truncationNotice?.frame = NSRect(x: 16, y: 8, width: max(0, view.bounds.width - 32), height: 36)
+    }
+
     var pendingMarkdown: String?
     private var prevMarkdown: String? = nil
     var currentURL: URL?
@@ -366,6 +396,11 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         let schemeHandler = LocalSchemeHandler()
         webConfiguration.setURLSchemeHandler(schemeHandler, forURLScheme: "local-md")
         localSchemeHandler = schemeHandler
+        schemeHandler.onReadFailure = { [weak self] in
+            guard let self else { return }
+            self.previewHasUnreadableImages = true
+            self.updateTruncationNotice(self.previewIsTruncated)
+        }
 
         if let rendererHandler = RendererBundleSchemeHandler(bundle: Bundle(for: type(of: self))) {
             webConfiguration.setURLSchemeHandler(rendererHandler, forURLScheme: RendererBundleSchemeHandler.scheme)
@@ -451,6 +486,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     
     public override func viewDidLayout() {
         super.viewDidLayout()
+        layoutTruncationNotice()
         
         let size = self.view.frame.size
         os_log("📊 [viewDidLayout] size=%.0fx%.0f trackingEnabled=%{public}@",
@@ -1222,13 +1258,15 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         let readVersion = fileReadVersion.next()
         fileReadInFlight = false
         pendingMarkdown = nil
+        previewHasUnreadableImages = false
+        updateTruncationNotice(false)
         self.currentURL = url
         
         stopSecurityScopedAccessIfNeeded()
         securityScopedURL = url
         isSecurityScopedAccessActive = url.startAccessingSecurityScopedResource()
         completePendingSearchRequest()
-        os_log("🔵 Security-scoped resource access: %{public}@", log: logger, type: .debug, isSecurityScopedAccessActive ? "GRANTED" : "DENIED")
+        os_log("Security-scope activation: %{public}@ (actual file read determines access)", log: logger, type: .debug, isSecurityScopedAccessActive ? "activated" : "not-activated")
         
         logScreenEnvironment(context: "preparePreviewOfFile-ENTRY")
         
@@ -1276,6 +1314,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                     switch result {
                     case .success(let snapshot):
                         self.pendingMarkdown = snapshot.content
+                        self.previewHasUnreadableImages = false
+                        self.updateTruncationNotice(snapshot.isTruncated)
                         self.lastKnownFileSize = snapshot.size
                         self.lastKnownFileModificationDate = snapshot.modificationDate
                         if self.isWebViewLoaded { self.renderCurrentMode() }
@@ -1380,6 +1420,11 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                         os_log("🔴 JS Execution Error (renderMarkdown): %{public}@", log: self.logger, type: .error, error.localizedDescription)
                     case .success(let value):
                         os_log("🔵 renderMarkdown completed successfully, result: %{public}@", log: self.logger, type: .debug, String(describing: value))
+                        if let url = self.currentURL, let token = QuickLookProbeEvidence.token(for: url) {
+                            let version = Bundle(for: type(of: self)).object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
+                            os_log("%{public}@", log: self.logger, type: .default,
+                                   QuickLookProbeEvidence.marker(token: token, version: version, stage: "rendered"))
+                        }
                         self.isSearchReady = true
                         self.completePendingSearchRequest()
                     }
@@ -2075,6 +2120,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                     if force || snapshot.content != self.pendingMarkdown {
                         self.prevMarkdown = self.pendingMarkdown
                         self.pendingMarkdown = snapshot.content
+                        self.previewHasUnreadableImages = false
+                        self.updateTruncationNotice(snapshot.isTruncated)
                         if self.isWebViewLoaded { self.renderCurrentMode() }
                     }
                     self.lastKnownFileSize = snapshot.size

@@ -9,6 +9,7 @@ class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
     private var activeTasks: [ObjectIdentifier: UUID] = [:]
     private var loadedBytes: [String: Int] = [:]
     private var resourceGeneration = 0
+    var onReadFailure: (() -> Void)?
     var baseDirectory: URL?
     var allowedFileURLs: Set<URL> {
         get {
@@ -39,8 +40,9 @@ class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
         os_log("🔵 Start loading resource: %{public}@", log: logger, type: .debug, filePath)
 
         guard let fileUrl = resolveContainedFileURL(from: url) else {
-            os_log("🔴 Rejected resource outside base directory: %{public}@", log: logger, type: .error, filePath)
-            urlSchemeTask.didFailWithError(NSError(domain: "LocalSchemeHandler", code: -3, userInfo: [NSLocalizedDescriptionKey: "Resource outside base directory"]))
+            os_log("Local image unavailable or not in the document allowlist", log: logger, type: .error)
+            onReadFailure?()
+            urlSchemeTask.didFailWithError(NSError(domain: "LocalSchemeHandler", code: -3, userInfo: [NSLocalizedDescriptionKey: "Resource unavailable or not allowed"]))
             return
         }
         
@@ -72,7 +74,11 @@ class LocalSchemeHandler: NSObject, WKURLSchemeHandler {
                     urlSchemeTask.didReceive(self.buildResponse(for: url, data: data))
                     urlSchemeTask.didReceive(data)
                     urlSchemeTask.didFinish()
-                } catch { urlSchemeTask.didFailWithError(error) }
+                } catch {
+                    LocalResourceDiagnostics.log(error, operation: "scheme-read")
+                    self.onReadFailure?()
+                    urlSchemeTask.didFailWithError(error)
+                }
             }
         }
     }

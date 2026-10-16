@@ -16,7 +16,7 @@ final class ReleaseEntitlementsTests: XCTestCase {
         )
     }
 
-    func testReleaseEntitlementsDoNotAllowDebuggerOrHomeDirectoryException() throws {
+    func testReleaseEntitlementsUsePortableReadOnlyHomeAccessWithoutDebugger() throws {
         let root = projectRoot()
         let appRelease = try String(
             contentsOf: root.appendingPathComponent("Sources/Markdown/MarkdownRelease.entitlements"),
@@ -33,7 +33,7 @@ final class ReleaseEntitlementsTests: XCTestCase {
         XCTAssertFalse(previewRelease.contains("$HOME"))
         XCTAssertFalse(previewRelease.contains("/Users/"))
         XCTAssertTrue(previewRelease.contains("temporary-exception.files.home-relative-path.read-only"))
-        XCTAssertTrue(previewRelease.contains("/Library/Application Support/FluxMarkdown/"))
+        XCTAssertTrue(previewRelease.contains("<string>/</string>"))
         XCTAssertTrue(previewRelease.contains("com.apple.security.app-sandbox"))
     }
 

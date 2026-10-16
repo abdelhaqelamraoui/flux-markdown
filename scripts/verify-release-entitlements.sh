@@ -68,6 +68,15 @@ if printf '%s\n' "$ENTITLEMENTS" | grep -q "/Users/"; then
     fail "MarkdownPreview.appex release entitlements must not include build-machine home paths"
 fi
 
+printf '%s\n' "$ENTITLEMENTS" | python3 -c '
+import plistlib, sys
+p = plistlib.loads(sys.stdin.buffer.read())
+if p.get("com.apple.security.temporary-exception.files.home-relative-path.read-only") != ["/"]:
+    sys.exit("QuickLook release must preserve portable read-only home access for referenced images")
+if p.get("com.apple.security.app-sandbox") is not True:
+    sys.exit("QuickLook sandbox must be enabled")
+'
+
 echo "🔐 Checking app release entitlements..."
 APP_ENTITLEMENTS=$(/usr/bin/codesign -d --entitlements :- "$APP_PATH" 2>/dev/null || true)
 if printf '%s\n' "$APP_ENTITLEMENTS" | grep -q "com.apple.security.get-task-allow"; then

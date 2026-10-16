@@ -145,3 +145,11 @@
 "Don't Remind Me" = "Don't Remind Me";
 "I've Already Starred" = "I've Already Starred";
 "Invite me to support the project on GitHub" = "Invite me to support the project on GitHub";
+
+"Preview limited to 500 KiB. Use Open with FluxMarkdown above to read the complete document." = "Preview limited to 500 KiB. Use Open with FluxMarkdown above to read the complete document.";
+"Test Quick Look" = "Test Quick Look";
+"Quick Look preview verified" = "Quick Look preview verified";
+"Quick Look preview not confirmed" = "Quick Look preview not confirmed";
+"The installed extension rendered the test document. Your default editor was preserved." = "The installed extension rendered the test document. Your default editor was preserved.";
+"The test did not confirm a rendered preview. Include Quick Look diagnostics when reporting this issue." = "The test did not confirm a rendered preview. Include Quick Look diagnostics when reporting this issue.";
+"Some local images could not be read. Use Open with FluxMarkdown above to view the document." = "Some local images could not be read. Use Open with FluxMarkdown above to view the document.";
