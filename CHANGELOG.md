@@ -1,6 +1,8 @@
 ## [Unreleased]
 ### Fixed
 - **Updater configuration**: Use Sparkle's direct installer launcher for the non-sandboxed host app and remove obsolete installer sandbox exceptions. The reported update failure in #61 still needs confirmation on the affected machine.
+- **Update failure guidance**: Offer the official download page, explain manual DMG installation, and tell users how to report a persistent failure. Provide a copyable download link if the browser cannot open. Localized in English, Simplified Chinese, German, French, and Spanish.
+- **Update failure reporting**: Connect diagnostics to Sparkle's actual abort callback and exclude normal no-update/cancellation outcomes.
 
 ### Added
 - **Update diagnostics**: Include the latest update failure's timestamp, versions, and underlying error codes in issue reports and application logs, without retaining private paths or error descriptions.

@@ -165,3 +165,11 @@
 "Finder Preview Font Size" = "Tamaño de fuente de la vista previa de Finder";
 
 "Font size when previewing in Finder's column view" = "Tamaño de fuente al previsualizar en la vista de columnas de Finder";
+/* Actionable update failure recovery */
+"Could Not Update FluxMarkdown" = "No se pudo actualizar FluxMarkdown";
+"The automatic update could not be completed. You can update manually: download FluxMarkdown.dmg from our official download page, open it, quit FluxMarkdown, then drag FluxMarkdown into Applications and choose Replace.\n\nIf manual installation also fails, choose Help → Report an Issue and include the diagnostics, your macOS version, and how you installed FluxMarkdown." = "La actualización automática no se pudo completar. Puedes actualizar manualmente: descarga FluxMarkdown.dmg desde nuestra página oficial de descargas, abre el archivo y cierra FluxMarkdown. Después, arrastra FluxMarkdown a Aplicaciones y elige «Reemplazar».\n\nSi la instalación manual también falla, elige «Ayuda → Reportar un Problema» e incluye los diagnósticos, tu versión de macOS y cómo instalaste FluxMarkdown.";
+"Download Latest Version" = "Descargar la última versión";
+"Close" = "Cerrar";
+"Could Not Open Download Page" = "No se pudo abrir la página de descargas";
+"Copy the download link and paste it into your browser to download the latest version." = "Copia el enlace de descarga y pégalo en tu navegador para descargar la última versión.";
+"Copy Download Link" = "Copiar enlace de descarga";

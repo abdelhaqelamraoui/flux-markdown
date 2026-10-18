@@ -67,6 +67,15 @@ macOS QuickLook extension for Markdown files. Hybrid architecture: Native Swift 
 - **TDD**: Write tests/metrics *before* implementation (see `.clinerules`).
 - **Docs**: Create `docs/debug/DEBUG_*.md` for hard problems.
 - **Logs**: Use `os_log` via the JS bridge. Do not rely on `console.log` alone.
+- **Actionable error messages**: Design every error from the user's perspective.
+  Explain what the failure means for their task and what they can do next:
+  recovery steps, an alternative workflow, or exactly which information/resources
+  to provide and where. Provide a direct action or link when possible. Do not
+  merely complain, expose a technical error, or say "try again later" without a
+  useful next step. Keep technical diagnostics available separately and localize
+  the guidance. For update failures, always offer the official download page and
+  explain how to manually download and install the latest version. Do not claim
+  an unverified cause or guarantee that a workaround resolves every failure.
 - **Automatic Commits**: After completing and verifying each important,
   self-contained work item, automatically create a Conventional Commit. Do not
   wait for the user to request the commit unless they explicitly ask not to

@@ -4,11 +4,7 @@ import Sparkle
 import os.log
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    let updaterController = SPUStandardUpdaterController(
-        startingUpdater: true,
-        updaterDelegate: UpdateDelegate.shared,
-        userDriverDelegate: nil
-    )
+    let updaterController = AppUpdaterController()
 
     private var preferenceObservationTimer: Timer?
 
@@ -612,13 +608,14 @@ private final class WindowObservingToolbarFeedbackView: NSView {
 }
 
 struct CheckForUpdatesView: View {
-    let updaterController: SPUStandardUpdaterController
+    @ObservedObject var updaterController: AppUpdaterController
 
     var body: some View {
         Button(NSLocalizedString("Check for Updates...", comment: "Check for updates menu item")) {
             print("🔍 [DEBUG] Triggering update check...")
-            NSApp.sendAction(#selector(SPUStandardUpdaterController.checkForUpdates(_:)), to: updaterController, from: nil)
+            updaterController.checkForUpdates()
         }
+        .disabled(!updaterController.canCheckForUpdates)
         .keyboardShortcut("u", modifiers: [.command])
         Divider()
     }
