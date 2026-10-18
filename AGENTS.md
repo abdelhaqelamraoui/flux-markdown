@@ -67,20 +67,62 @@ macOS QuickLook extension for Markdown files. Hybrid architecture: Native Swift 
 - **TDD**: Write tests/metrics *before* implementation (see `.clinerules`).
 - **Docs**: Create `docs/debug/DEBUG_*.md` for hard problems.
 - **Logs**: Use `os_log` via the JS bridge. Do not rely on `console.log` alone.
-- **Actionable error messages**: Design every error from the user's perspective.
-  Explain what the failure means for their task and what they can do next:
-  recovery steps, an alternative workflow, or exactly which information/resources
-  to provide and where. Provide a direct action or link when possible. Do not
-  merely complain, expose a technical error, or say "try again later" without a
-  useful next step. Keep technical diagnostics available separately and localize
-  the guidance. For update failures, always offer the official download page and
-  explain how to manually download and install the latest version. Do not claim
-  an unverified cause or guarantee that a workaround resolves every failure.
+- **Error UX**: Every error must help the user take the next useful action and
+  provide contextual feedback. Follow **ERROR GUIDANCE AND FEEDBACK** below.
 - **Automatic Commits**: After completing and verifying each important,
   self-contained work item, automatically create a Conventional Commit. Do not
   wait for the user to request the commit unless they explicitly ask not to
   commit. Stage only files that belong to the completed work item, and leave
   unrelated worktree changes untouched.
+
+## ERROR GUIDANCE AND FEEDBACK
+
+The two requirements are inseparable: **guide the user forward** and **make
+feedback one action from the failure**. A technical error dump, a generic apology,
+or a link to an empty feedback form does not satisfy them.
+
+- **Explain the task impact.** Use a short title describing what could not be
+  completed, then one or two sentences giving a useful next step. State causes
+  only when supported by evidence. Do not blame the user or promise an unverified fix.
+- **Make recovery executable.** The primary action performs the best available
+  recovery or opens a concrete alternative. Use explicit labels such as
+  "Download Latest Version", "Choose Another Folder", or "Open in FluxMarkdown".
+  Do not stop at "Something went wrong", "OK", "Try again later", or instructions
+  to find a menu the current interface could open itself. Offer Retry only when
+  it can help, and avoid unbounded or automatic retry loops.
+- **Keep the first view simple.** Show the recommended recovery, a secondary
+  "Report This Problem" action, and a safe dismissal where appropriate. Put long
+  instructions, technical details and optional report controls behind disclosure.
+  For update failures, offer the official download page directly, with concise
+  manual DMG installation instructions available in the same interface.
+- **Make feedback contextual and effortless.** One activation at the error must
+  prepare the relevant safe diagnostic context and enter the chosen feedback
+  channel. Do not require users to locate Help, copy logs, choose an already-known
+  component, retype their system/app version, or pass through a compulsory local
+  report editor. Additional explanation and diagnostic inspection are optional.
+- **Capture before presenting.** Freeze the specific incident's identity,
+  component, operation/stage, safe error information and relevant environment when
+  the error occurs. Do not substitute the most recent unrelated error or later
+  settings. Collect only useful allowlisted diagnostics; exclude private document
+  content, paths, credentials and raw logs by default. Explain the destination and
+  included data briefly before the action; users can inspect or exclude diagnostics.
+- **Be honest about delivery.** Distinguish prepared, opened, sending, accepted
+  and failed states. Opening a GitHub form is not submission; a service must
+  acknowledge receipt before the app says "Sent". Explain required sign-in or
+  final confirmation for the selected channel without inventing completed delivery.
+- **Preserve the user's work and escape route.** Failure, dismissal and reporting
+  must preserve the document and edited report. Avoid repeated prompts; keep an
+  actionable error reachable until recovery or dismissal. Inline errors stay
+  inline, and repeated equivalent errors may share one accessible feedback entry.
+- **Make feedback failure recoverable.** Keep the report available when collection,
+  browser launch or delivery fails. Offer a concrete retry, copy or save alternative;
+  never recursively open another error-reporting dialog. Missing diagnostics must
+  not block reporting. Retrying a send must not create duplicate reports.
+- **Cover and verify the real surfaces.** Apply these rules to app-owned dialogs,
+  notices and renderer errors in every supported language, with keyboard and
+  accessibility support. Native feedback must survive renderer failure. Document
+  system-owned/unreachable surfaces honestly. Reviews must demonstrate both an
+  executable next step and a usable contextual report without manual troubleshooting.
 
 ## GITHUB ISSUE MANAGEMENT
 
