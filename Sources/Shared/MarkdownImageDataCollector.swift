@@ -9,7 +9,10 @@ enum MarkdownImageDataCollector {
 
         static let `default` = Limits(
             maxImageCount: 32,
-            maxImageBytes: 2 * 1024 * 1024,
+            // Keep the per-resource guard aligned with the document-wide budget.
+            // A fixed 2 MiB cutoff hid legitimate assets such as the project's
+            // README demo GIF; the aggregate budget still bounds memory use.
+            maxImageBytes: 8 * 1024 * 1024,
             maxTotalBytes: 8 * 1024 * 1024
         )
     }
