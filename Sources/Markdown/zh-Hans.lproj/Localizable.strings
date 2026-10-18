@@ -217,3 +217,5 @@
 "Open in FluxMarkdown" = "用 FluxMarkdown 打开";
 "How to Install…" = "如何安装…";
 "Download and open FluxMarkdown.dmg, quit FluxMarkdown, then drag the app into Applications and choose Replace." = "下载并打开 FluxMarkdown.dmg，退出 FluxMarkdown，再将应用拖入“应用程序”并选择“替换”。";
+"Preview could not start" = "无法启动预览";
+"Download and reinstall FluxMarkdown, or open the document in your editor." = "请下载并重新安装 FluxMarkdown，或在编辑器中打开文档。";
