@@ -397,7 +397,9 @@ struct DocumentReadFailure: LocalizedError, RecoverableError, CustomNSError {
             if optionIndex == 1 { ErrorFeedback.report(IncidentDraft(incident)) }
             if optionIndex == 2 { ErrorFeedback.report(IncidentDraft(incident), review: true) }
         }
-        return (0...2).contains(optionIndex)
+        // Choosing another file or reporting handles the error, but does not make
+        // the original read succeed. Do not ask AppKit to treat it as recovered.
+        return false
     }
 }
 
