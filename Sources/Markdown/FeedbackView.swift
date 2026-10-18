@@ -119,6 +119,7 @@ struct FeedbackView: View {
         if preference.history == nil { history.warning = "history-unavailable-or-incomplete" }
         diagnostics = FeedbackReport.markdown(settings: preference.diagnosticSettings,
                                                environment: DiagnosticEnvironment.current(), history: history)
+            + UpdateDiagnostics.shared.summary()
         let base = diagnostics
         let fileURL = NSDocumentController.shared.currentDocument?.fileURL
         DispatchQueue.global(qos: .utility).async {

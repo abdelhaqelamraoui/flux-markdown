@@ -1,5 +1,6 @@
 import Cocoa
 import Sparkle
+import os.log
 
 class UpdateDelegate: NSObject, SPUUpdaterDelegate {
     static let shared = UpdateDelegate()
@@ -24,7 +25,11 @@ class UpdateDelegate: NSObject, SPUUpdaterDelegate {
     }
 
     func updater(_: SPUUpdater, didAbortUpdateWithError error: Error, forItem item: SUAppcastItem?) {
-        print("❌ Update aborted: \(error.localizedDescription)")
+        UpdateDiagnostics.shared.record(error: error,
+                                        sourceVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown",
+                                        targetVersion: item?.displayVersionString)
+        os_log("Update aborted: %{public}@", log: OSLog(subsystem: "com.markdownquicklook.app", category: "Updater"),
+               type: .error, UpdateDiagnostics.shared.summary())
         UpdateRestorationManager.shared.clearUpdatePending()
     }
 }

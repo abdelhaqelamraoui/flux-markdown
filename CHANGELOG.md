@@ -1,5 +1,9 @@
 ## [Unreleased]
-_无待发布的变更_
+### Fixed
+- **Updater configuration**: Use Sparkle's direct installer launcher for the non-sandboxed host app and remove obsolete installer sandbox exceptions. The reported update failure in #61 still needs confirmation on the affected machine.
+
+### Added
+- **Update diagnostics**: Include the latest update failure's timestamp, versions, and underlying error codes in issue reports and application logs, without retaining private paths or error descriptions.
 
 ## [1.36.582] - 2026-10-18
 ### Fixed
