@@ -49,3 +49,13 @@ If switching the runtime to `app_error.yml`, publish it on the default branch an
 - Quick Look-related reports can add allowlisted registration/enabled/signature/self-test status, explicitly timestamped as a report-time check. Collection is asynchronous with a two-second fallback; late results cannot reopen or replace an already-handed-off report. Timeout and unavailable history are disclosed, and optional user notes remain intact.
 - Native notices use vertically arranged actions in narrow previews. Guidance and recovery activation are exercised for every FailureKind, and both native bundles' five language resources are validated. Update report continuations retain the manual download action. Update reports carry the known target version and only relevant language settings.
 - Runtime GitHub URL generation handles long Unicode notes within 6000 bytes, explicitly marks omitted content, and retains complete notes locally. Reports with diagnostics excluded still contain a useful task summary.
+
+## Cleanup and compatibility verification
+
+The temporary acceptance install was replaced with the backed-up original 1.36.573 app. Its strict signature is valid and the saved Markdown-editor state matches byte-for-byte. Test-owned last-file/preview-state changes were restored conditionally; other current settings were not overwritten. The preview helper and test host processes were stopped; unsubmitted test GitHub tabs were closed.
+
+Implementation commits: `41d43b7` and `f013440`. Verification branch: `verify/error-feedback-20261018`. Runs: initial [39119222259](https://github.com/xykong/flux-markdown/actions/runs/39119222259), final [39119432970](https://github.com/xykong/flux-markdown/actions/runs/39119432970). Both use the repository's pinned Xcode 16.4 workflow, macOS 11 deployment target and universal arm64/x86_64 packaging. The branch is for validation only; master and releases were not published by this task.
+
+## Document error presenter correction
+
+A direct Foundation bridge probe caught that Swift `RecoverableError` alone did not populate the NSError recovery metadata on this SDK. Added explicit `CustomNSError` userInfo and both synchronous/asynchronous NSObject recovery-attempter overrides. Regression tests inspect the actual NSError options/attempter and verify callback result/context and exactly-once completion; closing does not launch feedback. These tests failed before the correction and passed afterward.

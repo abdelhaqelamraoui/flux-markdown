@@ -379,12 +379,18 @@ final class ErrorActionButton: NSButton {
 }
 
 /// Foundation recovery options integrate with system-presented document errors.
-struct DocumentReadFailure: LocalizedError, RecoverableError {
+struct DocumentReadFailure: LocalizedError, RecoverableError, CustomNSError {
     let incident: ErrorIncident
     init(kind: FailureKind, error: Error) { incident = ErrorFeedback.capture(kind, error: error) }
     var errorDescription: String? { ErrorFeedback.text(incident.kind.title) }
     var recoverySuggestion: String? { ErrorFeedback.text(incident.kind.guidance) + "\n\n" + ErrorFeedback.disclosure }
     var recoveryOptions: [String] { ["Choose Another File", "Report This Problem", "Review Feedback…", "Close"].map(ErrorFeedback.text) }
+    static var errorDomain: String { "com.xykong.Markdown.DocumentRead" }
+    var errorCode: Int { incident.kind == .fileTooLarge ? CocoaError.fileReadTooLarge.rawValue : CocoaError.fileReadCorruptFile.rawValue }
+    var errorUserInfo: [String: Any] {
+        [NSLocalizedDescriptionKey: errorDescription ?? "", NSLocalizedRecoverySuggestionErrorKey: recoverySuggestion ?? "",
+         NSLocalizedRecoveryOptionsErrorKey: recoveryOptions, NSRecoveryAttempterErrorKey: DocumentErrorRecoveryAttempter(failure: self)]
+    }
     func attemptRecovery(optionIndex: Int) -> Bool {
         DispatchQueue.main.async {
             if optionIndex == 0 { NSDocumentController.shared.openDocument(nil) }
@@ -392,5 +398,24 @@ struct DocumentReadFailure: LocalizedError, RecoverableError {
             if optionIndex == 2 { ErrorFeedback.report(IncidentDraft(incident), review: true) }
         }
         return (0...2).contains(optionIndex)
+    }
+}
+
+/// AppKit invokes these Objective-C selectors, not the Swift RecoverableError witness.
+final class DocumentErrorRecoveryAttempter: NSObject {
+    let failure: DocumentReadFailure
+    init(failure: DocumentReadFailure) { self.failure = failure }
+
+    override func attemptRecovery(fromError error: Error, optionIndex: Int) -> Bool {
+        guard (0...3).contains(optionIndex) else { return false }
+        return failure.attemptRecovery(optionIndex: optionIndex)
+    }
+
+    override func attemptRecovery(fromError error: Error, optionIndex: Int, delegate: Any?, didRecoverSelector: Selector?, contextInfo: UnsafeMutableRawPointer?) {
+        let recovered = attemptRecovery(fromError: error, optionIndex: optionIndex)
+        guard let target = delegate as? NSObject, let selector = didRecoverSelector,
+              target.responds(to: selector), let implementation = target.method(for: selector) else { return }
+        typealias RecoveryCallback = @convention(c) (AnyObject, Selector, Bool, UnsafeMutableRawPointer?) -> Void
+        unsafeBitCast(implementation, to: RecoveryCallback.self)(target, selector, recovered, contextInfo)
     }
 }

@@ -239,3 +239,38 @@ extension ErrorIncidentTests {
         wait(for: [opened], timeout: 4)
     }
 }
+
+extension ErrorIncidentTests {
+    func testDocumentFailureBridgesActualNSErrorRecoveryOptions() {
+        let error = DocumentReadFailure(kind: .fileRead, error: CocoaError(.fileReadCorruptFile)) as NSError
+        XCTAssertTrue(error.localizedRecoveryOptions?.contains("Report This Problem") == true)
+        let attempter = error.userInfo[NSRecoveryAttempterErrorKey] as? NSObject
+        XCTAssertNotNil(attempter)
+        XCTAssertTrue(attempter?.responds(to: NSSelectorFromString("attemptRecoveryFromError:optionIndex:")) == true)
+        XCTAssertTrue(attempter?.responds(to: NSSelectorFromString("attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:")) == true)
+    }
+}
+
+private final class RecoveryCallbackProbe: NSObject {
+    var calls = 0
+    var recovered: Bool?
+    var context: UnsafeMutableRawPointer?
+    @objc func finished(_ recovered: Bool, contextInfo: UnsafeMutableRawPointer?) {
+        calls += 1; self.recovered = recovered; context = contextInfo
+    }
+}
+
+extension ErrorIncidentTests {
+    func testAppKitRecoveryCallbacksCompleteOnceWithoutPresentingOnClose() throws {
+        let error = DocumentReadFailure(kind: .fileRead, error: CocoaError(.fileReadCorruptFile)) as NSError
+        let attempter = try XCTUnwrap(error.recoveryAttempter as? DocumentErrorRecoveryAttempter)
+        XCTAssertFalse(attempter.attemptRecovery(fromError: error, optionIndex: 3))
+        let probe = RecoveryCallbackProbe()
+        let context = UnsafeMutableRawPointer(bitPattern: 42)
+        attempter.attemptRecovery(fromError: error, optionIndex: 3, delegate: probe,
+                          didRecoverSelector: #selector(RecoveryCallbackProbe.finished(_:contextInfo:)), contextInfo: context)
+        XCTAssertEqual(probe.calls, 1)
+        XCTAssertEqual(probe.recovered, false)
+        XCTAssertEqual(probe.context, context)
+    }
+}
