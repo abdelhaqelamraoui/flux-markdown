@@ -103,6 +103,9 @@ staging = Path(sys.argv[1])
 ud = staging / "Sources/Markdown/UpdateDelegate.swift"
 ud.write_text("import Cocoa\n\n// Sparkle auto-updater disabled for MacPorts builds.\n")
 print("  ✅ UpdateDelegate.swift stubbed")
+controller = staging / "Sources/Markdown/AppUpdaterController.swift"
+if controller.exists():
+    controller.write_text("// Sparkle auto-updater disabled for MacPorts builds.\n")
 
 # --- MarkdownApp.swift: remove Sparkle import + updaterController + CheckForUpdatesView ---
 ma = staging / "Sources/Markdown/MarkdownApp.swift"
@@ -113,7 +116,7 @@ content = content.replace("import Sparkle\n", "")
 
 # Remove updaterController property (multi-line)
 content = re.sub(
-    r'[ \t]*let updaterController = SPUStandardUpdaterController\([^)]+\)\s*\n',
+    r'[ \t]*let updaterController = (?:SPUStandardUpdaterController|AppUpdaterController)\([^)]*\)\s*\n',
     '',
     content,
     flags=re.DOTALL

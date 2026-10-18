@@ -113,6 +113,8 @@ targets:
       - Sources/Markdown/WindowAccessor.swift
       - Sources/Markdown/ResourceLoader.swift
       - Sources/Markdown/QuickLookRegistration.swift
+      - Sources/Markdown/AppUpdaterController.swift
+      - Sources/Markdown/UpdateDelegate.swift
       - Sources/MarkdownPreview
       - Sources/Shared
       - benchmark/swift-bench/RenderBenchmarkTests.swift
@@ -124,6 +126,9 @@ targets:
       PRODUCT_BUNDLE_IDENTIFIER: com.xykong.Markdown.Tests
       MARKETING_VERSION: ${MARKETING_VERSION}
       CURRENT_PROJECT_VERSION: ${CURRENT_PROJECT_VERSION}
+    dependencies:
+      - package: Sparkle
+        product: Sparkle
 schemes:
   Markdown:
     build:
