@@ -284,6 +284,7 @@ import { BlockquoteCollapse } from './blockquote-collapse';
 import { detectRtlContent } from './rtl';
 import { DiffAnimator } from './diff-animator';
 import { computeLineDiff } from './diff-engine';
+import { rendererLabels } from './renderer-strings';
 
 function extractFrontMatter(text: string): { yaml: string | null; body: string } {
     if (!text.startsWith('---')) {
@@ -369,7 +370,7 @@ function buildMd(): MarkdownIt {
             if (lang === 'typst' || lang === 'typst-math') {
                 return '<div class="typst-placeholder" data-typst-source="' +
                     str.replace(/"/g, '&quot;').replace(/\n/g, '&#10;') +
-                    '"><div class="typst-loading">Rendering Typst…</div></div>';
+                    '"><div class="typst-loading">' + rendererLabels().typstLoading + '</div></div>';
             }
 
             if (resolvedLang && hljs.getLanguage(resolvedLang)) {
@@ -666,7 +667,7 @@ async function renderGraphvizDiagrams(container: HTMLElement, isCurrent: () => b
         if (!src) {
             const errDiv = document.createElement('div');
             errDiv.className = 'graphviz-error';
-            errDiv.textContent = 'GraphViz error: empty diagram source';
+            errDiv.textContent = `${rendererLabels().graphvizError}: ${rendererLabels().emptyGraphvizSource}`;
             pre.insertAdjacentElement('afterend', errDiv);
             continue;
         }
@@ -683,7 +684,7 @@ async function renderGraphvizDiagrams(container: HTMLElement, isCurrent: () => b
             logToSwift(`[Graphviz] Render error: ${msg}`);
             const errDiv = document.createElement('div');
             errDiv.className = 'graphviz-error';
-            errDiv.textContent = `GraphViz error: ${msg}`;
+            errDiv.textContent = `${rendererLabels().graphvizError}: ${msg}`;
             pre.insertAdjacentElement('afterend', errDiv);
         }
     }
@@ -994,9 +995,9 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
                         const errorMessage = renderErr?.message || String(renderErr);
                         logToSwift(`JS Mermaid render error for ${id}: ${errorMessage}`);
                         div.innerHTML = `<div class="mermaid-error" style="background-color:#fff5f5;border:1px solid #feb2b2;border-radius:6px;padding:16px;">
-                            <div style="color:#c53030;font-weight:600;margin-bottom:8px;">⚠️ Mermaid Syntax Error</div>
+                            <div style="color:#c53030;font-weight:600;margin-bottom:8px;">${rendererLabels().mermaidSyntaxError}</div>
                             <pre style="background-color:#fed7d7;color:#742a2a;padding:12px;border-radius:4px;overflow-x:auto;font-size:13px;margin:0 0 12px 0;white-space:pre-wrap;">${escapeHtml(errorMessage)}</pre>
-                            <details><summary style="cursor:pointer;color:#718096;font-size:12px;">Show source code</summary>
+                            <details><summary style="cursor:pointer;color:#718096;font-size:12px;">${rendererLabels().showSourceCode}</summary>
                             <pre style="background-color:#f7fafc;color:#2d3748;padding:12px;border-radius:4px;margin-top:8px;overflow-x:auto;font-size:12px;white-space:pre-wrap;">${escapeHtml(code)}</pre></details>
                         </div>`;
                     }
@@ -1041,7 +1042,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
                         } catch (err) {
                             logToSwift(`JS Typst render error: ${err}`);
                             placeholder.innerHTML = `<div class="typst-math-block typst-error">
-                                <div class="typst-error-title">⚠️ Typst Render Error</div>
+                                <div class="typst-error-title">${rendererLabels().typstRenderError}</div>
                                 <pre class="typst-error-source">${escapeHtml(decodedSource)}</pre>
                             </div>`;
                         }
@@ -1062,7 +1063,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
         if (!isCurrent()) return;
         logToSwift(`[renderMarkdown:${callId}] ERROR: ` + e);
         if (outputDiv) {
-            outputDiv.innerHTML = `<div style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>Rendering Error</h3><pre>${escapeHtml(String(e))}</pre></div>`;
+            outputDiv.innerHTML = `<div style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>${rendererLabels().renderingError}</h3><pre>${escapeHtml(String(e))}</pre></div>`;
         }
     }
 };
@@ -1116,7 +1117,7 @@ window.renderSource = function(text: string, theme: string, prevContent?: string
     } catch (e) {
         logToSwift("JS Error during source rendering: " + e);
         if (outputDiv) {
-            outputDiv.innerHTML = `<div style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>Source Rendering Error</h3><pre>${escapeHtml(String(e))}</pre></div>`;
+            outputDiv.innerHTML = `<div style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>${rendererLabels().sourceRenderingError}</h3><pre>${escapeHtml(String(e))}</pre></div>`;
         }
     }
 };

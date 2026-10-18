@@ -2,6 +2,7 @@ import mathFontUrl from './assets/typst/NewCMMath-Regular.otf?url';
 import textFontUrl from './assets/typst/NewCM10-Regular.otf?url';
 import compilerWasmUrl from '@myriaddreamin/typst-ts-web-compiler/wasm?url';
 import rendererWasmUrl from '@myriaddreamin/typst-ts-renderer/wasm?url';
+import { rendererLabels } from './renderer-strings';
 /**
  * Typst math rendering module.
  *
@@ -119,7 +120,7 @@ export async function renderTypstBlock(
         return `<div class="typst-math-block typst-transpiled">${html}</div>`;
     } catch (err) {
         return `<div class="typst-math-block typst-error">
-            <div class="typst-error-title">⚠️ Typst Render Error</div>
+            <div class="typst-error-title">${rendererLabels().typstRenderError}</div>
             <pre class="typst-error-source">${escapeHtml(typstCode)}</pre>
             <pre class="typst-error-message">${escapeHtml(String(err))}</pre>
         </div>`;
