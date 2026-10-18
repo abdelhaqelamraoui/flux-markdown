@@ -77,8 +77,8 @@ final class ToolbarButtonHitAreaTests: XCTestCase {
             "Main app refresh and reset zoom controls should keep their user-facing tooltip text."
         )
         XCTAssertTrue(
-            quickLookSource.contains("toolTip: \"Reload File (⌘R)\"")
-                && quickLookSource.contains("toolTip: \"Reset Zoom (⌘0)\""),
+            quickLookSource.contains("NSLocalizedString(\"Reload File (⌘R)\"")
+                && quickLookSource.contains("NSLocalizedString(\"Reset Zoom (⌘0)\""),
             "QuickLook refresh and reset zoom controls should keep explicit user-facing tooltip text."
         )
     }

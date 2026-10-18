@@ -157,3 +157,11 @@
 "Document reloaded" = "已重新载入文档";
 "Reload failed" = "重新载入失败";
 "Zoom reset" = "已重置缩放";
+
+"Typst Math" = "Typst 数学";
+
+"Typst math expressions in ```typst code blocks" = "```typst 代码块中的 Typst 数学表达式";
+
+"Finder Preview Font Size" = "访达预览字体大小";
+
+"Font size when previewing in Finder's column view" = "在访达分栏视图中预览时的字体大小";

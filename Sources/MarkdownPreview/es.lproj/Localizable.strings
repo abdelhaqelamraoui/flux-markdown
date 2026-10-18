@@ -12,3 +12,16 @@
 "Document reloaded" = "Documento recargado";
 "Reload failed" = "Error al recargar";
 "Zoom reset" = "Zoom restablecido";
+
+"Could not open GitHub" = "No se pudo abrir GitHub";
+"QuickLook preview does not support link navigation" = "La vista previa de QuickLook no admite navegación de enlaces";
+"Double-click .md file to open in main app for full functionality" = "Haz doble clic en el archivo .md para abrirlo en la app principal y acceder a toda la funcionalidad";
+"Preview limited to 500 KiB. Use Open with FluxMarkdown above to read the complete document." = "Vista previa limitada a 500 KiB. Usa «Abrir con FluxMarkdown» arriba para leer el documento completo.";
+"Some local images could not be read. Use Open with FluxMarkdown above to view the document." = "No se pudieron leer algunas imágenes locales. Usa «Abrir con FluxMarkdown» arriba.";
+"Reload File (⌘R)" = "Recargar Archivo (⌘R)";
+"Zoom Out" = "Alejar";
+"Reset Zoom (⌘0)" = "Restablecer Zoom (⌘0)";
+"Zoom In" = "Acercar";
+"Show Help" = "Mostrar Ayuda";
+"Toggle Theme" = "Cambiar tema";
+"Toggle Source View" = "Alternar vista de código fuente";

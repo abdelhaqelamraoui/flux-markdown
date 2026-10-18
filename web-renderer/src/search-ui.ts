@@ -1,6 +1,21 @@
 import { updateReadingControlsLayout } from './reading-controls';
 import type { SearchEngine, SearchOptions } from "./search";
 
+declare global { interface Window { __fluxLang?: string; } }
+
+const searchLabels = {
+	en: { find: 'Find in page', query: 'Search query', previous: 'Previous match', next: 'Next match', close: 'Close', case: 'Match case', word: 'Match whole word', regex: 'Use regular expression', invalidRegex: 'Invalid regular expression' },
+	zh: { find: '在页面中查找', query: '搜索内容', previous: '上一个匹配项', next: '下一个匹配项', close: '关闭', case: '区分大小写', word: '匹配整个单词', regex: '使用正则表达式', invalidRegex: '正则表达式无效' },
+	de: { find: 'Auf der Seite suchen', query: 'Suchanfrage', previous: 'Vorheriger Treffer', next: 'Nächster Treffer', close: 'Schließen', case: 'Groß-/Kleinschreibung beachten', word: 'Ganzes Wort suchen', regex: 'Regulären Ausdruck verwenden', invalidRegex: 'Ungültiger regulärer Ausdruck' },
+	fr: { find: 'Rechercher dans la page', query: 'Requête de recherche', previous: 'Résultat précédent', next: 'Résultat suivant', close: 'Fermer', case: 'Respecter la casse', word: 'Mot entier', regex: 'Utiliser une expression régulière', invalidRegex: 'Expression régulière non valide' },
+	es: { find: 'Buscar en la página', query: 'Consulta de búsqueda', previous: 'Coincidencia anterior', next: 'Coincidencia siguiente', close: 'Cerrar', case: 'Distinguir mayúsculas', word: 'Coincidir palabra completa', regex: 'Usar expresión regular', invalidRegex: 'Expresión regular no válida' },
+} as const;
+
+function localizedSearchLabels() {
+	const language = (window.__fluxLang || navigator.language || 'en').split('-')[0] as keyof typeof searchLabels;
+	return searchLabels[language] || searchLabels.en;
+}
+
 export class SearchUI {
 	private container: HTMLElement;
 	private searchEngine: SearchEngine;
@@ -29,10 +44,11 @@ export class SearchUI {
 	}
 
 	private createUI(): void {
+		const labels = localizedSearchLabels();
 		const toolbar = document.createElement("div");
 		toolbar.className = "search-toolbar";
 		toolbar.setAttribute("role", "search");
-		toolbar.setAttribute("aria-label", "Find in page");
+		toolbar.setAttribute("aria-label", labels.find);
 
 		const inputGroup = document.createElement("div");
 		inputGroup.className = "search-input-group";
@@ -40,8 +56,8 @@ export class SearchUI {
 		this.searchInput = document.createElement("input");
 		this.searchInput.type = "text";
 		this.searchInput.className = "search-input";
-		this.searchInput.placeholder = "Find in page";
-		this.searchInput.setAttribute("aria-label", "Search query");
+		this.searchInput.placeholder = labels.find;
+		this.searchInput.setAttribute("aria-label", labels.query);
 		// Disable macOS auto-capitalization, auto-correct, and spellcheck
 		this.searchInput.setAttribute("autocapitalize", "off");
 		this.searchInput.setAttribute("autocomplete", "off");
@@ -55,8 +71,8 @@ export class SearchUI {
 		inputGroup.appendChild(this.searchInput);
 		inputGroup.appendChild(this.matchCounter);
 
-		this.prevButton = this.createButton("prev", "↑", "Previous match");
-		this.nextButton = this.createButton("next", "↓", "Next match");
+		this.prevButton = this.createButton("prev", "↑", labels.previous);
+		this.nextButton = this.createButton("next", "↓", labels.next);
 
 		const optionsGroup = document.createElement("div");
 		optionsGroup.className = "search-options";
@@ -64,17 +80,17 @@ export class SearchUI {
 		this.caseSensitiveCheckbox = this.createCheckbox(
 			"case",
 			"Aa",
-			"Match case",
+			labels.case,
 		);
 		this.wholeWordCheckbox = this.createCheckbox(
 			"word",
 			"ab",
-			"Match whole word",
+			labels.word,
 		);
 		this.regexCheckbox = this.createCheckbox(
 			"regex",
 			".*",
-			"Use regular expression",
+			labels.regex,
 		);
 
 		const caseLabel = this.caseSensitiveCheckbox.parentElement;
@@ -85,7 +101,7 @@ export class SearchUI {
 		if (wordLabel) optionsGroup.appendChild(wordLabel);
 		if (regexLabel) optionsGroup.appendChild(regexLabel);
 
-		this.closeButton = this.createButton("close", "×", "Close");
+		this.closeButton = this.createButton("close", "×", labels.close);
 
 		toolbar.appendChild(inputGroup);
 		toolbar.appendChild(this.prevButton);
@@ -207,7 +223,7 @@ export class SearchUI {
 		const matchCount = this.searchEngine.search(query, options);
 
 		if (matchCount === -1) {
-			this.showError("Invalid regular expression");
+			this.showError(localizedSearchLabels().invalidRegex);
 			this.updateMatchCounter(0, 0);
 			this.updateButtonStates(false);
 			return;

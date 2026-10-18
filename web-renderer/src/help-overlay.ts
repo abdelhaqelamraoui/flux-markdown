@@ -278,11 +278,12 @@ export class HelpOverlay {
     }
 
     private createOverlay(): void {
+        const strings = STRINGS[detectLang()];
         const overlay = document.createElement('div');
         overlay.id = 'help-overlay';
         overlay.setAttribute('role', 'dialog');
         overlay.setAttribute('aria-modal', 'true');
-        overlay.setAttribute('aria-label', 'Keyboard shortcuts');
+        overlay.setAttribute('aria-label', strings.title);
 
         overlay.innerHTML = this.buildOverlayHTML();
         overlay.addEventListener('click', (e) => {
