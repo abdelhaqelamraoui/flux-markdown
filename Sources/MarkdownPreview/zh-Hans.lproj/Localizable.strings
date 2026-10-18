@@ -8,3 +8,7 @@
 "Right" = "右侧";
 
 "Keep contents and its button on the same side" = "目录与按钮始终保持同侧";
+
+"Document reloaded" = "已重新载入文档";
+"Reload failed" = "重新载入失败";
+"Zoom reset" = "已重置缩放";

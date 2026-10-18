@@ -153,3 +153,7 @@
 "The installed extension rendered the test document. Your default editor was preserved." = "L’extension installée a affiché le document de test. Votre éditeur par défaut a été conservé.";
 "The test did not confirm a rendered preview. Include Quick Look diagnostics when reporting this issue." = "Le test n’a pas confirmé le rendu de l’aperçu. Joignez les diagnostics Quick Look à votre rapport.";
 "Some local images could not be read. Use Open with FluxMarkdown above to view the document." = "Certaines images locales sont illisibles. Utilisez « Ouvrir avec FluxMarkdown » ci-dessus.";
+
+"Document reloaded" = "Document rechargé";
+"Reload failed" = "Échec du rechargement";
+"Zoom reset" = "Zoom réinitialisé";

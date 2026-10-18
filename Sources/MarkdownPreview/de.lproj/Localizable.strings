@@ -8,3 +8,7 @@
 "Right" = "Rechts";
 
 "Keep contents and its button on the same side" = "Inhalt und Schaltfläche auf derselben Seite";
+
+"Document reloaded" = "Dokument neu geladen";
+"Reload failed" = "Neuladen fehlgeschlagen";
+"Zoom reset" = "Zoom zurückgesetzt";

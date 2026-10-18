@@ -8,3 +8,7 @@
 "Right" = "Derecha";
 
 "Keep contents and its button on the same side" = "Mantener el índice y su botón en el mismo lado";
+
+"Document reloaded" = "Documento recargado";
+"Reload failed" = "Error al recargar";
+"Zoom reset" = "Zoom restablecido";
