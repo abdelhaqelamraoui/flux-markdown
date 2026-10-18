@@ -157,3 +157,11 @@
 "Document reloaded" = "Document rechargé";
 "Reload failed" = "Échec du rechargement";
 "Zoom reset" = "Zoom réinitialisé";
+
+"Typst Math" = "Mathématiques Typst";
+
+"Typst math expressions in ```typst code blocks" = "Expressions mathématiques Typst dans les blocs de code ```typst";
+
+"Finder Preview Font Size" = "Taille de police de l’aperçu Finder";
+
+"Font size when previewing in Finder's column view" = "Taille de police dans la vue en colonnes du Finder";

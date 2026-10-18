@@ -680,13 +680,14 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     private var themeTrailingConstraint: NSLayoutConstraint?
 
     private func setupThemeButton() {
+        let title = NSLocalizedString("Toggle Theme", comment: "Theme toggle tooltip")
         let button = CircularToolbarButton.make(
             systemName: "circle.lefthalf.filled",
-            accessibilityDescription: "Toggle Theme",
+            accessibilityDescription: title,
             tintColor: NSColor.labelColor,
             target: self,
             action: #selector(toggleTheme),
-            toolTip: "Toggle Theme"
+            toolTip: title
         )
         
         self.view.addSubview(button)
@@ -723,6 +724,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
     
     private func updateThemeButtonState() {
+        let title = NSLocalizedString("Toggle Theme", comment: "Theme toggle tooltip")
         let mode = AppearancePreference.shared.currentMode
         let iconName: String
         let iconColor: NSColor
@@ -739,20 +741,21 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         }
         themeButton.configure(
             systemName: iconName,
-            accessibilityDescription: "Toggle Theme",
+            accessibilityDescription: title,
             tintColor: iconColor,
-            toolTip: "Toggle Theme"
+            toolTip: title
         )
     }
     
     private func setupSourceButton() {
+        let title = NSLocalizedString("Toggle Source View", comment: "Source view toggle tooltip")
         let button = CircularToolbarButton.make(
             systemName: "doc.text.fill",
-            accessibilityDescription: "Toggle Source View",
+            accessibilityDescription: title,
             tintColor: NSColor.labelColor,
             target: self,
             action: #selector(toggleViewMode),
-            toolTip: "Toggle Source View"
+            toolTip: title
         )
         
         self.view.addSubview(button)
@@ -804,14 +807,15 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
     
     private func updateSourceButtonState() {
+        let title = NSLocalizedString("Toggle Source View", comment: "Source view toggle tooltip")
         let iconName = (currentViewMode == .source) ? "eye.fill" : "doc.text.fill"
         let iconColor = (currentViewMode == .source) ? NSColor.systemBlue : NSColor.darkGray
         
         sourceButton.configure(
             systemName: iconName,
-            accessibilityDescription: "Toggle Source View",
+            accessibilityDescription: title,
             tintColor: iconColor,
-            toolTip: "Toggle Source View"
+            toolTip: title
         )
     }
 
@@ -849,13 +853,14 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
 
     private func setupHelpButton() {
+        let title = NSLocalizedString("Show Help", comment: "Show help tooltip")
         let button = CircularToolbarButton.make(
             systemName: "questionmark.circle",
-            accessibilityDescription: "Show Help",
+            accessibilityDescription: title,
             tintColor: NSColor.labelColor,
             target: self,
             action: #selector(toggleHelp),
-            toolTip: "Show Help"
+            toolTip: title
         )
 
         self.view.addSubview(button)
@@ -874,13 +879,14 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
 
     private func setupZoomInButton() {
+        let title = NSLocalizedString("Zoom In", comment: "Zoom in tooltip")
         let button = CircularToolbarButton.make(
             systemName: "textformat.size.larger",
-            accessibilityDescription: "Zoom In",
+            accessibilityDescription: title,
             tintColor: NSColor.labelColor,
             target: self,
             action: #selector(zoomIn),
-            toolTip: "Zoom In"
+            toolTip: title
         )
 
         self.view.addSubview(button)
@@ -895,13 +901,14 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
 
     private func setupZoomOutButton() {
+        let title = NSLocalizedString("Zoom Out", comment: "Zoom out tooltip")
         let button = CircularToolbarButton.make(
             systemName: "textformat.size.smaller",
-            accessibilityDescription: "Zoom Out",
+            accessibilityDescription: title,
             tintColor: NSColor.labelColor,
             target: self,
             action: #selector(zoomOut),
-            toolTip: "Zoom Out"
+            toolTip: title
         )
 
         self.view.addSubview(button)
@@ -916,13 +923,14 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
 
     private func setupResetZoomButton() {
+        let title = NSLocalizedString("Reset Zoom (⌘0)", comment: "Reset zoom tooltip")
         let button = CircularToolbarButton.make(
             systemName: "arrow.uturn.backward",
-            accessibilityDescription: "Reset Zoom",
+            accessibilityDescription: title,
             tintColor: NSColor.labelColor,
             target: self,
             action: #selector(resetZoom),
-            toolTip: "Reset Zoom (⌘0)"
+            toolTip: title
         )
 
         self.view.addSubview(button)
@@ -937,13 +945,14 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     }
 
     private func setupReloadButton() {
+        let title = NSLocalizedString("Reload File (⌘R)", comment: "Reload file tooltip")
         let button = CircularToolbarButton.make(
             systemName: "arrow.clockwise",
-            accessibilityDescription: "Reload File",
+            accessibilityDescription: title,
             tintColor: NSColor.labelColor,
             target: self,
             action: #selector(reloadFileManually),
-            toolTip: "Reload File (⌘R)"
+            toolTip: title
         )
 
         self.view.addSubview(button)
