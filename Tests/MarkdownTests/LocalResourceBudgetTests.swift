@@ -37,7 +37,7 @@ final class LocalResourceBudgetTests: XCTestCase {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
         let image = directory.appendingPathComponent("image.png")
-        try Data(repeating: 0, count: 2 * 1024 * 1024 + 1).write(to: image)
+        try Data(repeating: 0, count: 8 * 1024 * 1024 + 1).write(to: image)
         let handler = LocalSchemeHandler()
         handler.baseDirectory = directory
         handler.allowedFileURLs = [image]

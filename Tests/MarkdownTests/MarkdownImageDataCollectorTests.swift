@@ -286,7 +286,7 @@ extension MarkdownImageDataCollectorTests {
         XCTAssertNotNil(MarkdownImageDataCollector.collectImageData(from: document, content: markdown)["photo (1).png"])
         let large = root.appendingPathComponent("large.png")
         try Data(repeating: 0, count: 2 * 1024 * 1024 + 1).write(to: large)
-        XCTAssertTrue(MarkdownImageDataCollector.referencedLocalImageURLs(from: document, content: "![large](large.png)").isEmpty)
+        XCTAssertEqual(MarkdownImageDataCollector.referencedLocalImageURLs(from: document, content: "![large](large.png)"), [large])
     }
 }
 
