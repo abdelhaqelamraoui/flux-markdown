@@ -17,12 +17,12 @@ struct MarkdownDocument: FileDocument {
     }
 
     init(configuration: ReadConfiguration) throws {
-        guard let data = configuration.file.regularFileContents else { throw CocoaError(.fileReadCorruptFile) }
-        guard data.count <= BoundedFileReader.documentLimit else { throw CocoaError(.fileReadTooLarge) }
+        guard let data = configuration.file.regularFileContents else { throw DocumentReadFailure(kind: .fileRead, error: CocoaError(.fileReadCorruptFile)) }
+        guard data.count <= BoundedFileReader.documentLimit else { throw DocumentReadFailure(kind: .fileTooLarge, error: CocoaError(.fileReadTooLarge)) }
         guard
               let string = String(data: data, encoding: .utf8)
         else {
-            throw CocoaError(.fileReadCorruptFile)
+            throw DocumentReadFailure(kind: .fileRead, error: CocoaError(.fileReadCorruptFile))
         }
         text = string
     }

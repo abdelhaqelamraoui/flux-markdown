@@ -43,6 +43,7 @@ struct MarkdownWebView: NSViewRepresentable {
         userContentController.add(coordinator, name: "logger")
         userContentController.add(coordinator, name: "linkClicked")
         userContentController.add(coordinator, name: "readingToolsLayout")
+        userContentController.add(coordinator, name: "errorFeedback")
         
         let debugSource = """
         window.onerror = function(msg, url, line, col, error) {
@@ -84,6 +85,12 @@ struct MarkdownWebView: NSViewRepresentable {
         webView.appearance = NSAppearance(named: .aqua)
         webView.navigationDelegate = coordinator
         coordinator.currentWebView = webView
+        coordinator.errorRegistry.onRecover = { [weak coordinator] incident in
+            guard let coordinator else { return }
+            if incident.reason == .moduleUnavailable || [.renderer, .source].contains(incident.kind) { coordinator.retryPreview() }
+            else { coordinator.handleOpenInExternalEditor() }
+        }
+        coordinator.armRendererTimeout()
         
         if coordinator.rendererBundleSchemeHandler != nil {
             let url = RendererBundleSchemeHandler.rendererURL()
@@ -91,6 +98,7 @@ struct MarkdownWebView: NSViewRepresentable {
             webView.load(URLRequest(url: url))
         } else {
             os_log("Failed to find index.html in bundle", log: coordinator.logger, type: .error)
+            coordinator.showFailure(.renderer)
         }
         
         return webView
@@ -112,6 +120,37 @@ struct MarkdownWebView: NSViewRepresentable {
 
     class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         let logger = OSLog(subsystem: "com.markdownquicklook.app", category: "MarkdownWebView")
+        let errorRegistry = RendererErrorRegistry()
+        func showFailure(_ kind: FailureKind, error: Error? = nil, recoveryTitle: String = "Reload", recovery: (() -> Void)? = nil) {
+            guard let view = currentWebView else { return }
+            let incident = errorRegistry.nativeFailure(kind, error: error)
+            IncidentNotice.attach(to: view, incident: incident, recoveryTitle: recoveryTitle,
+                                  recovery: recovery ?? { [weak self] in self?.retryPreview() })
+        }
+        private var rendererTimeout: DispatchWorkItem?
+        func armRendererTimeout() {
+            rendererTimeout?.cancel()
+            let work = DispatchWorkItem { [weak self] in
+                guard let self, !self.isWebViewLoaded else { return }
+                self.showFailure(.renderer)
+            }
+            rendererTimeout = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: work)
+        }
+        func retryPreview() {
+            guard let webView = currentWebView else { return }
+            isWebViewLoaded = false
+            if pendingRender == nil {
+                let retained = lastRenderedContent
+                lastRenderedContent = ""; lastRenderedFeatures = nil
+                render(webView: webView, content: retained, fileURL: currentFileURL, viewMode: lastViewMode,
+                       appearanceMode: lastAppearanceMode, baseFontSize: lastBaseFontSize, enableMermaid: lastEnableMermaid,
+                       enableKatex: lastEnableKatex, enableEmoji: lastEnableEmoji, enableTypst: lastEnableTypst,
+                       codeHighlightTheme: lastCodeHighlightTheme, collapseBlockquotesByDefault: lastCollapseBlockquotesByDefault,
+                       showLineNumbers: lastShowLineNumbers)
+            }
+            armRendererTimeout(); webView.reload()
+        }
         weak var starReminder: StarReminderSession?
         var isWebViewLoaded = false
         var pendingRender: (() -> Void)?
@@ -307,10 +346,18 @@ struct MarkdownWebView: NSViewRepresentable {
             let task = Process()
             task.launchPath = "/usr/bin/open"
             task.arguments = ["-t", url.path]
+            task.terminationHandler = { [weak self] process in
+                guard process.terminationStatus != 0 else { return }
+                DispatchQueue.main.async {
+                    guard let self, self.currentFileURL == url else { return }
+                    self.showDestinationFailure(url)
+                }
+            }
             do {
                 try task.run()
             } catch {
                 os_log("Failed to open in external editor: %{public}@", log: logger, type: .error, error.localizedDescription)
+                        showFailure(.link, error: error, recoveryTitle: "Try Again", recovery: { [weak self] in self?.handleOpenInExternalEditor() })
             }
         }
 
@@ -323,6 +370,7 @@ struct MarkdownWebView: NSViewRepresentable {
                 DispatchQueue.main.async {
                     guard let htmlString = htmlString else {
                         os_log("exportHTML: received nil HTML", log: self?.logger ?? .default, type: .error)
+                        self?.showFailure(.exportHTML, recoveryTitle: "Export Again", recovery: { [weak self] in self?.handleExportHTML() })
                         return
                     }
                     let panel = NSSavePanel()
@@ -335,6 +383,7 @@ struct MarkdownWebView: NSViewRepresentable {
                             os_log("Exported HTML to: %{public}@", log: self?.logger ?? .default, type: .default, url.path)
                         } catch {
                             os_log("Failed to write HTML: %{public}@", log: self?.logger ?? .default, type: .error, error.localizedDescription)
+                        self?.showFailure(.exportHTML, error: error, recoveryTitle: "Choose Another Folder", recovery: { [weak self] in self?.handleExportHTML() })
                         }
                     }
                 }
@@ -469,6 +518,10 @@ struct MarkdownWebView: NSViewRepresentable {
 
             let safeContentArg = String(contentJsonArray.dropFirst().dropLast())
 
+            let feedbackGeneration = errorRegistry.beginDocument()
+            ErrorFeedback.capture(.renderer, phase: .started, scope: errorRegistry.scope)
+            webView.evaluateJavaScript("window.setFeedbackGeneration && window.setFeedbackGeneration('\(feedbackGeneration)');", completionHandler: nil)
+            for notice in webView.subviews.compactMap({ $0 as? IncidentNotice }) { notice.removeFromSuperview() }
             var options: [String: Any] = ["context": "app"]
 
             if let url = fileURL {
@@ -542,6 +595,7 @@ struct MarkdownWebView: NSViewRepresentable {
                 if case .failure(let error) = result {
                     self.lastRenderedFeatures = nil
                     os_log("JS render failed: %{public}@", log: self.logger, type: .error, error.localizedDescription)
+                        self.showFailure(.renderer, error: error)
                     return
                 }
                 self.starReminder?.rendered()
@@ -590,23 +644,27 @@ struct MarkdownWebView: NSViewRepresentable {
         
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
             os_log("WebView didFail navigation: %{public}@", log: logger, type: .error, error.localizedDescription)
+                        showFailure(.renderer, error: error)
         }
         
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
             os_log("WebView didFailProvisionalNavigation: %{public}@", log: logger, type: .error, error.localizedDescription)
+                        showFailure(.renderer, error: error)
         }
         
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
             os_log("🔴 WebView WebContent process terminated! Attempting reload...", log: logger, type: .error)
-            webView.reload()
+            showFailure(.renderer)
         }
         
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard RendererBridgePolicy.accepts(message) else { return }
+            if message.name == "errorFeedback" { errorRegistry.handle(message.body); return }
             if message.name == "logger", let body = message.body as? String {
                 os_log("JS Log: %{public}@", log: logger, type: .debug, body)
                 
                 if body == "rendererReady" {
+                    rendererTimeout?.cancel()
                     os_log("Coordinator: Renderer Handshake Received!", log: logger, type: .default)
                     if !isWebViewLoaded {
                         isWebViewLoaded = true
@@ -689,6 +747,7 @@ struct MarkdownWebView: NSViewRepresentable {
                 if case .failure(let error) = result {
                     os_log("exportPDF: failed to inject font-size variable: %{public}@",
                            log: self?.logger ?? .default, type: .error, error.localizedDescription)
+                    self?.showFailure(.exportPDF, error: error, recoveryTitle: "Export Again", recovery: { [weak self] in self?.handleExportPDF() })
                     return
                 }
                 self?.runPrintOperation(webView: webView, to: destinationURL)
@@ -718,13 +777,14 @@ struct MarkdownWebView: NSViewRepresentable {
             printOperation.view?.frame = NSRect(origin: .zero, size: a4PaperSize)
 
             let log = self.logger
-            DispatchQueue.global(qos: .userInitiated).async {
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 let success = printOperation.run()
                 DispatchQueue.main.async {
                     if success {
                         os_log("Exported PDF to: %{public}@", log: log, type: .default, destinationURL.path)
                     } else {
                         os_log("exportPDF: NSPrintOperation.run() failed", log: log, type: .error)
+                        self?.showFailure(.exportPDF, recoveryTitle: "Choose Another Folder", recovery: { [weak self] in self?.handleExportPDF() })
                     }
                 }
             }
@@ -856,6 +916,7 @@ struct MarkdownWebView: NSViewRepresentable {
                         completion?(true)
                     } catch {
                         os_log("Reload failed: %{public}@", log: self.logger, type: .error, error.localizedDescription)
+                        self.showFailure(.reload, error: error, recoveryTitle: "Try Again", recovery: { [weak self] in self?.reloadFromDisk(url: url, force: true) })
                         completion?(false)
                     }
                 }
@@ -867,6 +928,12 @@ struct MarkdownWebView: NSViewRepresentable {
             reloadFromDisk(url: url)
         }
 
+        private func showDestinationFailure(_ url: URL) {
+            showFailure(.link, recoveryTitle: "Copy Link", recovery: {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(url.absoluteString, forType: .string)
+            })
+        }
         private func handleLinkClick(href: String) {
             if href == GitHubStar.repository.absoluteString {
                 GitHubStar.showRepository()
@@ -875,7 +942,7 @@ struct MarkdownWebView: NSViewRepresentable {
             if href.starts(with: "http://") || href.starts(with: "https://") {
                 if let url = URL(string: href) {
                     os_log("🔵 Opening external URL: %{public}@", log: logger, type: .default, href)
-                    NSWorkspace.shared.open(url)
+                    if !NSWorkspace.shared.open(url) { showDestinationFailure(url) }
                 }
                 return
             }
@@ -898,11 +965,12 @@ struct MarkdownWebView: NSViewRepresentable {
                 NSDocumentController.shared.openDocument(withContentsOf: targetURL, display: true) { _, _, error in
                     if error != nil {
                         if let id { DocumentPositionStore.shared.discard(for: targetURL, id: id) }
+                        self.showFailure(.fileRead, error: error)
                     } else {
                         NotificationCenter.default.post(name: DocumentPositionStore.notification, object: targetURL)
                     }
                 }
-            } else { NSWorkspace.shared.open(targetURL) }
+            } else if !NSWorkspace.shared.open(targetURL) { showDestinationFailure(targetURL) }
         }
         
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -913,10 +981,10 @@ struct MarkdownWebView: NSViewRepresentable {
             }
             
             if url.scheme == "http" || url.scheme == "https" {
-                NSWorkspace.shared.open(url)
+                if !NSWorkspace.shared.open(url) { showDestinationFailure(url) }
                 decisionHandler(.cancel)
             } else if url.isFileURL && url.pathExtension == "md" {
-                 NSWorkspace.shared.open(url)
+                 if !NSWorkspace.shared.open(url) { showDestinationFailure(url) }
                  decisionHandler(.cancel)
             } else {
                 decisionHandler(.allow)

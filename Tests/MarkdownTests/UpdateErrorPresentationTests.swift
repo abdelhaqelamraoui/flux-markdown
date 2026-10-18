@@ -8,10 +8,9 @@ final class UpdateErrorPresentationTests: XCTestCase {
         var acknowledgements = 0
         let driver = UpdateErrorUserDriver(presentAlert: { alert in
             XCTAssertEqual(alert.messageText, "Could Not Update FluxMarkdown")
-            XCTAssertTrue(alert.informativeText.contains("FluxMarkdown.dmg"))
-            XCTAssertTrue(alert.informativeText.contains("Applications"))
-            XCTAssertTrue(alert.informativeText.contains("Report an Issue"))
-            XCTAssertEqual(alert.buttons.map(\.title), ["Download Latest Version", "Close"])
+            XCTAssertTrue(alert.informativeText.contains("download"))
+            XCTAssertTrue(alert.informativeText.contains("manually"))
+            XCTAssertEqual(alert.buttons.map(\.title), ["Download Latest Version", "Report This Problem", "Close"])
             return .alertFirstButtonReturn
         }, openURL: { opened = $0; return true })
         driver.showUpdaterError(NSError(domain: "SUSparkleErrorDomain", code: 4005)) { acknowledgements += 1 }
@@ -19,9 +18,22 @@ final class UpdateErrorPresentationTests: XCTestCase {
         XCTAssertEqual(acknowledgements, 1)
     }
 
+    func testReportCapturesFailureBeforeHandoffAndAcknowledgesFirst() {
+        var actions: [String] = []
+        let driver = UpdateErrorUserDriver(presentAlert: { _ in .alertSecondButtonReturn },
+                                          openURL: { _ in XCTFail("Reporting must use its own route"); return false },
+                                          reportIncident: { draft in
+            actions.append("report")
+            XCTAssertTrue(draft.incident.report.contains("SUSparkleErrorDomain:4005"))
+            XCTAssertFalse(draft.incident.report.contains("private"))
+        })
+        driver.showUpdaterError(NSError(domain: "SUSparkleErrorDomain", code: 4005, userInfo: [NSLocalizedDescriptionKey: "private text"])) { actions.append("acknowledge") }
+        XCTAssertEqual(actions, ["acknowledge", "report"])
+    }
+
     func testCloseAcknowledgesWithoutOpeningBrowser() {
         var acknowledgements = 0
-        let driver = UpdateErrorUserDriver(presentAlert: { _ in .alertSecondButtonReturn },
+        let driver = UpdateErrorUserDriver(presentAlert: { _ in .alertThirdButtonReturn },
                                           openURL: { _ in XCTFail("Close must not open a website"); return false })
         driver.showUpdaterError(NSError(domain: "SUSparkleErrorDomain", code: 4005)) { acknowledgements += 1 }
         XCTAssertEqual(acknowledgements, 1)
@@ -80,7 +92,7 @@ final class UpdateErrorPresentationTests: XCTestCase {
         var alerts = 0
         let driver = UpdateErrorUserDriver(hostBundle: bundle, presentAlert: { _ in
             alerts += 1
-            return .alertSecondButtonReturn
+            return .alertThirdButtonReturn
         })
         let defaults = try XCTUnwrap(UserDefaults(suiteName: identifier))
         let diagnostics = UpdateDiagnostics(defaults: defaults)

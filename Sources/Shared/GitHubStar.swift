@@ -14,14 +14,10 @@ enum GitHubStar {
 
     static func showRepository() {
         guard !openRepository() else { return }
-        let alert = NSAlert()
-        alert.messageText = NSLocalizedString("Could not open GitHub", comment: "GitHub support browser error")
-        alert.informativeText = repository.absoluteString
-        alert.addButton(withTitle: NSLocalizedString("Copy Link", comment: "Copy support URL"))
-        alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Cancel"))
-        if alert.runModal() == .alertFirstButtonReturn {
+        ErrorFeedback.present(ErrorFeedback.capture(.browser), recoveryTitle: "Copy Link", recovery: {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(repository.absoluteString, forType: .string)
-        }
+        })
+        return
     }
 }

@@ -1,0 +1,29 @@
+name: Report from FluxMarkdown
+description: A report prepared automatically from an error in the app
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        FluxMarkdown has prepared the observed failure and available diagnostics. Review them before publishing; issues are public. Additional steps or a non-private sample are optional.
+  - type: textarea
+    id: description
+    attributes:
+      label: Observed problem
+      description: Prepared by FluxMarkdown. You can edit this description.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Error and environment
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional details (optional)
+      description: You may add steps, expected behavior, or a minimal non-private sample. Do not include private documents or credentials.
+    validations:
+      required: false

@@ -9,7 +9,7 @@ final class CLIAppDelegate: NSObject, NSApplicationDelegate {
         let args = CommandLine.arguments
         guard let idx = args.firstIndex(of: "--export-pdf"), idx + 1 < args.count else {
             fputs("Usage: FluxMarkdown --export-pdf <input.md> [output.pdf]\n", stderr)
-            exit(1)
+            CLIErrorGuidance.printReport(); exit(1)
         }
 
         let inputPath  = args[idx + 1]
@@ -18,7 +18,7 @@ final class CLIAppDelegate: NSObject, NSApplicationDelegate {
 
         guard FileManager.default.fileExists(atPath: inputURL.path) else {
             fputs("Error: file not found: \(inputURL.path)\n", stderr)
-            exit(1)
+            CLIErrorGuidance.printReport(); exit(1)
         }
 
         let outputURL: URL
@@ -51,7 +51,7 @@ final class CLIExporter: NSObject {
     }
 
     func run() {
-        let timeout = DispatchWorkItem { fputs("Error: PDF export timed out\n", stderr); exit(1) }
+        let timeout = DispatchWorkItem { fputs("Error: PDF export timed out\n", stderr); CLIErrorGuidance.printReport(); exit(1) }
         deadline = timeout
         DispatchQueue.main.asyncAfter(deadline: .now() + 60, execute: timeout)
         setupWebView()
@@ -112,7 +112,7 @@ final class CLIExporter: NSObject {
     private func loadRenderer() {
         guard rendererBundleSchemeHandler != nil else {
             fputs("Error: index.html not found in bundle\n", stderr)
-            exit(1)
+            CLIErrorGuidance.printReport(); exit(1)
         }
         let url = RendererBundleSchemeHandler.rendererURL()
         fputs("Loading renderer from: \(url.absoluteString)\n", stderr)
@@ -123,13 +123,13 @@ final class CLIExporter: NSObject {
         guard let data = try? BoundedFileReader.read(inputURL, maxBytes: BoundedFileReader.documentLimit),
               let content = String(data: data, encoding: .utf8) else {
             fputs("Error: cannot read \(inputURL.path)\n", stderr)
-            exit(1)
+            CLIErrorGuidance.printReport(); exit(1)
         }
 
         guard let contentData = try? JSONSerialization.data(withJSONObject: [content]),
               let jsonArray   = String(data: contentData, encoding: .utf8) else {
             fputs("Error: cannot encode content\n", stderr)
-            exit(1)
+            CLIErrorGuidance.printReport(); exit(1)
         }
         let safeArg = String(jsonArray.dropFirst().dropLast())
 
@@ -149,14 +149,14 @@ final class CLIExporter: NSObject {
         guard let optData = try? JSONSerialization.data(withJSONObject: options),
               let optJson  = String(data: optData, encoding: .utf8) else {
             fputs("Error: cannot encode options\n", stderr)
-            exit(1)
+            CLIErrorGuidance.printReport(); exit(1)
         }
 
         let js = "await window.renderMarkdown(\(safeArg), \(optJson)); await window.waitForExportReady();"
         webView.callAsyncJavaScript(js, arguments: [:], in: nil, in: .page) { [weak self] result in
             if case .failure(let error) = result {
                 fputs("Error: export rendering failed: \(error.localizedDescription)\n", stderr)
-                exit(1)
+                CLIErrorGuidance.printReport(); exit(1)
             }
             self?.capturePDF()
         }
@@ -204,7 +204,7 @@ final class CLIExporter: NSObject {
                     exit(0)
                 } else {
                     fputs("Error: PDF file not created at \(capturedOutputURL.path)\n", stderr)
-                    exit(1)
+                    CLIErrorGuidance.printReport(); exit(1)
                 }
             }
         }
@@ -217,12 +217,12 @@ extension CLIExporter: WKNavigationDelegate {
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        defer { exit(1) }
+        defer { CLIErrorGuidance.printReport(); exit(1) }
         fputs("CLIExporter: webView didFail: \(error.localizedDescription)\n", stderr)
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation nav: WKNavigation!, withError error: Error) {
-        defer { exit(1) }
+        defer { CLIErrorGuidance.printReport(); exit(1) }
         fputs("CLIExporter: didFailProvisional: \(error.localizedDescription)\n", stderr)
     }
 }
@@ -237,5 +237,14 @@ extension CLIExporter: WKScriptMessageHandler {
             rendererReady = true
             renderAndExport()
         }
+    }
+}
+
+private enum CLIErrorGuidance {
+    static func printReport() {
+        let incident = ErrorIncident(kind: .exportPDF, source: .cli, environment: DiagnosticEnvironment.current())
+        fputs("Try a readable UTF-8 Markdown file and a writable output folder.\n", stderr)
+        fputs("Report this problem (review before publishing): \(incident.feedbackURL().absoluteString)\n", stderr)
+        fputs("Safe diagnostic summary (no document content or paths):\n\(incident.report)\n", stderr)
     }
 }

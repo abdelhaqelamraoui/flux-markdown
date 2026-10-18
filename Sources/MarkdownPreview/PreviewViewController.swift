@@ -89,6 +89,16 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     var statusLabel: NSTextField!
     var webView: InteractiveWebView!
     private var truncationNotice: NSTextField?
+    private let errorRegistry = RendererErrorRegistry()
+    private func showFailure(_ kind: FailureKind, error: Error? = nil) {
+        let incident = errorRegistry.nativeFailure(kind, error: error)
+        IncidentNotice.attach(to: view, incident: incident, recoveryTitle: "Open in FluxMarkdown", recovery: { [weak self] in
+            guard let self, let url = self.currentURL else { return }
+            SearchLaunchClient.openForReading(url) { success in
+                if !success { IncidentNotice.fallback(in: self.view, draft: IncidentDraft(incident)) }
+            }
+        })
+    }
     private var previewIsTruncated = false
     private var previewHasUnreadableImages = false
 
@@ -108,6 +118,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         truncationNotice?.setAccessibilityLabel(truncationNotice?.stringValue)
         truncationNotice?.isHidden = !truncated && !previewHasUnreadableImages
         layoutTruncationNotice()
+        if truncated || previewHasUnreadableImages { showFailure(truncated ? .previewLimit : .images) }
     }
 
     private func layoutTruncationNotice() {
@@ -388,9 +399,19 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         
         
         let userContentController = WKUserContentController()
+        errorRegistry.onRecover = { [weak self] incident in
+            guard let self, let url = self.currentURL else { return }
+            SearchLaunchClient.openForReading(url) { success in
+                if !success { IncidentNotice.fallback(in: self.view, draft: IncidentDraft(incident)) }
+            }
+        }
+        errorRegistry.onFailure = { [weak self] draft in
+            guard let self else { return }; IncidentNotice.fallback(in: self.view, draft: draft)
+        }
         userContentController.add(self, name: "logger")
         userContentController.add(self, name: "linkClicked")
         userContentController.add(self, name: "readingToolsLayout")
+        userContentController.add(self, name: "errorFeedback")
         webConfiguration.userContentController = userContentController
         
         let schemeHandler = LocalSchemeHandler()
@@ -434,7 +455,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             webView.load(URLRequest(url: url))
             os_log("🔵 Loaded renderer via custom scheme: %{public}@", log: logger, type: .default, url.absoluteString)
         } else {
-            webView.loadHTMLString("<h1>Error: index.html not found</h1>", baseURL: nil)
+            showFailure(.renderer)
         }
 
         let doubleClickGesture = QuickLookDoubleClickGestureRecognizer(
@@ -634,6 +655,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "logger")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "linkClicked")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "readingToolsLayout")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "errorFeedback")
         
         for recognizer in webView.gestureRecognizers where recognizer is NSClickGestureRecognizer {
             webView.removeGestureRecognizer(recognizer)
@@ -1060,6 +1082,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         let capturedPrevForSource = self.prevMarkdown
         self.prevMarkdown = nil
 
+        let feedbackGeneration = errorRegistry.beginDocument()
+        webView.evaluateJavaScript("window.setFeedbackGeneration && window.setFeedbackGeneration('\(feedbackGeneration)');", completionHandler: nil)
         var callJs: String
         if let prev = capturedPrevForSource, !prev.isEmpty,
            let prevData = try? JSONSerialization.data(withJSONObject: [prev]),
@@ -1087,6 +1111,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         self.webView.evaluateJavaScript(callJs) { (innerResult, innerError) in
             if let innerError = innerError {
                 os_log("🔴 JS Execution Error (renderSource): %{public}@", log: self.logger, type: .error, innerError.localizedDescription)
+                self.showFailure(.source, error: innerError)
             } else if let res = innerResult as? String {
                 os_log("🔵 JS Execution Result (renderSource): %{public}@", log: self.logger, type: .debug, res)
                 self.isSearchReady = true
@@ -1163,6 +1188,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     private func showSearchLaunchFailure() {
         os_log("Host also refused document search launch", log: logger, type: .error)
         if let searchLaunchFailureHandler { searchLaunchFailureHandler(); return }
+        showFailure(.search)
         showToast(
             message: NSLocalizedString("Search in FluxMarkdown", comment: "Search guidance title"),
             hint: NSLocalizedString("Double-click the file, then press ⌘F to search.", comment: "Search guidance after host refuses app launch"),
@@ -1262,6 +1288,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     #endif
 
     public func preparePreviewOfFile(at url: URL, completionHandler handler: @escaping (Error?) -> Void) {
+        _ = errorRegistry.beginDocument()
+        for notice in view.subviews.compactMap({ $0 as? IncidentNotice }) { notice.removeFromSuperview() }
         os_log("🔵 preparePreviewOfFile called for: %{public}@", log: logger, type: .default, url.path)
         renderVersion.next()
         let readVersion = fileReadVersion.next()
@@ -1332,7 +1360,8 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                         handler(nil)
                     case .failure(let error):
                         os_log("Failed to read preview: %{public}@", log: self.logger, type: .error, error.localizedDescription)
-                        handler(error)
+                        self.showFailure(.fileRead, error: error)
+                        handler(nil)
                     }
                 }
             }
@@ -1409,6 +1438,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                   let optionsJson = String(data: optionsData, encoding: .utf8) else {
                 await MainActor.run {
                     os_log("🔴 Failed to encode options to JSON", log: self.logger, type: .error)
+                    self.showFailure(.renderer)
                 }
                 return
             }
@@ -1417,6 +1447,9 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             
             await MainActor.run {
                 guard self.renderVersion.isCurrent(capturedRenderVersion), self.currentURL == capturedURL else { return }
+                let feedbackGeneration = self.errorRegistry.beginDocument()
+                ErrorFeedback.capture(.renderer, phase: .started, scope: self.errorRegistry.scope)
+                self.webView.evaluateJavaScript("window.setFeedbackGeneration && window.setFeedbackGeneration('\(feedbackGeneration)');", completionHandler: nil)
                 self.webView.callAsyncJavaScript(
                     callJs,
                     arguments: [:],
@@ -1427,6 +1460,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                     switch result {
                     case .failure(let error):
                         os_log("🔴 JS Execution Error (renderMarkdown): %{public}@", log: self.logger, type: .error, error.localizedDescription)
+                self.showFailure(.renderer, error: error)
                     case .success(let value):
                         os_log("🔵 renderMarkdown completed successfully, result: %{public}@", log: self.logger, type: .debug, String(describing: value))
                         if let url = self.currentURL, let token = QuickLookProbeEvidence.token(for: url) {
@@ -1480,11 +1514,13 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     
     public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         os_log("🔴 WebView didFail navigation: %{public}@", log: logger, type: .error, error.localizedDescription)
+                showFailure(.renderer, error: error)
         cancelHandshakeTimeout()
     }
     
     public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         os_log("🔴 WebView didFailProvisionalNavigation: %{public}@", log: logger, type: .error, error.localizedDescription)
+                showFailure(.renderer, error: error)
         cancelHandshakeTimeout()
     }
     
@@ -1542,11 +1578,12 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     public func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         os_log("🔴 WebContent process terminated! Attempting reload...", log: logger, type: .error)
         cancelHandshakeTimeout()
-        webView.reload()
+        showFailure(.renderer)
     }
     
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard RendererBridgePolicy.accepts(message) else { return }
+        if message.name == "errorFeedback" { errorRegistry.handle(message.body); return }
         if message.name == "logger", let body = message.body as? String {
             os_log("🟢 JS Log: %{public}@", log: logger, type: .debug, body)
             
@@ -1573,6 +1610,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                 os_log("GitHub repository browser handoff: %{public}@", log: self.logger,
                        type: .default, success ? "SUCCESS" : "FAILED")
                 if !success {
+                    self.showFailure(.browser)
                     self.showToast(message: NSLocalizedString("Could not open GitHub", comment: "GitHub support browser error"),
                                    hint: GitHubStar.repository.absoluteString, iconName: "info.circle.fill")
                 }
@@ -1601,6 +1639,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
     private var toastDismissWorkItem: DispatchWorkItem?
     
     private func showLinkUnsupportedToast() {
+        showFailure(.link)
         showToast(
             message: NSLocalizedString("QuickLook preview does not support link navigation", comment: "Toast message when link clicked in QuickLook"),
             hint: NSLocalizedString("Double-click .md file to open in main app for full functionality", comment: "Toast hint message"),
@@ -1716,28 +1755,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             if !self.isWebViewLoaded {
                 os_log("🔴 Renderer Handshake Timeout (%{public}.1fs)! Showing non-destructive error.", log: self.logger, type: .error, self.handshakeTimeoutInterval)
                 
-                let js = """
-                (function() {
-                    var status = document.getElementById('loading-status');
-                    if (status) {
-                        status.textContent = 'Renderer timed out. Please retry.';
-                        status.style.color = 'red';
-                    } else {
-                        var d = document.createElement('div');
-                        d.style.position = 'fixed';
-                        d.style.top = '10px';
-                        d.style.right = '10px';
-                        d.style.background = 'rgba(255,0,0,0.8)';
-                        d.style.color = 'white';
-                        d.style.padding = '5px 10px';
-                        d.style.borderRadius = '4px';
-                        d.style.zIndex = '9999';
-                        d.innerText = 'Renderer Timeout';
-                        document.body.appendChild(d);
-                    }
-                })();
-                """
-                self.webView.evaluateJavaScript(js, completionHandler: nil)
+                self.showFailure(.renderer)
             }
         }
         
@@ -2138,6 +2156,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                     completion?(true)
                 } catch {
                     os_log("Reload failed: %{public}@", log: self.logger, type: .error, error.localizedDescription)
+                self.showFailure(.reload, error: error)
                     completion?(false)
                 }
             }

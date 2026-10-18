@@ -28,6 +28,26 @@ private func trustedPreview(_ connection: NSXPCConnection) -> Bool {
 }
 
 private final class Launcher: NSObject, SearchLaunchServing {
+    func openDocument(_ value: String, reply: @escaping (Bool) -> Void) {
+        guard value.utf8.count <= 8192, let url = URL(string: value), url.host == "open",
+              let request = DocumentOpenRequest(url: url), !request.wantsSearch,
+              let searchURL = DocumentOpenRequest.searchURL(for: request.fileURL), SearchLaunchPolicy.request(searchURL.absoluteString) != nil,
+              Bundle(url: appURL)?.bundleIdentifier == "com.xykong.Markdown" else { reply(false); return }
+        DispatchQueue.main.async {
+            let configuration = NSWorkspace.OpenConfiguration(); configuration.activates = true; configuration.promptsUserIfNeeded = false
+            NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: configuration) { _, error in reply(error == nil) }
+        }
+    }
+    func reportError(_ data: Data, reply: @escaping (Bool) -> Void) {
+        guard let request = IncidentFeedbackRequest.decode(data), let url = request.hostURL,
+              Bundle(url: appURL)?.bundleIdentifier == "com.xykong.Markdown" else { reply(false); return }
+        DispatchQueue.main.async {
+            let configuration = NSWorkspace.OpenConfiguration()
+            configuration.activates = false
+            configuration.promptsUserIfNeeded = false
+            NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: configuration) { _, error in reply(error == nil) }
+        }
+    }
     func openGitHubRepository(reply: @escaping (Bool) -> Void) {
         DispatchQueue.main.async {
             reply(NSWorkspace.shared.open(URL(string: "https://github.com/xykong/flux-markdown")!))

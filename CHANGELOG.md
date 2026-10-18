@@ -5,6 +5,7 @@
 - **Update failure reporting**: Connect diagnostics to Sparkle's actual abort callback and exclude normal no-update/cancellation outcomes.
 
 ### Added
+- **Contextual error feedback**: Offer recovery actions and one-click prefilled GitHub reports from app, Quick Look and renderer errors. Capture bounded, privacy-filtered error-time diagnostics; allow optional review/exclusion and copy/save fallback. Native recovery remains available when WebKit cannot render.
 - **Update diagnostics**: Include the latest update failure's timestamp, versions, and underlying error codes in issue reports and application logs, without retaining private paths or error descriptions.
 
 ## [1.36.582] - 2026-10-18
