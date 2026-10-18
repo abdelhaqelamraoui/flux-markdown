@@ -197,3 +197,17 @@ make install
 <p align="center">
   <sub>Inspired by and partially based on <a href="https://github.com/shd101wyy/markdown-preview-enhanced">markdown-preview-enhanced</a></sub>
 </p>
+
+### Reporting a failure
+
+Error notices offer a recovery action and **Report This Problem**. Reporting opens
+GitHub with the selected error and available system information already filled in;
+you review and publish the issue there. A GitHub account is required. Use **Review
+Feedback…** to add optional details or turn off diagnostics before continuing.
+
+Reports exclude document text, file paths and raw system logs by default. If the
+browser cannot open, the report remains available to copy or save. **Help → Review
+Last Error…** reopens the latest failure, and **Help → Clear Error History** clears
+locally retained error records without changing your settings. Errors controlled
+by macOS itself, or failures where the extension never starts, may require the
+existing **Help → Report an Issue** entry.

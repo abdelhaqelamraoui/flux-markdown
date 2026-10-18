@@ -118,6 +118,11 @@ or a link to an empty feedback form does not satisfy them.
   browser launch or delivery fails. Offer a concrete retry, copy or save alternative;
   never recursively open another error-reporting dialog. Missing diagnostics must
   not block reporting. Retrying a send must not create duplicate reports.
+- **Reuse the shared implementation.** New error surfaces must use
+  `ErrorIncident` / `ErrorFeedback` and the renderer's validated `errorFeedback`
+  bridge, adding their recovery and feedback checks to the coverage inventory in
+  `docs/debug/DEBUG_ERROR_FEEDBACK.md`. Do not create a parallel raw-error alert,
+  ad hoc diagnostic uploader, or empty Issue link.
 - **Cover and verify the real surfaces.** Apply these rules to app-owned dialogs,
   notices and renderer errors in every supported language, with keyboard and
   accessibility support. Native feedback must survive renderer failure. Document

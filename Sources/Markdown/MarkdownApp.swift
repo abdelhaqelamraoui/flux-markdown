@@ -47,6 +47,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        if ErrorFeedback.receive(url) { return }
+
         guard let request = DocumentOpenRequest(url: url) else { return }
         os_log("Document URL request received; position=%{public}@ placement=%{public}d", type: .info,
                request.position == nil ? "none" : "explicit", request.windowPlacement == nil ? 0 : 1)
@@ -159,6 +161,8 @@ struct MarkdownApp: App {
                 Button(NSLocalizedString("Report an Issue", comment: "Report issue menu item")) {
                     FeedbackWindowController.shared.show()
                 }
+                Button(ErrorFeedback.text("Review Last Error…")) { ErrorFeedback.showLatest() }
+                Button(ErrorFeedback.text("Clear Error History")) { ErrorFeedback.clearHistory() }
                 Button(NSLocalizedString("Suggest a Feature…", comment: "Feature feedback menu")) {
                     if !NSWorkspace.shared.open(FeedbackIssueLink.feature) {
                         FeedbackWindowController.shared.showFeatureFallback()

@@ -71,6 +71,10 @@ final class QuickLookSelfTest {
 
     func show() {
         start { passed in
+            if !passed {
+                ErrorFeedback.present(ErrorFeedback.capture(.quickLook), recoveryTitle: "Try Again", recovery: { self.show() })
+                return
+            }
             let alert = NSAlert()
             alert.messageText = NSLocalizedString(passed ? "Quick Look preview verified" : "Quick Look preview not confirmed", comment: "QuickLook probe result")
             alert.informativeText = NSLocalizedString(passed ? "The installed extension rendered the test document. Your default editor was preserved." : "The test did not confirm a rendered preview. Include Quick Look diagnostics when reporting this issue.", comment: "QuickLook probe guidance")

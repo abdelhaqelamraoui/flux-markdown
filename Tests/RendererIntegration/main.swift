@@ -7,7 +7,20 @@ final class RendererIntegration: NSObject, WKScriptMessageHandler {
     private var webView: WKWebView!
     private var started = false
     private var index = 0
+    private var feedbackEvents: [[String: Any]] = []
     private let cases: [(String, String)] = [
+        ("contextual feedback bridge", """
+        window.setFeedbackGeneration('11111111-1111-1111-1111-111111111111');
+        await window.renderMarkdown('```mermaid\\nSAMPLE-DO-NOT-INCLUDE ! invalid\\n```');
+        await new Promise(resolve=>setTimeout(resolve,20));
+        const button=document.querySelector('.mermaid-error [data-feedback-action="report"]');
+        if(!button)return false;
+        button.click();
+        const exported=window.exportHTML();
+        window.setFeedbackGeneration('22222222-2222-2222-2222-222222222222');
+        button.click();
+        return !exported.includes('data-feedback-action=');
+        """),
         ("passive HTML", "await window.renderMarkdown('<img src=\"missing.png\" onerror=\"window.pwned=true\"><details><summary>ok</summary></details>'); return !document.querySelector('[onerror]') && !window.pwned && !!document.querySelector('details');"),
         ("new render wins", "const a=window.renderMarkdown('# OLD\\n\\n$x$'); const b=window.renderMarkdown('# NEW',{enableKatex:false}); await Promise.all([a,b]); return document.querySelector('h1').textContent==='NEW';"),
         ("math and emoji", "await window.renderMarkdown('$x$ :smile:'); await window.renderMarkdown(':smile:',{enableKatex:false}); return !document.getElementById('markdown-preview').textContent.includes(':smile:');"),
@@ -54,6 +67,7 @@ final class RendererIntegration: NSObject, WKScriptMessageHandler {
     func run() {
         let config = WKWebViewConfiguration()
         config.userContentController.add(self, name: "logger")
+        config.userContentController.add(self, name: "errorFeedback")
         config.setURLSchemeHandler(RendererBundleSchemeHandler(rootDirectory: URL(fileURLWithPath: CommandLine.arguments[1])), forURLScheme: RendererBundleSchemeHandler.scheme)
         let imageDirectory = URL(fileURLWithPath: CommandLine.arguments[2])
         let imageURL = imageDirectory.appendingPathComponent("pixel.png")
@@ -68,6 +82,7 @@ final class RendererIntegration: NSObject, WKScriptMessageHandler {
     }
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         guard RendererBridgePolicy.accepts(message) else { print("FAIL bridge origin"); exit(1) }
+        if message.name == "errorFeedback", let body = message.body as? [String: Any] { feedbackEvents.append(body); return }
         guard let text = message.body as? String else { return }
         if text.contains("Error") || text.contains("fallback") { print(text) }
         if text == "rendererReady" && !started { started = true; next() }
@@ -80,6 +95,12 @@ final class RendererIntegration: NSObject, WKScriptMessageHandler {
         webView.callAsyncJavaScript(js, arguments: ["imageBase": CommandLine.arguments[2]], in: nil, in: .page) { result in
             switch result {
             case .success(let value) where value as? Bool == true:
+                if name == "contextual feedback bridge" {
+                    let reports = self.feedbackEvents.filter { $0["action"] as? String == "report" }
+                    guard reports.count == 1, reports[0]["kind"] as? String == "mermaid",
+                          reports[0]["generation"] as? String == "11111111-1111-1111-1111-111111111111",
+                          !String(describing: self.feedbackEvents).contains("SAMPLE-DO-NOT-INCLUDE") else { print("FAIL feedback payload or stale action"); exit(1) }
+                }
                 print("PASS \(name)"); self.index += 1; self.next()
             default: print("FAIL \(name): \(result)"); exit(1)
             }

@@ -5,7 +5,7 @@ import os.log
 class UpdateDelegate: NSObject, SPUUpdaterDelegate {
     static let shared = UpdateDelegate()
     private let diagnostics: UpdateDiagnostics
-    private var targetVersion: String?
+    private(set) var targetVersion: String?
     private let clearPending: () -> Void
 
     init(diagnostics: UpdateDiagnostics = .shared,

@@ -1,3 +1,4 @@
+import { installErrorFeedback, setFeedbackGeneration } from './error-feedback';
 import { waitForExportReady } from './export-readiness';
 window.waitForExportReady = waitForExportReady;
 import { sanitizeDocumentHTML, sanitizeDiagramHTML } from './safe-html';
@@ -608,6 +609,7 @@ async function renderVegaDiagrams(container: HTMLElement, theme: string, isCurre
         if (!isCurrent()) return;
     } catch (err) {
         logToSwift('[Vega] Failed to load modules: ' + err);
+        if (isCurrent()) vegaBlocks.forEach(block => block.parentElement?.classList.add('vega-error', 'module-load-error'));
         return;
     }
 
@@ -655,6 +657,7 @@ async function renderGraphvizDiagrams(container: HTMLElement, isCurrent: () => b
             if (!isCurrent()) return;
         } catch (err) {
             logToSwift('[Graphviz] Failed to load wasm module: ' + err);
+            if (isCurrent()) dotBlocks.forEach(block => block.parentElement?.classList.add('graphviz-error', 'module-load-error'));
             return;
         }
     }
@@ -723,6 +726,7 @@ window.exportHTML = function(): string {
     // Ensure we clone the content so we don't modify the active DOM
     const clone = previewDiv ? (previewDiv.cloneNode(true) as HTMLElement) : document.createElement('div');
     
+    clone.querySelectorAll('.error-feedback-controls').forEach(control => control.remove());
     clone.querySelectorAll<HTMLElement>('.blockquote-placeholder').forEach(placeholder => {
         const quote = placeholder.nextElementSibling as HTMLElement | null;
         if (quote?.matches('blockquote, .markdown-alert')) quote.style.display = '';
@@ -1004,6 +1008,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
                 }
             } catch (err) {
                 logToSwift("JS Error loading/running mermaid: " + err);
+                if (isCurrent()) outputDiv.querySelectorAll(".mermaid").forEach(block => block.classList.add("mermaid-error", "module-load-error"));
             }
         }
 
@@ -1049,6 +1054,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
                     }
                 } catch (err) {
                     logToSwift('JS Error loading typst-renderer: ' + err);
+                    if (isCurrent()) outputDiv.querySelectorAll('.typst-placeholder').forEach(block => block.classList.add('typst-error', 'module-load-error'));
                 }
             }
         }
@@ -1063,7 +1069,7 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
         if (!isCurrent()) return;
         logToSwift(`[renderMarkdown:${callId}] ERROR: ` + e);
         if (outputDiv) {
-            outputDiv.innerHTML = `<div style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>${rendererLabels().renderingError}</h3><pre>${escapeHtml(String(e))}</pre></div>`;
+            outputDiv.innerHTML = `<div class="render-error" style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>${rendererLabels().renderingError}</h3><pre>${escapeHtml(String(e))}</pre></div>`;
         }
     }
 };
@@ -1117,7 +1123,7 @@ window.renderSource = function(text: string, theme: string, prevContent?: string
     } catch (e) {
         logToSwift("JS Error during source rendering: " + e);
         if (outputDiv) {
-            outputDiv.innerHTML = `<div style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>${rendererLabels().sourceRenderingError}</h3><pre>${escapeHtml(String(e))}</pre></div>`;
+            outputDiv.innerHTML = `<div class="source-render-error" style="color:red;padding:20px;border:1px solid red;border-radius:5px;"><h3>${rendererLabels().sourceRenderingError}</h3><pre>${escapeHtml(String(e))}</pre></div>`;
         }
     }
 };
@@ -1384,3 +1390,7 @@ window.navigateDocumentPosition = function(position: DocumentPosition): boolean 
     target.scrollIntoView({behavior:'auto',block:'start'});
     return true;
 };
+
+Object.assign(window, { setFeedbackGeneration });
+if (document.body) installErrorFeedback(document.body);
+else document.addEventListener("DOMContentLoaded", () => installErrorFeedback(document.body), { once: true });

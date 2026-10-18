@@ -195,6 +195,10 @@ final class QuickLookRepairController {
             let result = QuickLookRegistration.repairCurrentApp()
             DispatchQueue.main.async {
                 self.running = false
+                if !result.succeeded {
+                    ErrorFeedback.present(ErrorFeedback.capture(.quickLook), recoveryTitle: "Try Again", recovery: { self.show() })
+                    return
+                }
                 let alert = NSAlert()
                 alert.messageText = NSLocalizedString(result.succeeded ? "Quick Look registration repaired" : "Quick Look repair failed", comment: "QuickLook repair result")
                 alert.informativeText = result.succeeded
