@@ -210,3 +210,32 @@ extension ErrorIncidentTests {
         }
     }
 }
+
+extension ErrorIncidentTests {
+    func testQuickLookSupplementAcceptsOnlyTypedStatusesAndKeepsItsOwnTime() throws {
+        let fields = IncidentQuickLookCheck.sanitize(["registeredCopies": "2", "signature": "valid", "documentUTI": "/private/document", "lastExplicitPreviewTest": "rendered", "lastExplicitPreviewTestAt": "2026-10-18T10:00:00Z"])
+        XCTAssertNil(fields["documentUTI"])
+        var incident = ErrorIncident(kind: .quickLook, source: .quicklook)
+        incident.quickLookCheck = IncidentQuickLookCheck(date: Date(), fields: fields)
+        XCTAssertNotNil(ErrorIncident.decode(try incident.encoded()))
+        XCTAssertTrue(incident.report.contains("collected at report time"))
+        XCTAssertFalse(incident.report.contains("/private"))
+    }
+}
+
+extension ErrorIncidentTests {
+    func testSupplementTimeoutDoesNotBlockOneClickFeedbackOrReplaceUserNotes() {
+        let previous = ErrorFeedback.supplementProvider
+        defer { ErrorFeedback.supplementProvider = previous }
+        ErrorFeedback.supplementProvider = { _, _ in }
+        let opened = expectation(description: "feedback opens with available diagnostics")
+        let draft = IncidentDraft(ErrorIncident(kind: .quickLook, source: .app))
+        draft.notes = "Optional user explanation"
+        ErrorFeedback.report(draft, openURL: { url in
+            let body = URLComponents(url: url, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "body" }!.value!
+            XCTAssertTrue(body.contains("Optional user explanation"))
+            opened.fulfill(); return true
+        })
+        wait(for: [opened], timeout: 4)
+    }
+}
