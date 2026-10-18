@@ -65,3 +65,14 @@ A direct Foundation bridge probe caught that Swift `RecoverableError` alone did 
 ## Packaging regression
 
 A full staged MacPorts build exposed a YAML-null dependency block after stripping the test target's only Sparkle dependency. The exporter now removes empty dependency blocks. A regression test runs the real export transforms and XcodeGen parser; this check is included in release CI. Document recovery also reports the original read as unrecovered when an alternative/report is chosen, rather than implying that reporting repaired the file.
+
+## Final verified result
+
+- Final product-code commit: `19625b7a117678dfa9c792f2f291821269e2d618`.
+- [Final CI run 39120891184](https://github.com/xykong/flux-markdown/actions/runs/39120891184) passed every applicable job: MacPorts export regression, renderer build/tests, real WebKit, macOS 11 native tests, universal Release build, signature/entitlement checks and artifact packaging.
+- Local native functional run: 351 passed, no failures. CI executed 351 native tests with zero failures and one expected skip because the adjacent homebrew-tap checkout is absent. Renderer: 42 suites / 374 tests passed. Actual WebKit: all 19 cases passed. Final targeted recovery/supplement checks passed after the last functional refinements.
+- Downloaded final CI artifact to `build/feedback-ci-39120891184/`; verified its SHA256, provenance commit and strict deep signature. Host app, Quick Look extension and XPC helper each contain arm64 and x86_64 slices, with macOS 11.0 minimum for both slices.
+- Actual staged MacPorts Release build passed after the empty-dependency export fix; `otool` confirms no Sparkle linkage and release-entitlement verification passes. This local no-Sparkle build explicitly targets macOS 12 for the installed Xcode 27 diagnostic toolchain.
+- Direct NSError bridge probe passed with the localized recovery label and recovery attempter present. Sync/async recovery callback tests pass; feedback/alternative actions do not falsely report that the original read succeeded.
+- Acceptance-only error history was archived under ignored build artifacts and removed from the user's store. Original 1.36.573 installation and its editor association were restored. No release, default-branch push, Issue submission, reporter reply or done label was performed.
+- The only commit after the verified product-code revision updates these acceptance records and OpenSpec task status; no application behavior changes are included in that documentation commit.
