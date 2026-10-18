@@ -1,5 +1,8 @@
 ## [Unreleased]
-_无待发布的变更_
+### Fixed
+- **Localization** ([#60](https://github.com/xykong/flux-markdown/issues/60)): Localize reload and reset-zoom feedback in both the app and Quick Look instead of always displaying Chinese. Thanks to [@ziadulhuq](https://github.com/ziadulhuq) for the report.
+- **Interface translations**: Add missing English, Simplified Chinese, German, French and Spanish strings for Quick Look toolbar controls and notices, Typst and Finder preview settings, and search controls and errors. Localize the help dialog accessibility label.
+- **Renderer messages**: Localize Typst loading and error messages, Mermaid syntax errors and source disclosure, GraphViz error headings and empty-source notices, and preview/source rendering error headings.
 
 ## [1.36.573] - 2026-10-16
 ### Fixed
