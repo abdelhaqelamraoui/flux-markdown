@@ -61,3 +61,7 @@ Implementation commits: `41d43b7` and `f013440`. Verification branch: `verify/er
 A direct Foundation bridge probe caught that Swift `RecoverableError` alone did not populate the NSError recovery metadata on this SDK. Added explicit `CustomNSError` userInfo and both synchronous/asynchronous NSObject recovery-attempter overrides. Regression tests inspect the actual NSError options/attempter and verify callback result/context and exactly-once completion; closing does not launch feedback. These tests failed before the correction and passed afterward.
 
 - Final recovery review separates missing renderer resources from a transient render failure: missing files offer downloading/reinstalling the app, with a copy-link fallback if the browser cannot open. Reload recovery reuses retained rendered content directly instead of treating externally loaded disk content as a new SwiftUI model edit.
+
+## Packaging regression
+
+A full staged MacPorts build exposed a YAML-null dependency block after stripping the test target's only Sparkle dependency. The exporter now removes empty dependency blocks. A regression test runs the real export transforms and XcodeGen parser; this check is included in release CI. Document recovery also reports the original read as unrecovered when an alternative/report is chosen, rather than implying that reporting repaired the file.

@@ -71,6 +71,19 @@ content = re.sub(
     content
 )
 
+# Removing a target's only package dependency must not leave YAML null where
+# XcodeGen expects an array (notably the native test target).
+lines = content.splitlines(keepends=True)
+kept = []
+for index, line in enumerate(lines):
+    if line.strip() == "dependencies:":
+        indent = len(line) - len(line.lstrip())
+        following = next((candidate for candidate in lines[index + 1:] if candidate.strip() and not candidate.lstrip().startswith("#")), None)
+        if following is None or len(following) - len(following.lstrip()) <= indent:
+            continue
+    kept.append(line)
+content = "".join(kept)
+
 with open(path, 'w') as f:
     f.write(content)
 

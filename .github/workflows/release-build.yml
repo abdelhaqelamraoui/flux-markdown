@@ -18,6 +18,8 @@ jobs:
           cache: npm
           cache-dependency-path: web-renderer/package-lock.json
       - run: brew install xcodegen
+      - name: Verify MacPorts export transforms
+        run: python3 scripts/tests/macports-export.test.py
       - name: Build renderer and generate project
         run: |
           cd web-renderer
