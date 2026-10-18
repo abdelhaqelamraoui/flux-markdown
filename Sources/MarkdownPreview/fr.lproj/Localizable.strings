@@ -8,3 +8,7 @@
 "Right" = "Droite";
 
 "Keep contents and its button on the same side" = "Placer le sommaire et son bouton du même côté";
+
+"Document reloaded" = "Document rechargé";
+"Reload failed" = "Échec du rechargement";
+"Zoom reset" = "Zoom réinitialisé";

@@ -153,3 +153,7 @@
 "The installed extension rendered the test document. Your default editor was preserved." = "已安装的扩展成功渲染测试文档。默认编辑器设置已保留。";
 "The test did not confirm a rendered preview. Include Quick Look diagnostics when reporting this issue." = "未能确认测试文档已渲染。反馈问题时请附上 Quick Look 诊断信息。";
 "Some local images could not be read. Use Open with FluxMarkdown above to view the document." = "部分本地图片无法读取。请使用上方“通过 FluxMarkdown 打开”查看文档。";
+
+"Document reloaded" = "已重新载入文档";
+"Reload failed" = "重新载入失败";
+"Zoom reset" = "已重置缩放";

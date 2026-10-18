@@ -8,3 +8,7 @@
 "Right" = "Right";
 
 "Keep contents and its button on the same side" = "Keep contents and its button on the same side";
+
+"Document reloaded" = "Document reloaded";
+"Reload failed" = "Reload failed";
+"Zoom reset" = "Zoom reset";
