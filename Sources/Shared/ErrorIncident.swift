@@ -78,6 +78,7 @@ struct ErrorIncident: Codable {
     var previewTest: String?
     var historyUnavailable: Bool?
     var reason: IncidentReason?
+    var quickLookCheck: IncidentQuickLookCheck?
 
     init(kind: FailureKind, source: IncidentSource, phase: IncidentPhase = .failed, scope: UUID? = nil,
          error: Error? = nil, environment: [String: String] = [:], settings: [String: String] = [:]) {
@@ -125,7 +126,7 @@ struct ErrorIncident: Codable {
     }
     var isValid: Bool {
         schema == 1 && (-62135596800...253402300799).contains(date.timeIntervalSince1970) && codes.count <= 8 && steps.count <= 12 &&
-        settingChanges.count <= 5 && settingChanges.allSatisfy(\.isValid) &&
+        (quickLookCheck?.isValid ?? true) && settingChanges.count <= 5 && settingChanges.allSatisfy(\.isValid) &&
         (previewTest == nil || ["rendered", "unconfirmed", "not-run"].contains(previewTest!)) &&
         codes.allSatisfy { IncidentCode.domains.contains($0.domain) } &&
         steps.allSatisfy { (-62135596800...253402300799).contains($0.date.timeIntervalSince1970) } &&
@@ -145,9 +146,13 @@ struct ErrorIncident: Codable {
         lines += ["", "## Settings at failure"] + settings.keys.sorted().map { "- \($0): \(settings[$0]!)" }
         lines += ["", "## Related operation events"] + steps.map { "- \(formatter.string(from: $0.date)): \($0.kind.rawValue) / \($0.phase.rawValue)" }
         if let reason { lines += ["Failure category: \(reason.rawValue)"] }
-        if historyUnavailable == true { lines += ["", "Some diagnostic history is unavailable. This report includes the current incident."] }
+        if historyUnavailable == true { lines += ["", "Some diagnostic information is unavailable. This report includes the current incident."] }
         if let previewTest { lines += ["", "Last explicit preview test (historical, not proof of current rendering): \(previewTest)"] }
         lines += ["", "## Recent related settings changes"] + settingChanges.map { "- \(formatter.string(from: $0.date)): \($0.key) \($0.before) → \($0.after)" }
+        if let check = quickLookCheck {
+            lines += ["", "## Quick Look check collected at report time: \(formatter.string(from: check.date))"]
+            lines += check.fields.keys.sorted().map { "- \($0): \(check.fields[$0]!)" }
+        }
         return lines.joined(separator: "\n")
     }
     func feedbackURL(includeDiagnostics: Bool = true, notes: String = "", useTemplate: Bool = false) -> URL {
@@ -236,4 +241,25 @@ struct IncidentFeedbackRequest: Codable {
         components.queryItems = [URLQueryItem(name: "payload", value: data.base64EncodedString())]
         return components.url
     }
+}
+
+struct IncidentQuickLookCheck: Codable {
+    let date: Date
+    let fields: [String: String]
+    static func sanitize(_ fields: [String: String]) -> [String: String] {
+        fields.filter { key, value in
+            switch key {
+            case "registeredCopies", "otherRegisteredCopies": return Int(value).map { (0...10000).contains($0) } ?? false
+            case "installedCopyRegistered", "installedCopyEnabled", "firstInSavedOrder": return ["true", "false"].contains(value)
+            case "signature": return ["valid", "invalid"].contains(value)
+            case "registrationQuery": return value == "failed"
+            case "extensionVersion", "lastExplicitPreviewTestVersion": return value == "unknown" || ErrorIncident.cleanEnvironment(["appVersion": value])["appVersion"] != nil
+            case "lastExplicitPreviewTest": return ["rendered", "unconfirmed", "not-run"].contains(value)
+            case "lastExplicitPreviewTestAt": return value.utf8.count <= 40 && ISO8601DateFormatter().date(from: value) != nil
+            case "actualFinderProvider": return value == "unknown-registration-is-not-runtime-proof"
+            default: return false
+            }
+        }
+    }
+    var isValid: Bool { fields == Self.sanitize(fields) && (-62135596800...253402300799).contains(date.timeIntervalSince1970) }
 }

@@ -24,6 +24,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        ErrorFeedback.supplementProvider = { incident, completion in
+            DispatchQueue.global(qos: .utility).async {
+                let summary = QuickLookRegistration.diagnosticSummary()
+                var fields: [String: String] = [:]
+                for line in summary.components(separatedBy: "\n") where line.hasPrefix("- ") {
+                    let parts = line.dropFirst(2).components(separatedBy: ": ")
+                    if parts.count == 2 { fields[parts[0]] = parts[1] }
+                }
+                var enriched = incident
+                enriched.quickLookCheck = IncidentQuickLookCheck(date: Date(), fields: IncidentQuickLookCheck.sanitize(fields))
+                completion(enriched)
+            }
+        }
         _ = StarReminderStore.shared
         NotificationCenter.default.addObserver(forName: Notification.Name("FluxMarkdown.TestQuickLook"), object: nil, queue: .main) { _ in
             QuickLookSelfTest.shared.show()

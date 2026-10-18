@@ -2,7 +2,7 @@ import AppKit
 import os.log
 
 final class IncidentDraft {
-    let incident: ErrorIncident
+    var incident: ErrorIncident
     var includeDiagnostics = true
     var notes = ""
     init(_ incident: ErrorIncident) { self.incident = incident }
@@ -15,6 +15,7 @@ enum ErrorFeedback {
         guard Bundle.main.bundleIdentifier == "com.xykong.Markdown" else { return ErrorIncidentStore() }
         return ErrorIncidentStore(fileURL: SharedPreferenceStore.applicationSupportDirectory().appendingPathComponent("error-incidents.json"))
     }()
+    static var supplementProvider: ((ErrorIncident, @escaping (ErrorIncident) -> Void) -> Void)?
     private static var pending = Set<UUID>()
     private static var windows: [UUID: IncidentReportWindow] = [:]
     private static var drafts: [UUID: IncidentDraft] = [:]
@@ -73,11 +74,29 @@ enum ErrorFeedback {
         return incident
     }
 
-    static func report(_ requestDraft: IncidentDraft, review: Bool = false, failure: ((IncidentDraft) -> Void)? = nil, openURL: (URL) -> Bool = { NSWorkspace.shared.open($0) }) {
+    static func report(_ requestDraft: IncidentDraft, review: Bool = false, failure: ((IncidentDraft) -> Void)? = nil, openURL: @escaping (URL) -> Bool = { NSWorkspace.shared.open($0) }, collectSupplement: Bool = true) {
         precondition(Thread.isMainThread)
         let draft = remember(requestDraft)
         guard pending.count < 100 else { failure?(draft); return }
         guard pending.insert(draft.incident.id).inserted else { return }
+        if collectSupplement, draft.includeDiagnostics, draft.incident.quickLookCheck == nil,
+           [.quickLook, .images, .previewLimit, .fileRead].contains(draft.incident.kind),
+           let provider = supplementProvider, Bundle.main.bundleIdentifier != "com.xykong.Markdown.QuickLook" {
+            var finished = false
+            let finish: (ErrorIncident) -> Void = { incident in
+                guard !finished else { return }; finished = true
+                if incident.id == draft.incident.id && incident.isValid { draft.incident = incident }
+                pending.remove(draft.incident.id)
+                report(draft, review: review, failure: failure, openURL: openURL, collectSupplement: false)
+            }
+            provider(draft.incident) { incident in DispatchQueue.main.async { finish(incident) } }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                guard !finished else { return }
+                var partial = draft.incident; partial.historyUnavailable = true
+                finish(partial)
+            }
+            return
+        }
         store.record(draft.incident)
         if Bundle.main.bundleIdentifier == "com.xykong.Markdown.QuickLook" {
             var request = IncidentFeedbackRequest(incident: draft.incident, includeDiagnostics: draft.includeDiagnostics, notes: String(draft.notes.prefix(600)))

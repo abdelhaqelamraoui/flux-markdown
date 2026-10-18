@@ -43,3 +43,9 @@ Verified the repository's real logged-in GitHub editor with a non-private title/
 ## Remaining release-only gate
 
 If switching the runtime to `app_error.yml`, publish it on the default branch and verify it first. The current verified title/body route does not require that publication. No release, master push, issue reply or done label is included in this task.
+
+## Final refinements
+
+- Quick Look-related reports can add allowlisted registration/enabled/signature/self-test status, explicitly timestamped as a report-time check. Collection is asynchronous with a two-second fallback; late results cannot reopen or replace an already-handed-off report. Timeout and unavailable history are disclosed, and optional user notes remain intact.
+- Native notices use vertically arranged actions in narrow previews. Guidance and recovery activation are exercised for every FailureKind, and both native bundles' five language resources are validated. Update report continuations retain the manual download action. Update reports carry the known target version and only relevant language settings.
+- Runtime GitHub URL generation handles long Unicode notes within 6000 bytes, explicitly marks omitted content, and retains complete notes locally. Reports with diagnostics excluded still contain a useful task summary.
