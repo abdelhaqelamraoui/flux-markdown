@@ -5,7 +5,7 @@ enum IncidentSource: String, Codable { case app, quicklook, cli }
 enum IncidentReason: String, Codable { case operationFailed, invalidInput, moduleUnavailable, resourceUnavailable }
 enum IncidentPhase: String, Codable { case started, failed, completed, timeout }
 enum FailureKind: String, Codable, CaseIterable {
-    case update, fileRead, fileTooLarge, reload, exportHTML, exportPDF, renderer, source
+    case update, fileRead, fileTooLarge, reload, exportHTML, exportPDF, renderer, rendererResources, source
     case mermaid, typst, graphviz, vega, math, search, quickLook, images, previewLimit, link, browser
 
     var title: String {
@@ -14,6 +14,7 @@ enum FailureKind: String, Codable, CaseIterable {
         case .fileRead, .fileTooLarge: return "Document could not be opened"
         case .reload: return "Document could not be reloaded"
         case .exportHTML, .exportPDF: return "Export could not be completed"
+        case .rendererResources: return "Preview could not start"
         case .renderer, .source: return "Document could not be displayed"
         case .mermaid, .typst, .graphviz, .vega, .math: return "This diagram or formula could not be displayed"
         case .search: return "Search could not be completed"
@@ -30,6 +31,7 @@ enum FailureKind: String, Codable, CaseIterable {
         case .fileTooLarge: return "Open this document in your editor, or split it into smaller files before trying again."
         case .reload: return "Try reloading again when the file is available. Your current document has not been discarded."
         case .exportHTML, .exportPDF: return "Try exporting again and choose another writable folder."
+        case .rendererResources: return "Download and reinstall FluxMarkdown, or open the document in your editor."
         case .renderer, .source: return "Try reloading the preview, or open the document in your editor."
         case .mermaid, .typst, .graphviz, .vega, .math: return "Check the source syntax in your editor. The rest of the document is still available."
         case .search: return "Check the search expression, or open the document in FluxMarkdown and press Command-F."

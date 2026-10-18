@@ -455,7 +455,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             webView.load(URLRequest(url: url))
             os_log("🔵 Loaded renderer via custom scheme: %{public}@", log: logger, type: .default, url.absoluteString)
         } else {
-            showFailure(.renderer)
+            showFailure(.rendererResources)
         }
 
         let doubleClickGesture = QuickLookDoubleClickGestureRecognizer(

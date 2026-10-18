@@ -74,3 +74,5 @@
 "Download and open FluxMarkdown.dmg, quit FluxMarkdown, then drag the app into Applications and choose Replace." = "Download and open FluxMarkdown.dmg, quit FluxMarkdown, then drag the app into Applications and choose Replace.";
 "Could not save the report. You can copy it instead." = "Could not save the report. You can copy it instead.";
 "Copy Link" = "Copy Link";
+"Preview could not start" = "Preview could not start";
+"Download and reinstall FluxMarkdown, or open the document in your editor." = "Download and reinstall FluxMarkdown, or open the document in your editor.";

@@ -98,7 +98,14 @@ struct MarkdownWebView: NSViewRepresentable {
             webView.load(URLRequest(url: url))
         } else {
             os_log("Failed to find index.html in bundle", log: coordinator.logger, type: .error)
-            coordinator.showFailure(.renderer)
+            coordinator.showFailure(.rendererResources, recoveryTitle: "Download Latest Version", recovery: { [weak coordinator] in
+                let url = URL(string: "https://github.com/xykong/flux-markdown/releases/latest")!
+                if !NSWorkspace.shared.open(url) {
+                    coordinator?.showFailure(.browser, recoveryTitle: "Copy Link", recovery: {
+                        NSPasteboard.general.clearContents(); NSPasteboard.general.setString(url.absoluteString, forType: .string)
+                    })
+                }
+            })
         }
         
         return webView
@@ -143,11 +150,15 @@ struct MarkdownWebView: NSViewRepresentable {
             if pendingRender == nil {
                 let retained = lastRenderedContent
                 lastRenderedContent = ""; lastRenderedFeatures = nil
-                render(webView: webView, content: retained, fileURL: currentFileURL, viewMode: lastViewMode,
-                       appearanceMode: lastAppearanceMode, baseFontSize: lastBaseFontSize, enableMermaid: lastEnableMermaid,
-                       enableKatex: lastEnableKatex, enableEmoji: lastEnableEmoji, enableTypst: lastEnableTypst,
-                       codeHighlightTheme: lastCodeHighlightTheme, collapseBlockquotesByDefault: lastCollapseBlockquotesByDefault,
-                       showLineNumbers: lastShowLineNumbers)
+                // Re-render retained disk/model output without feeding it back as a new model edit.
+                pendingRender = { [weak self, weak webView] in
+                    guard let self, let webView else { return }
+                    self.executeRender(webView: webView, content: retained, fileURL: self.currentFileURL, viewMode: self.lastViewMode,
+                                       appearanceMode: self.lastAppearanceMode, baseFontSize: self.lastBaseFontSize, enableMermaid: self.lastEnableMermaid,
+                                       enableKatex: self.lastEnableKatex, enableEmoji: self.lastEnableEmoji, enableTypst: self.lastEnableTypst,
+                                       codeHighlightTheme: self.lastCodeHighlightTheme, collapseBlockquotesByDefault: self.lastCollapseBlockquotesByDefault,
+                                       showLineNumbers: self.lastShowLineNumbers)
+                }
             }
             armRendererTimeout(); webView.reload()
         }
