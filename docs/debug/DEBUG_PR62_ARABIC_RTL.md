@@ -18,4 +18,12 @@ Before fixes: 393 renderer tests and 20 existing WebKit cases pass. Targeted nat
 - Added the seven missing Arabic strings to both targets and a parity test against each target's current English keys. Red: 14 parity assertions failed. Green: complete native suite 370 tests, zero failures, one expected missing-adjacent-tap skip (local macOS 12 diagnostic target).
 - Decoupled physical layout containers from text direction; Arabic contents text remains RTL while grid, toolbar placement and search centering preserve Left/Right. App floating toolbar uses an explicit LTR placement environment and Quick Look uses physical left/right anchors, matching the existing rightInset bridge even on RTL systems.
 - Real WebKit red reproduced the reversed side. Green: 22 cases, including App/Quick Look, both sides, wide docked/narrow overlay, ar→en→ar switching, document/search geometry and native-right reserve. Existing source/math/document-direction checks retained.
-- Renderer 43 suites / 393 tests and production build/typecheck pass. Pinned macOS 11 CI pending below.
+- Renderer 43 suites / 393 tests and production build/typecheck pass. Pinned macOS 11 CI results recorded below.
+
+
+## Merge verification
+
+- Exact candidate a0a8e121df8df1984f1daa33bd1c752d0da78220 passed https://github.com/xykong/flux-markdown/actions/runs/40306522445: Xcode 16.4, macOS 11, 370 native tests (one expected skip), 393 renderer tests, 22 WebKit cases, release entitlement checks, arm64/x86_64 build.
+- PR checks also passed: https://github.com/xykong/flux-markdown/actions/runs/40306521770 (docs/renderer and macOS build/XCTest).
+- Maintainer modification permission was enabled. Fast-forwarded the contributor branch from 7aa44d0 to the tested integration commit without force push; original authorship/commit retained. Updated the PR description and merged with an exact head SHA guard.
+- Added user-facing notes with contributor credit to Unreleased. No new release or installation of the Arabic candidate was performed.
