@@ -7,6 +7,23 @@
         <language>zh-CN</language>
 
         <item>
+            <title>Version 1.40.622</title>
+            <link>https://github.com/xykong/flux-markdown/releases/tag/v1.40.622</link>
+            <sparkle:version>622</sparkle:version>
+            <sparkle:shortVersionString>1.40.622</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+            <pubDate>Mon, 26 Oct 2026 11:46:38 +0000</pubDate>
+            <enclosure
+                url="https://github.com/xykong/flux-markdown/releases/download/v1.40.622/FluxMarkdown.dmg"
+                sparkle:edSignature="BGfuNfOjDwBIZFUKJFxGchR9YWljIl1b5uq+dR8lEry2KpZmgALcGBam5N8v2U1bY6XKbWVt6ix5wX0nUFkdDA=="
+                length="37803887"
+                type="application/octet-stream" />
+            <description><![CDATA[
+                <h2>更新内容</h2><h3>Added</h3><ul><li><strong>Arabic interface</strong>: Add Arabic localization and right-to-left interface text in the app and Quick Look, keeping documents, code and math in their appropriate reading direction. Thanks to [](https://github.com/abdelhaqelamraoui) for [#62](https://github.com/xykong/flux-markdown/pull/62).</li></ul><h3>Fixed</h3><ul><li><strong>RTL layout</strong>: Preserve physical Left/Right contents positions, search centering and native toolbar spacing when switching interface languages. Include Arabic translations for usage statistics and contextual error recovery.</li><li><strong>Settings layout</strong>: Give translated sidebar labels enough space and prevent restoring the window below its supported minimum size.</li></ul><p><a href="https://github.com/xykong/flux-markdown/releases/tag/v1.40.622">查看完整更新日志</a></p>
+            ]]></description>
+        </item>
+        
+        <item>
             <title>Version 1.39.614</title>
             <link>https://github.com/xykong/flux-markdown/releases/tag/v1.39.614</link>
             <sparkle:version>614</sparkle:version>
