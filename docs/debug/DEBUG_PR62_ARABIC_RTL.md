@@ -27,3 +27,7 @@ Before fixes: 393 renderer tests and 20 existing WebKit cases pass. Targeted nat
 - PR checks also passed: https://github.com/xykong/flux-markdown/actions/runs/40306521770 (docs/renderer and macOS build/XCTest).
 - Maintainer modification permission was enabled. Fast-forwarded the contributor branch from 7aa44d0 to the tested integration commit without force push; original authorship/commit retained. Updated the PR description and merged with an exact head SHA guard.
 - Added user-facing notes with contributor credit to Unreleased. No new release or installation of the Arabic candidate was performed.
+
+## Acceptance scope clarification
+
+After release 1.40.622, the user explicitly confirmed that Arabic native-speaker review is not required. Do not track it as pending work or as a merge/release acceptance gate for this contribution.
