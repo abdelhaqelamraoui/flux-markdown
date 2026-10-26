@@ -1,4 +1,7 @@
 ## [Unreleased]
+_无待发布的变更_
+
+## [1.40.622] - 2026-10-26
 ### Added
 - **Arabic interface**: Add Arabic localization and right-to-left interface text in the app and Quick Look, keeping documents, code and math in their appropriate reading direction. Thanks to [@abdelhaqelamraoui](https://github.com/abdelhaqelamraoui) for [#62](https://github.com/xykong/flux-markdown/pull/62).
 
