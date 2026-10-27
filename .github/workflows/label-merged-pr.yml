@@ -1,0 +1,59 @@
+name: Mark Linked Issues Done
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  mark-done-on-merge:
+    name: Mark linked issues as done
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Add done label to linked issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const prNumber = context.payload.pull_request.number;
+
+            const pattern = /(?:closes?|fixes?|resolves?)\s+#(\d+)/gi;
+            const matches = [...prBody.matchAll(pattern)];
+
+            if (matches.length === 0) {
+              console.log(`PR #${prNumber}: no linked issues found.`);
+              return;
+            }
+
+            for (const match of matches) {
+              const issueNumber = parseInt(match[1], 10);
+              console.log(`Marking issue #${issueNumber} as done`);
+
+              try {
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber
+                });
+
+                if (issue.labels.some(l => l.name === 'done')) {
+                  console.log(`Issue #${issueNumber} already has 'done' label.`);
+                  continue;
+                }
+
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  labels: ['done']
+                });
+
+                console.log(`Added 'done' to issue #${issueNumber}`);
+              } catch (err) {
+                console.error(`Failed to label issue #${issueNumber}:`, err.message);
+              }
+            }

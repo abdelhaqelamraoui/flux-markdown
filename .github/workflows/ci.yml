@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -28,7 +30,7 @@ jobs:
         run: bash scripts/check-links.sh
 
       - name: Test Feishu notification payloads
-        run: node --test scripts/tests/feishu-notify.test.cjs
+        run: node --test scripts/tests/feishu-notify.test.cjs scripts/tests/workflow-security.test.cjs
 
       - name: Test release failure and retry behavior
         run: python3 scripts/tests/release-publication.test.py
@@ -55,6 +57,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v4
