@@ -62,4 +62,4 @@ The historical launch-only scope above now also includes a parameterless
 peer gate remains. Helper entitlements add client networking and read/write access
 only to the Telemetry state directory, enforced by release verification. This is
 necessary because the preview host blocks direct DNS. See
-`DEBUG_QUICKLOOK_TELEMETRY_TRANSPORT.md` for actual installed-host validation.
+`../design/DESIGN_USAGE_STATISTICS_CLIENT.md` for the client transport contract.
