@@ -1,5 +1,10 @@
 ## [Unreleased]
-_无待发布的变更_
+### Added
+- **TSV table previews**: View `.tsv` files as tables in Finder Quick Look and FluxMarkdown, with source view, text selection, search handoff, themes and export support. Preserve empty cells and keep the first record as data.
+- **Bounded table viewing**: Limit TSV previews to 500 KiB, 1,000 rows, 100 columns and 20,000 cells, with explicit truncation notices in previews and exports. UTF-8 and LF/CRLF/CR are supported; quotes, HTML and formulas remain literal text. Initial host-app opening still uses the system-provided full file buffer.
+
+### Fixed
+- **MacPorts installation**: Use the Xcode PortGroup and preserve versioned source-archive paths for the MacPorts package.
 
 ## [1.40.622] - 2026-10-26
 ### Added
