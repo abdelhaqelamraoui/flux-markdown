@@ -28,6 +28,10 @@
   <a href="#-troubleshooting">Troubleshooting</a>
 </p>
 
+## Privacy and network activity
+
+Markdown rendering uses bundled local assets. The app also checks for updates and, by default, sends pseudonymous usage statistics. You can turn off **Share Usage Statistics** in Settings (for both the app and Quick Look). Statistics do not include document names, paths or contents. See the [privacy notice](docs/PRIVACY.md) for the collected fields, IP-based location processing, retention and opt-out behavior.
+
 ---
 
 ## ✨ Demo

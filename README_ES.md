@@ -28,6 +28,10 @@
   <a href="#-solución-de-problemas">Solución de problemas</a>
 </p>
 
+## Privacidad y actividad de red
+
+El renderizado de Markdown utiliza recursos locales incluidos en la aplicación. La aplicación también busca actualizaciones y, de forma predeterminada, envía estadísticas de uso seudónimas. Puedes desactivar **Share Usage Statistics** en Ajustes, tanto para la aplicación como para Quick Look. Las estadísticas no incluyen nombres, rutas ni contenido de documentos. Consulta el [aviso de privacidad](docs/PRIVACY.md) para conocer los datos recopilados, el tratamiento de ubicación basado en IP, la retención y cómo desactivarlo.
+
 ---
 
 ## ✨ Demo
