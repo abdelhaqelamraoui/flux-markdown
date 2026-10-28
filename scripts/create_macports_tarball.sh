@@ -181,7 +181,6 @@ if [ -f "$PORTFILE" ]; then
     echo "📝 Updating macports/Portfile checksums and version..."
     sed -i '' \
         -e "s|github.setup        xykong flux-markdown [^ ]* v|github.setup        xykong flux-markdown ${VERSION} v|" \
-        -e "s|distname            FluxMarkdown-[^ ]*-macports-source|distname            FluxMarkdown-${VERSION}-macports-source|" \
         -e "s|rmd160  [0-9a-f]*|rmd160  ${RMD160}|" \
         -e "s|sha256  [0-9a-f]*|sha256  ${SHA256}|" \
         -e "s|size    [0-9]*|size    ${SIZE}|" \

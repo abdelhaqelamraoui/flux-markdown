@@ -12,6 +12,26 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class MacPortsExportTests(unittest.TestCase):
+    def test_release_metadata_update_preserves_variable_distname(self):
+        script = (ROOT / "scripts/create_macports_tarball.sh").read_text()
+        update = script.split("    sed -i ''", 1)[1].split('    echo "  ✅ macports/Portfile updated"', 1)[0]
+        with tempfile.TemporaryDirectory() as directory:
+            portfile = Path(directory) / "Portfile"
+            portfile.write_text("github.setup        xykong flux-markdown 1.0.1 v\n"
+                                "distname            FluxMarkdown-${version}-macports-source\n"
+                                "worksrcdir          FluxMarkdown-${version}\n"
+                                "checksums           rmd160  abc \\\n"
+                                "                    sha256  def \\\n"
+                                "                    size    10\n")
+            env = dict(os.environ, VERSION="2.0.2", RMD160="123abc", SHA256="456def", SIZE="42", PORTFILE=str(portfile))
+            subprocess.run(["bash", "-c", "sed -i ''" + update], env=env, check=True)
+            text = portfile.read_text()
+            self.assertIn("FluxMarkdown-${version}-macports-source", text)
+            self.assertIn("worksrcdir          FluxMarkdown-${version}", text)
+            self.assertIn("xykong flux-markdown 2.0.2 v", text)
+            self.assertIn("sha256  456def", text)
+            self.assertIn("size    42", text)
+
     @unittest.skipUnless(shutil.which("xcodegen"), "XcodeGen is needed to validate exported projects")
     def test_removing_sparkle_leaves_a_valid_project_and_no_updater_references(self):
         script = (ROOT / "scripts/create_macports_tarball.sh").read_text()
