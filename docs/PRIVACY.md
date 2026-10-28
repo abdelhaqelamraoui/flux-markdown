@@ -20,9 +20,27 @@ per hour while running. It never wakes the computer or launches just to upload.
 Offline counters remain for up to 90 days, subject to a 720-bucket limit. Data is
 stored locally with restrictive filesystem permissions, not application-level
 encryption. Server records are stored on our Tokyo server for up to 180 days.
-No external analytics provider or remote database is used. HTTPS necessarily
-exposes the connection IP to network infrastructure; it is not stored in usage
-records, and request access logs are disabled.
+We operate the usage-statistics service and its database ourselves. HTTPS
+necessarily exposes the connection IP to network infrastructure. Request access
+logs are disabled, and we do not save source IP addresses in usage records.
+
+To estimate country, region and city, our server uses a local IP database and may
+send the connection IP over HTTPS to [IPWhois](https://ipwhois.io/privacy),
+[IP2Location.io](https://www.ip2location.io/privacy-policy) and
+[IPLocate](https://www.iplocate.io/legal/privacy). These queries do not include
+installation identifiers, document counts, reading times or document information.
+The providers process the queried IP under their own privacy policies. Source IPs
+may remain temporarily in our server's bounded in-memory lookup queue or cache
+(for up to six hours); they are not persisted in our database or request logs.
+
+Local IP-derived country/region observations follow the 180-day retention above.
+Online lookup results and source-comparison metadata are kept separately for no
+more than seven days and excluded from long-term telemetry backups. Country,
+region and city estimates can disagree and do not establish a person's residence.
+Where IP data is missing, internal reports may separately label country estimates
+inferred from a reported system timezone; no province or city is inferred from
+that timezone. Turning usage statistics off prevents subsequent telemetry-driven
+IP lookups, except for a request already in flight.
 
 Turning statistics off clears unsent local counters and rotates the random
 identity. Re-enabling starts a new counter identity; disabled usage is not collected.
