@@ -11,6 +11,7 @@ enum ViewMode {
 
 struct MarkdownWebView: NSViewRepresentable {
     var content: String
+    var isTruncated: Bool = false
     var fileURL: URL?
     var appearanceMode: AppearanceMode = .light
     var viewMode: ViewMode = .preview
@@ -119,6 +120,7 @@ struct MarkdownWebView: NSViewRepresentable {
             webView.appearance = nil
         }
 
+        context.coordinator.modelIsTruncated = isTruncated
         context.coordinator.usage.attach(webView, document: fileURL)
         context.coordinator.starReminder = starReminder
         starReminder?.attach(webView, url: fileURL, preview: viewMode == .preview)
@@ -127,6 +129,9 @@ struct MarkdownWebView: NSViewRepresentable {
     }
 
     class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+        var modelIsTruncated = false
+        private var lastRenderedTruncated = false
+        private var diskIsTruncated: Bool?
         let logger = OSLog(subsystem: "com.markdownquicklook.app", category: "MarkdownWebView")
         let errorRegistry = RendererErrorRegistry()
         let usage = UsageTelemetrySession(source: "app")
@@ -456,6 +461,7 @@ struct MarkdownWebView: NSViewRepresentable {
 
             if fileURL != currentFileURL {
                 navigationRenderVersion += 1
+                diskIsTruncated = nil
                 currentFileURL = fileURL
                 startFileMonitoring()
                 webView.pageZoom = AppearancePreference.shared.zoomLevel
@@ -472,7 +478,7 @@ struct MarkdownWebView: NSViewRepresentable {
                 // but passing the URL allows the handler to work consistently
                 if let handler = webView.configuration.urlSchemeHandler(forURLScheme: "local-md") as? LocalSchemeHandler {
                     handler.baseDirectory = baseDir
-                    handler.allowedFileURLs = MarkdownImageDataCollector.referencedLocalImageURLs(
+                    handler.allowedFileURLs = url.pathExtension.lowercased() == "tsv" ? [] : MarkdownImageDataCollector.referencedLocalImageURLs(
                         from: url,
                         content: content
                     )
@@ -495,7 +501,7 @@ struct MarkdownWebView: NSViewRepresentable {
 
         private func executeRender(webView: WKWebView, content: String, fileURL: URL?, viewMode: ViewMode, appearanceMode: AppearanceMode, baseFontSize: Double, enableMermaid: Bool, enableKatex: Bool, enableEmoji: Bool, enableTypst: Bool, codeHighlightTheme: String, collapseBlockquotesByDefault: Bool, showLineNumbers: Bool = false) {
             let features = RenderFeatureConfiguration(fontSize: baseFontSize, mermaid: enableMermaid, katex: enableKatex, emoji: enableEmoji, typst: enableTypst, codeTheme: codeHighlightTheme)
-            let onlyThemeChanged = !renderingPositionContent && lastRenderedFeatures == features && (fileURL == lastRenderedFileURL) && (content == lastRenderedContent) && (viewMode == .preview) && (viewMode == lastViewMode) && (collapseBlockquotesByDefault == lastCollapseBlockquotesByDefault) && (showLineNumbers == lastShowLineNumbers)
+            let onlyThemeChanged = lastRenderedTruncated == (diskIsTruncated ?? modelIsTruncated) && !renderingPositionContent && lastRenderedFeatures == features && (fileURL == lastRenderedFileURL) && (content == lastRenderedContent) && (viewMode == .preview) && (viewMode == lastViewMode) && (collapseBlockquotesByDefault == lastCollapseBlockquotesByDefault) && (showLineNumbers == lastShowLineNumbers)
             if onlyThemeChanged {
                 os_log("🔵 FAST PATH: only theme changed, viewMode=%{public}@ lastViewMode=%{public}@", log: logger, type: .debug, String(describing: viewMode), String(describing: lastViewMode))
                 let theme: String
@@ -517,6 +523,7 @@ struct MarkdownWebView: NSViewRepresentable {
             // Capture previous content for diff animation before overwriting
             let previousContent = lastRenderedContent
             lastRenderedContent = content
+            lastRenderedTruncated = diskIsTruncated ?? modelIsTruncated
             lastRenderedFeatures = features
             lastRenderedFileURL = fileURL
             lastViewMode = viewMode
@@ -565,7 +572,7 @@ struct MarkdownWebView: NSViewRepresentable {
             options["renderVersion"] = renderVersion.next()
             if fileURL?.pathExtension.lowercased() == "tsv" {
                 options["format"] = "tsv"
-                options["isTruncated"] = false
+                options["isTruncated"] = diskIsTruncated ?? modelIsTruncated
             }
 
             if !previousContent.isEmpty && previousContent != content {
@@ -590,9 +597,9 @@ struct MarkdownWebView: NSViewRepresentable {
                    let prevData = try? JSONSerialization.data(withJSONObject: [previousContent]),
                    let prevJson = String(data: prevData, encoding: .utf8) {
                     let safePrevArg = String(prevJson.dropFirst().dropLast())
-                    js = "window.renderSource(\(safeContentArg), \"\(themeStr)\", \(safePrevArg));"
+                    js = "window.renderSource(\(safeContentArg), \"\(themeStr)\", \(safePrevArg), \(optionsJson));"
                 } else {
-                    js = "window.renderSource(\(safeContentArg), \"\(themeStr)\");"
+                    js = "window.renderSource(\(safeContentArg), \"\(themeStr)\", undefined, \(optionsJson));"
                 }
                 os_log("🔴 Calling renderSource", log: logger, type: .debug)
             } else {
@@ -903,16 +910,21 @@ struct MarkdownWebView: NSViewRepresentable {
             fileReadInFlight = true
             let generation = fileReadVersion.next()
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                let result = Result { () -> (String, [FileAttributeKey: Any]) in
+                let result = Result { () -> (String, [FileAttributeKey: Any], Bool) in
+                    if url.pathExtension.lowercased() == "tsv" {
+                        let preview = try PreviewFileReader.read(url)
+                        return (preview.content, try FileManager.default.attributesOfItem(atPath: url.path), preview.isTruncated)
+                    }
                     let data = try BoundedFileReader.read(url, maxBytes: BoundedFileReader.documentLimit)
                     guard let text = String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
-                    return (text, try FileManager.default.attributesOfItem(atPath: url.path))
+                    return (text, try FileManager.default.attributesOfItem(atPath: url.path), false)
                 }
                 DispatchQueue.main.async {
                     guard let self, self.fileReadVersion.isCurrent(generation), self.currentFileURL == url else { completion?(false); return }
                     self.fileReadInFlight = false
                     do {
-                        let (newContent, attrs) = try result.get()
+                        let (newContent, attrs, truncated) = try result.get()
+                        self.diskIsTruncated = truncated
                         self.contentState.receivedDiskText(newContent, for: url)
                         self.lastKnownFileSize = attrs[.size] as? UInt64 ?? 0
                         self.lastKnownFileModificationDate = attrs[.modificationDate] as? Date

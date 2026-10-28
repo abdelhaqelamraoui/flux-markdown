@@ -215,3 +215,9 @@ Last Error…** reopens the latest failure, and **Help → Clear Error History**
 locally retained error records without changing your settings. Errors controlled
 by macOS itself, or failures where the extension never starts, may require the
 existing **Help → Report an Issue** entry.
+
+### TSV table previews
+
+Open `.tsv` in FluxMarkdown or preview it with Finder Quick Look. UTF-8 (including BOM) and LF/CRLF/CR records are supported. Tabs separate columns; quotes, HTML, Markdown and formulas remain literal text. The first record is data, with generated column numbers above it.
+
+Previews show up to 500 KiB, 1,000 rows, 100 columns and 20,000 cells. Truncation is marked in the table, source view and exports. Empty fields and uneven rows are preserved. This is a read-only viewer, not a spreadsheet editor; quoted multiline fields and non-UTF-8 encodings are not supported. On initial host-app opening, macOS supplies a full FileDocument buffer before the app decodes its bounded prefix; very large initial opens can still use significant memory.

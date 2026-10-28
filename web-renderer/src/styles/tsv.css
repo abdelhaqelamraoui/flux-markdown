@@ -1,0 +1,7 @@
+.tsv-scroll { overflow-x: auto; max-width: 100%; }
+.markdown-body .tsv-table { display: table; width: max-content; min-width: 100%; border-collapse: collapse; font-size: inherit; }
+.tsv-table th, .tsv-table td { min-width: 5em; max-width: 28em; white-space: pre-wrap; overflow-wrap: anywhere; text-align: start; vertical-align: top; }
+.tsv-table td { unicode-bidi: plaintext; }
+.tsv-empty, .tsv-truncated { padding: 12px 0; }
+.tsv-truncated { font-size: .9em; }
+@media print { .tsv-scroll { overflow: visible; } .markdown-body .tsv-table { width: 100%; table-layout: fixed; } .tsv-table th, .tsv-table td { min-width: 0; } }

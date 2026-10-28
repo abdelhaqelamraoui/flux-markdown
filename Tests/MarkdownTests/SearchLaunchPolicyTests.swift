@@ -10,6 +10,12 @@ final class SearchLaunchPolicyTests: XCTestCase {
         }
     }
 
+    func testTSVHandoffAcceptsUppercaseExtension() throws {
+        let file = URL(fileURLWithPath: "/tmp/table.TSV")
+        let url = try XCTUnwrap(DocumentOpenRequest.searchURL(for: file))
+        XCTAssertEqual(SearchLaunchPolicy.request(url.absoluteString)?.fileURL, file)
+    }
+
     func testAnUnverifiedPeerCannotUseTheBroker() {
         XCTAssertTrue(SearchLaunchPolicy.acceptsPeer(sameUser: true, validSignature: true,
             identifier: "com.xykong.Markdown.QuickLook", expectedExecutable: true))

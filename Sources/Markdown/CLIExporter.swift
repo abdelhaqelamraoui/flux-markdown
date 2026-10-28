@@ -120,9 +120,20 @@ final class CLIExporter: NSObject {
     }
 
     private func renderAndExport() {
-        guard let data = try? BoundedFileReader.read(inputURL, maxBytes: BoundedFileReader.documentLimit),
-              let content = String(data: data, encoding: .utf8) else {
-            fputs("Error: cannot read \(inputURL.path)\n", stderr)
+        let content: String
+        var truncated = false
+        do {
+            if inputURL.pathExtension.lowercased() == "tsv" {
+                let preview = try PreviewFileReader.read(inputURL)
+                content = preview.content
+                truncated = preview.isTruncated
+            } else {
+                let data = try BoundedFileReader.read(inputURL, maxBytes: BoundedFileReader.documentLimit)
+                guard let text = String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
+                content = text
+            }
+        } catch {
+            fputs("Error: cannot read input\n", stderr)
             CLIErrorGuidance.printReport(); exit(1)
         }
 
@@ -148,7 +159,7 @@ final class CLIExporter: NSObject {
         ]
         if inputURL.pathExtension.lowercased() == "tsv" {
             options["format"] = "tsv"
-            options["isTruncated"] = false
+            options["isTruncated"] = truncated
         }
         guard let optData = try? JSONSerialization.data(withJSONObject: options),
               let optJson  = String(data: optData, encoding: .utf8) else {

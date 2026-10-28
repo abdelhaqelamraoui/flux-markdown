@@ -1,6 +1,14 @@
 import XCTest
 
 final class PreviewFileReaderTests: XCTestCase {
+    func testTSVBoundedDecodePreservesUTF8AndReportsExactBoundary() throws {
+        let data = Data("a\tb\r\n中tail".utf8)
+        let prefix = try PreviewFileReader.decode(data, limit: 7)
+        XCTAssertEqual(prefix.content, "a\tb\r\n")
+        XCTAssertTrue(prefix.isTruncated)
+        XCTAssertFalse(try PreviewFileReader.decode(data, limit: data.count).isTruncated)
+    }
+
     func testTruncationPreservesMultibytePrefix() throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".md")
         defer { try? FileManager.default.removeItem(at: url) }

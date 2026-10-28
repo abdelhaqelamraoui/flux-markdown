@@ -12,26 +12,34 @@ export const TSV_MAX_CELLS = 20000;
 
 /** Parse the deliberately literal TSV dialect used by the QuickLook preview. */
 export function parseTSV(input: string, byteTruncated = false): TSVPreviewResult {
-    const text = input.replace(/^\uFEFF/, '');
-    if (text.length === 0) return { rows: [], columns: 0, truncated: byteTruncated, empty: true, limited: false };
-    const raw = text.split(/\r\n|\n|\r/);
-    const hasTerminatingNewline = /(?:\r\n|\n|\r)$/.test(text);
-    if (byteTruncated && !hasTerminatingNewline) raw.pop();
-    if (hasTerminatingNewline && raw[raw.length - 1] === '') raw.pop();
-    if (raw.length === 0) return { rows: [], columns: 0, truncated: byteTruncated, empty: true, limited: false };
+    // Bound work even for direct bridge callers; native readers apply the byte limit too.
+    let text = input.slice(0, 500 * 1024).replace(/^\uFEFF/, '');
+    byteTruncated ||= input.length > 500 * 1024;
     const rows: string[][] = [];
     let columns = 0;
     let limited = false;
-    for (const line of raw) {
-        if (rows.length >= TSV_MAX_ROWS) { limited = true; break; }
-        const cells = line.split('\t');
-        columns = Math.max(columns, Math.min(cells.length, TSV_MAX_COLUMNS));
-        rows.push(cells.slice(0, TSV_MAX_COLUMNS));
-        if (rows.length * columns >= TSV_MAX_CELLS) { limited = true; break; }
+    let start = 0;
+    for (let i = 0; i <= text.length; i++) {
+        const end = i === text.length;
+        if (!end && text[i] !== '\r' && text[i] !== '\n') continue;
+        if (end && (start === i || byteTruncated)) break;
+        if (rows.length === TSV_MAX_ROWS) { limited = true; break; }
+        const row: string[] = [];
+        let fieldStart = start;
+        for (let j = start; j <= i; j++) {
+            if (j !== i && text[j] !== '\t') continue;
+            if (row.length === TSV_MAX_COLUMNS) { limited = true; break; }
+            row.push(text.slice(fieldStart, j));
+            fieldStart = j + 1;
+        }
+        columns = Math.max(columns, row.length);
+        rows.push(row);
+        if (text[i] === '\r' && text[i + 1] === '\n') i++;
+        start = i + 1;
     }
-    const maxColumns = Math.min(columns, Math.max(1, Math.floor(TSV_MAX_CELLS / Math.max(1, rows.length))));
-    const finalColumns = Math.min(columns, TSV_MAX_COLUMNS, maxColumns);
-    return { rows: rows.map(row => row.slice(0, finalColumns)), columns: finalColumns, truncated: byteTruncated, empty: false, limited };
+    const count = columns ? Math.min(rows.length, Math.floor(TSV_MAX_CELLS / columns)) : 0;
+    if (count < rows.length) limited = true;
+    return { rows: rows.slice(0, count), columns, truncated: byteTruncated, empty: rows.length === 0, limited };
 }
 
 export function renderTSVTable(input: string, byteTruncated = false): { element: HTMLElement; result: TSVPreviewResult } {
@@ -41,13 +49,15 @@ export function renderTSVTable(input: string, byteTruncated = false): { element:
     if (result.empty) {
         const empty = document.createElement('p');
         empty.className = 'tsv-empty';
-        empty.textContent = rendererLabels().tsvEmpty;
+        empty.textContent = result.truncated ? rendererLabels().tsvRecordTooLarge : rendererLabels().tsvEmpty;
         wrapper.appendChild(empty);
         return { element: wrapper, result };
     }
     const scroll = document.createElement('div');
     scroll.className = 'tsv-scroll';
     scroll.tabIndex = 0;
+    scroll.setAttribute('role', 'region');
+    scroll.setAttribute('aria-label', 'TSV');
     const table = document.createElement('table');
     table.className = 'tsv-table';
     const head = document.createElement('thead');
@@ -55,14 +65,16 @@ export function renderTSVTable(input: string, byteTruncated = false): { element:
     for (let i = 0; i < result.columns; i++) {
         const cell = document.createElement('th');
         cell.scope = 'col';
-        cell.textContent = `Column ${i + 1}`;
+        cell.textContent = `${rendererLabels().tsvColumn} ${i + 1}`;
         header.appendChild(cell);
     }
     head.appendChild(header);
     table.appendChild(head);
     const body = document.createElement('tbody');
-    for (const row of result.rows) {
+    for (const [index, row] of result.rows.entries()) {
         const tr = document.createElement('tr');
+        tr.dataset.sourceLine = String(index + 1);
+        tr.dataset.sourceLineEnd = String(index + 1);
         for (let i = 0; i < result.columns; i++) {
             const td = document.createElement('td');
             td.textContent = row[i] ?? '';
@@ -76,7 +88,7 @@ export function renderTSVTable(input: string, byteTruncated = false): { element:
     if (result.truncated || result.limited) {
         const notice = document.createElement('p');
         notice.className = 'tsv-truncated';
-        notice.textContent = rendererLabels().tsvPreviewLimited;
+        notice.textContent = `${rendererLabels().tsvPreviewLimited} (${result.rows.length} × ${result.columns}; 500 KiB / 1,000 × 100 / 20,000)`;
         wrapper.appendChild(notice);
     }
     return { element: wrapper, result };

@@ -42,7 +42,7 @@
 				<string>com.fluxmarkdown.mkdn</string>
 				<string>com.fluxmarkdown.mkdown</string>
 				<string>com.fluxmarkdown.mdwn</string>
-				<string>com.fluxmarkdown.tsv</string>
+				<string>public.tab-separated-values-text</string>
 			</array>
 			<key>QLSupportsSearchableItems</key>
 			<false/>

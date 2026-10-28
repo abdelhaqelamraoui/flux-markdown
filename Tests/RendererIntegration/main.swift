@@ -9,6 +9,19 @@ final class RendererIntegration: NSObject, WKScriptMessageHandler {
     private var index = 0
     private var feedbackEvents: [[String: Any]] = []
     private let cases: [(String, String)] = [
+        ("TSV safe bounded table and source", """
+        const row=Array(100).fill('<img src=x>').join('\\t');
+        const start=performance.now();
+        await window.renderMarkdown(Array(201).fill(row).join('\\n'),{format:'tsv',context:'app',theme:'dark',uiLanguage:'en'});
+        const elapsed=performance.now()-start;
+        window.webkit.messageHandlers.logger.postMessage('TSV 20,000 cells render ms: '+elapsed);
+        if(elapsed>1000 || document.querySelectorAll('td').length!==20000 || document.querySelector('#markdown-preview img')) return false;
+        if(!window.exportHTML().includes('tsv-truncated')) return false;
+        window.renderSource('a\\tb\\npartial','dark',undefined,{format:'tsv',isTruncated:true});
+        if(!document.querySelector('.tsv-truncated'))return false;
+        await window.renderMarkdown('# Restored',{uiLanguage:'en'});
+        return document.querySelector('h1').textContent==='Restored'&&!document.querySelector('.tsv-truncated');
+        """),
         ("contextual feedback bridge", """
         window.setFeedbackGeneration('11111111-1111-1111-1111-111111111111');
         await window.renderMarkdown('```mermaid\\nSAMPLE-DO-NOT-INCLUDE ! invalid\\n```');
@@ -150,7 +163,7 @@ final class RendererIntegration: NSObject, WKScriptMessageHandler {
         guard RendererBridgePolicy.accepts(message) else { print("FAIL bridge origin"); exit(1) }
         if message.name == "errorFeedback", let body = message.body as? [String: Any] { feedbackEvents.append(body); return }
         guard let text = message.body as? String else { return }
-        if text.contains("Error") || text.contains("fallback") { print(text) }
+        if text.contains("Error") || text.contains("fallback") || text.hasPrefix("TSV 20,000") { print(text) }
         if text == "rendererReady" && !started { started = true; next() }
     }
     private func next() {

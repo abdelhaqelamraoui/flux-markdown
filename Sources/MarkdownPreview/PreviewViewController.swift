@@ -104,6 +104,11 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
 
     private func updateTruncationNotice(_ truncated: Bool) {
         previewIsTruncated = truncated
+        if currentURL?.pathExtension.lowercased() == "tsv" {
+            truncationNotice?.isHidden = true
+            layoutTruncationNotice()
+            return // TSV carries its bounded notice inside the rendered/exported content.
+        }
         if truncationNotice == nil {
             let label = NSTextField(wrappingLabelWithString: NSLocalizedString("Preview limited to 500 KiB. Use Open with FluxMarkdown above to read the complete document.", comment: "QuickLook truncation notice"))
             label.font = .systemFont(ofSize: 12)
@@ -123,7 +128,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
 
     private func layoutTruncationNotice() {
         guard let webView else { return }
-        let height: CGFloat = (previewIsTruncated || previewHasUnreadableImages) ? 52 : 0
+        let height: CGFloat = currentURL?.pathExtension.lowercased() != "tsv" && (previewIsTruncated || previewHasUnreadableImages) ? 52 : 0
         // Native chrome stays visible even when truncated Markdown ends in a code fence or image URI.
         webView.frame = NSRect(x: 0, y: height, width: view.bounds.width, height: max(0, view.bounds.height - height))
         truncationNotice?.frame = NSRect(x: 16, y: 8, width: max(0, view.bounds.width - 32), height: 36)
@@ -1093,6 +1098,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
 
         let feedbackGeneration = errorRegistry.beginDocument()
         webView.evaluateJavaScript("window.setFeedbackGeneration && window.setFeedbackGeneration('\(feedbackGeneration)');", completionHandler: nil)
+        let sourceOptions = "{format: '\(currentURL?.pathExtension.lowercased() == "tsv" ? "tsv" : "markdown")', isTruncated: \(previewIsTruncated)}"
         var callJs: String
         if let prev = capturedPrevForSource, !prev.isEmpty,
            let prevData = try? JSONSerialization.data(withJSONObject: [prev]),
@@ -1100,7 +1106,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             let safePrevArg = String(prevJson.dropFirst().dropLast())
             callJs = """
             try {
-                window.renderSource(\(safeContentArg), "\(theme)", \(safePrevArg));
+                window.renderSource(\(safeContentArg), "\(theme)", \(safePrevArg), \(sourceOptions));
                 "success"
             } catch(e) {
                 "error: " + e.toString()
@@ -1109,7 +1115,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         } else {
             callJs = """
             try {
-                window.renderSource(\(safeContentArg), "\(theme)");
+                window.renderSource(\(safeContentArg), "\(theme)", undefined, \(sourceOptions));
                 "success"
             } catch(e) {
                 "error: " + e.toString()
@@ -1409,7 +1415,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         
         if let url = capturedURL {
             localSchemeHandler?.baseDirectory = url.deletingLastPathComponent()
-            localSchemeHandler?.allowedFileURLs = MarkdownImageDataCollector.referencedLocalImageURLs(
+            localSchemeHandler?.allowedFileURLs = url.pathExtension.lowercased() == "tsv" ? [] : MarkdownImageDataCollector.referencedLocalImageURLs(
                 from: url,
                 content: content
             )
@@ -1429,6 +1435,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
         self.prevMarkdown = nil
         usage.rendering()
         usageReady = false
+        let capturedTruncated = previewIsTruncated
         let capturedRenderVersion = renderVersion.next()
         webView.evaluateJavaScript("window.invalidateRender && window.invalidateRender();", completionHandler: nil)
 
@@ -1439,12 +1446,12 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             var options: [String: Any] = ["theme": theme, "context": contextValue, "uiLanguage": capturedUILanguage, "collapseBlockquotes": capturedCollapseBlockquotes, "showLineNumbers": capturedShowLineNumbers, "contentsSide": capturedContentsSide, "fontSize": capturedFontSize, "renderVersion": capturedRenderVersion]
             if capturedURL?.pathExtension.lowercased() == "tsv" {
                 options["format"] = "tsv"
-                options["isTruncated"] = self.previewIsTruncated
+                options["isTruncated"] = capturedTruncated
             }
             if let url = capturedURL {
                 options["filename"] = url.lastPathComponent
                 options["baseUrl"] = url.deletingLastPathComponent().path
-                let imageData = MarkdownImageDataCollector.collectImageData(from: url, content: content)
+                let imageData = url.pathExtension.lowercased() == "tsv" ? [:] : MarkdownImageDataCollector.collectImageData(from: url, content: content)
                 if !imageData.isEmpty {
                     options["imageData"] = imageData
                 }
@@ -2165,7 +2172,7 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
                 self.fileReadInFlight = false
                 do {
                     let snapshot = try result.get()
-                    if force || snapshot.content != self.pendingMarkdown {
+                    if force || snapshot.content != self.pendingMarkdown || snapshot.isTruncated != self.previewIsTruncated {
                         self.prevMarkdown = self.pendingMarkdown
                         self.pendingMarkdown = snapshot.content
                         self.previewHasUnreadableImages = false

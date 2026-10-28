@@ -3,6 +3,7 @@ import { waitForExportReady } from './export-readiness';
 window.waitForExportReady = waitForExportReady;
 import { sanitizeDocumentHTML, sanitizeDiagramHTML } from './safe-html';
 import { renderTSVTable } from './tsv';
+import './styles/tsv.css';
 /**
  * Escapes colons inside Gantt task labels when the metadata delimiter is
  * written as a spaced colon. Mermaid's lexer always splits at the first raw
@@ -585,7 +586,7 @@ declare global {
         waitForExportReady: (timeoutMs?: number) => Promise<void>;
         invalidateRender: () => void;
         renderMarkdown: (text: string, options?: RenderOptions) => Promise<void>;
-        renderSource: (text: string, theme: string, prevContent?: string) => void;
+        renderSource: (text: string, theme: string, prevContent?: string, options?: RenderOptions) => void;
         clearDiffMarks: () => void;
         setContentsSide: (side: string) => void;
         updateTheme: (theme: string) => void;
@@ -915,17 +916,16 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
         }
         if (options.format === 'tsv') {
             document.documentElement.setAttribute('data-document-format', 'tsv');
-            if (!document.getElementById('tsv-preview-styles')) {
-                const style = document.createElement('style');
-                style.id = 'tsv-preview-styles';
-                style.textContent = `.tsv-scroll{overflow:auto;max-width:100%;max-height:calc(100vh - 32px)}.tsv-table{border-collapse:collapse;min-width:100%;font-size:inherit}.tsv-table th,.tsv-table td{border:1px solid var(--border-color,#d0d7de);padding:6px 10px;text-align:left;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}.tsv-table th{background:var(--bg-secondary,#f6f8fa);font-weight:600;position:sticky;top:0}.tsv-empty,.tsv-truncated{color:var(--fg-muted,#656d76);padding:12px 0}.tsv-truncated{font-size:.9em}`;
-                document.head.appendChild(style);
-            }
+            searchEngine?.clear();
             const rendered = renderTSVTable(text, options.isTruncated === true);
             outputDiv.innerHTML = '';
             outputDiv.appendChild(rendered.element);
+            outputDiv.setAttribute('dir', 'ltr');
+            blockquoteCollapse?.setInitialState(false);
+            searchUI?.refresh();
+            readingStatus?.render(text, options.filename);
+            updateReadingControlsLayout();
             toc?.render([]);
-            searchEngine?.clear();
             logToSwift(`[renderMarkdown:${callId}] TSV rendered rows=${rendered.result.rows.length} columns=${rendered.result.columns}`);
             return;
         }
@@ -1116,7 +1116,8 @@ window.renderMarkdown = (text, options) => {
     return currentRender;
 };
 
-window.renderSource = function(text: string, theme: string, prevContent?: string) {
+window.renderSource = function(text: string, theme: string, prevContent?: string, options: RenderOptions = {}) {
+    window.__fluxLang = options.uiLanguage === "system" ? undefined : options.uiLanguage ?? window.__fluxLang;
     applyInterfaceDirection();
     currentRender = Promise.resolve();
     ++renderGeneration;
@@ -1135,6 +1136,23 @@ window.renderSource = function(text: string, theme: string, prevContent?: string
         return;
     }
 
+    document.documentElement.dataset.documentFormat = options.format || 'markdown';
+    if (options.format === 'tsv') {
+        outputDiv.classList.add('source-mode');
+        outputDiv.setAttribute('dir', 'ltr');
+        const preview = renderTSVTable(text, options.isTruncated === true);
+        outputDiv.replaceChildren();
+        const notice = preview.element.querySelector('.tsv-truncated, .tsv-empty');
+        if (notice) outputDiv.appendChild(notice);
+        const pre = document.createElement('pre');
+        // The source remains literal and bounded, including any incomplete final record.
+        pre.textContent = text;
+        outputDiv.appendChild(pre);
+        toc?.render([]);
+        searchUI?.refresh();
+        readingStatus?.render(text, options.filename);
+        return;
+    }
     outputDiv.classList.add('source-mode');
     readingStatus?.render(text);
     toc?.render([]);

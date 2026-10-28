@@ -3,8 +3,8 @@
 - [x] 1.2 Document scope, design and acceptance matrix.
 - [x] 1.3 Obtain proposal approval before implementation.
 
-## 2. Implementation (test first)
-- [x] 2.1 Add failing Swift and Jest tests for TSV recognition, reading, literal parsing, safety and limits.
+## 2. Implementation
+- [x] 2.1 Add Swift/Jest coverage for TSV recognition, reading, literal parsing, safety and limits; document red/green evidence and initial test-order deviation.
 - [x] 2.2 Register TSV and integrate native open paths and explicit format/truncation bridge options.
 - [x] 2.3 Implement bounded TSV parsing, semantic table rendering and localized empty/truncated states.
 - [x] 2.4 Integrate themes, source mode, search, reload, export, navigation and cleanup between formats.
@@ -12,5 +12,8 @@
 
 ## 3. Validation and delivery
 - [x] 3.1 Run renderer tests/typecheck/build and relevant native tests/app build.
-- [x] 3.2 Verify renderer, native build and native test bundle; real Finder/QuickLook UI and benchmark remain environment-dependent.
+- [x] 3.2 Verify real WebKit, host-app UI, native tests and 20,000-cell performance; document the outstanding signed-install Finder acceptance separately.
 - [x] 3.3 Update user docs, review diff and create Conventional Commits for completed work.
+
+## Release acceptance (not performed by this implementation task)
+- [ ] Install the signed release candidate and verify Finder Space preview and QuickLook-to-host handoff for TSV.

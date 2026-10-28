@@ -25,7 +25,7 @@ The renderer SHALL display UTF-8 TSV with optional BOM as literal text cells, us
 - **AND** a terminating newline in a nonempty file does not create an extra record
 
 ### Requirement: Bounded and honest preview
-The system SHALL bound TSV reading to 500 KiB plus one probe byte and display no more than 1,000 rows, 100 columns and 20,000 cells including padding. It SHALL identify truncated previews without inventing full-file counts or presenting byte-truncated records as complete.
+The system SHALL bound explicit TSV file reads to 500 KiB plus one probe byte and decode only a 500 KiB prefix of system-provided FileDocument data and display no more than 1,000 rows, 100 columns and 20,000 cells including padding. It SHALL identify truncated previews without inventing full-file counts or presenting byte-truncated records as complete.
 
 #### Scenario: Byte limit interrupts a record
 - **WHEN** the input exceeds the byte budget

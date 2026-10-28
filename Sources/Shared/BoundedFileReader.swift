@@ -30,9 +30,16 @@ enum PreviewFileReader {
         guard values.isRegularFile == true else { throw CocoaError(.fileReadUnsupportedScheme) }
         let file = try FileHandle(forReadingFrom: url)
         defer { try? file.close() }
-        var data = try file.read(upToCount: limit + 1) ?? Data()
-        let truncated = data.count > limit
-        if truncated { data = data.prefix(limit) }
+        let data = try file.read(upToCount: limit + 1) ?? Data()
+        let preview = try decode(data, limit: limit)
+        var content = preview.content
+        if url.pathExtension.lowercased() == "mmd" { content = "```mermaid\n\(content)\n```" }
+        return Snapshot(content: content, size: UInt64(values.fileSize ?? data.count), modificationDate: values.contentModificationDate, isTruncated: preview.isTruncated)
+    }
+
+    static func decode(_ input: Data, limit: Int = previewLimit) throws -> (content: String, isTruncated: Bool) {
+        let truncated = input.count > limit
+        let data = Data(input.prefix(limit))
         var decoded = String(data: data, encoding: .utf8)
         // A valid UTF8 character has at most four bytes. Never conceal malformed
         // bytes in the body; only recover an incomplete final character.
@@ -49,8 +56,7 @@ enum PreviewFileReader {
                 }
             }
         }
-        guard var content = decoded else { throw CocoaError(.fileReadInapplicableStringEncoding) }
-        if url.pathExtension.lowercased() == "mmd" { content = "```mermaid\n\(content)\n```" }
-        return Snapshot(content: content, size: UInt64(values.fileSize ?? data.count), modificationDate: values.contentModificationDate, isTruncated: truncated)
+        guard let content = decoded else { throw CocoaError(.fileReadInapplicableStringEncoding) }
+        return (content, truncated)
     }
 }

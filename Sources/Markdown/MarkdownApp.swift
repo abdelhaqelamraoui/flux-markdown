@@ -272,6 +272,7 @@ private struct DocumentPreviewScene: View {
         ZStack(alignment: .topTrailing) {
             MarkdownWebView(
                 content: file.document.text,
+                isTruncated: file.document.isTruncated,
                 fileURL: file.fileURL,
                 appearanceMode: preference.currentMode,
                 viewMode: viewMode,

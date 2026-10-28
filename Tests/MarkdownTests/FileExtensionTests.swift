@@ -390,7 +390,7 @@ final class FileExtensionTests: XCTestCase {
             "com.fluxmarkdown.mkdn",
             "com.fluxmarkdown.mkdown",
             "com.fluxmarkdown.mdwn",
-            "com.fluxmarkdown.tsv",
+            "public.tab-separated-values-text",
         ]
         for uti in requiredUTIs {
             XCTAssertTrue(appPlist.contains(uti),
@@ -448,5 +448,19 @@ final class FileExtensionTests: XCTestCase {
             XCTAssertGreaterThan(processed.count, raw.count,
                                  "\(filename): wrapped output must be longer than raw content")
         }
+    }
+}
+
+
+extension FileExtensionTests {
+    func testTSVUsesSystemTypeWithoutClaimingEditorOwnership() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let data = try Data(contentsOf: root.appendingPathComponent("Sources/Markdown/Info.plist"))
+        let plist = try XCTUnwrap(PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
+        let types = try XCTUnwrap(plist["CFBundleDocumentTypes"] as? [[String: Any]])
+        let tsv = types.filter { ($0["LSItemContentTypes"] as? [String])?.contains("public.tab-separated-values-text") == true }
+        XCTAssertEqual(tsv.count, 1)
+        XCTAssertEqual(tsv.first?["LSHandlerRank"] as? String, "Alternate")
+        XCTAssertEqual(tsv.first?["CFBundleTypeRole"] as? String, "Viewer")
     }
 }
