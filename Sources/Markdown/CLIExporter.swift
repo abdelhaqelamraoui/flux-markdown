@@ -134,7 +134,7 @@ final class CLIExporter: NSObject {
         let safeArg = String(jsonArray.dropFirst().dropLast())
 
         let fontSize = AppearancePreference.shared.baseFontSize
-        let options: [String: Any] = [
+        var options: [String: Any] = [
             "context":            "app",
             "baseUrl":            inputURL.deletingLastPathComponent().path,
             "theme":              "light",
@@ -146,6 +146,10 @@ final class CLIExporter: NSObject {
             "enableTypst":        true,
             "uiLanguage":         "en",
         ]
+        if inputURL.pathExtension.lowercased() == "tsv" {
+            options["format"] = "tsv"
+            options["isTruncated"] = false
+        }
         guard let optData = try? JSONSerialization.data(withJSONObject: options),
               let optJson  = String(data: optData, encoding: .utf8) else {
             fputs("Error: cannot encode options\n", stderr)

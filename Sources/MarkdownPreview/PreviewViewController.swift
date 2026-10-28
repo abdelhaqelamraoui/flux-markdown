@@ -1437,6 +1437,10 @@ public class PreviewViewController: NSViewController, QLPreviewingController, WK
             
             let contextValue = capturedPreviewMode == .compact ? "finder" : "quicklook"
             var options: [String: Any] = ["theme": theme, "context": contextValue, "uiLanguage": capturedUILanguage, "collapseBlockquotes": capturedCollapseBlockquotes, "showLineNumbers": capturedShowLineNumbers, "contentsSide": capturedContentsSide, "fontSize": capturedFontSize, "renderVersion": capturedRenderVersion]
+            if capturedURL?.pathExtension.lowercased() == "tsv" {
+                options["format"] = "tsv"
+                options["isTruncated"] = self.previewIsTruncated
+            }
             if let url = capturedURL {
                 options["filename"] = url.lastPathComponent
                 options["baseUrl"] = url.deletingLastPathComponent().path

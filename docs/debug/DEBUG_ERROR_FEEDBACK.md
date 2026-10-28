@@ -88,3 +88,7 @@ the preference incident without uploading local telemetry counters or identifier
 ## Arabic coverage (PR #62)
 
 Arabic is covered in both native error/feedback bundles, including usage-statistics failure recovery added on master. Resource parity tests compare Arabic with current English keys; FailureKind title/guidance checks now include all six languages. Renderer feedback recovery/report controls include Arabic. See DEBUG_PR62_ARABIC_RTL.md for regression and CI evidence.
+
+## TSV preview coverage (2026-10-28)
+
+TSV uses the existing read and renderer failure paths. Read failures remain native `ErrorIncident`/`ErrorFeedback` incidents; bounded preview truncation is an inline, non-failure notice and contains no document content in diagnostics. Renderer failures retain the existing recovery/report controls. Automated coverage includes safe TSV rendering and native file-type registration; real Finder/QuickLook feedback UI remains environment-dependent.

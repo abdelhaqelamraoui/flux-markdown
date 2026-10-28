@@ -2,6 +2,7 @@ import { installErrorFeedback, setFeedbackGeneration } from './error-feedback';
 import { waitForExportReady } from './export-readiness';
 window.waitForExportReady = waitForExportReady;
 import { sanitizeDocumentHTML, sanitizeDiagramHTML } from './safe-html';
+import { renderTSVTable } from './tsv';
 /**
  * Escapes colons inside Gantt task labels when the metadata delimiter is
  * written as a spaced colon. Mermaid's lexer always splits at the first raw
@@ -481,6 +482,8 @@ interface RenderOptions {
     prevContent?: string;
     showLineNumbers?: boolean;
     renderVersion?: number;
+    format?: 'markdown' | 'tsv';
+    isTruncated?: boolean;
 }
 
 function imageDataForSource(source: string, imageData?: Record<string, string>): string | undefined {
@@ -826,6 +829,8 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
 
     outputDiv.classList.remove('source-mode');
 
+    document.documentElement.setAttribute('data-document-format', 'markdown');
+
     if (options.fontSize) {
         outputDiv.style.fontSize = options.fontSize + 'px';
     }
@@ -907,6 +912,22 @@ window.renderMarkdown = async function (text: string, options: RenderOptions = {
             } catch (e) {
                 logToSwift("JS Warning: BlockquoteCollapse initialization failed: " + e);
             }
+        }
+        if (options.format === 'tsv') {
+            document.documentElement.setAttribute('data-document-format', 'tsv');
+            if (!document.getElementById('tsv-preview-styles')) {
+                const style = document.createElement('style');
+                style.id = 'tsv-preview-styles';
+                style.textContent = `.tsv-scroll{overflow:auto;max-width:100%;max-height:calc(100vh - 32px)}.tsv-table{border-collapse:collapse;min-width:100%;font-size:inherit}.tsv-table th,.tsv-table td{border:1px solid var(--border-color,#d0d7de);padding:6px 10px;text-align:left;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}.tsv-table th{background:var(--bg-secondary,#f6f8fa);font-weight:600;position:sticky;top:0}.tsv-empty,.tsv-truncated{color:var(--fg-muted,#656d76);padding:12px 0}.tsv-truncated{font-size:.9em}`;
+                document.head.appendChild(style);
+            }
+            const rendered = renderTSVTable(text, options.isTruncated === true);
+            outputDiv.innerHTML = '';
+            outputDiv.appendChild(rendered.element);
+            toc?.render([]);
+            searchEngine?.clear();
+            logToSwift(`[renderMarkdown:${callId}] TSV rendered rows=${rendered.result.rows.length} columns=${rendered.result.columns}`);
+            return;
         }
         const { yaml, body } = extractFrontMatter(text);
         const sourceLineOffset = text.slice(0, text.length - body.length).split('\n').length - 1;

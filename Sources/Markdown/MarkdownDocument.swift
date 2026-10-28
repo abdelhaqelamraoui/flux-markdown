@@ -13,6 +13,9 @@ struct MarkdownDocument: FileDocument {
         if let md = UTType(filenameExtension: "md") {
             types.insert(md, at: 0)
         }
+        if let tsv = UTType(filenameExtension: "tsv") {
+            types.append(tsv)
+        }
         return types
     }
 

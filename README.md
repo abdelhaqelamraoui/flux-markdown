@@ -89,7 +89,7 @@ See [Tap Trust](https://docs.brew.sh/Tap-Trust) for Homebrew's security model.
 | 🔍 **Zoom & Pan** | Cmd +/-/0, Cmd+scroll, pinch gestures |
 | 💾 **Position Memory** | Remembers scroll position and last-viewed file |
 | 🌓 **Themes** | Light, Dark, and System-synchronized modes |
-| 📂 **File Formats** | Supports .md, .mdx, .rmd, .qmd, .mdoc, .mdc, .mmd, .livemd, .mkd, .mkdn, .mkdown, .mdwn, .mdown, .markdown |
+| 📂 **File Formats** | Supports .md, .mdx, .rmd, .qmd, .mdoc, .mdc, .mmd, .livemd, .mkd, .mkdn, .mkdown, .mdwn, .mdown, .markdown, and read-only .tsv table previews |
 
 ---
 

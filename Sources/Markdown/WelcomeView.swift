@@ -18,6 +18,9 @@ struct WelcomeView: View {
         if let md = UTType(filenameExtension: "md") {
             types.append(md)
         }
+        if let tsv = UTType(filenameExtension: "tsv") {
+            types.append(tsv)
+        }
         types.append(.plainText)
         return types
     }()

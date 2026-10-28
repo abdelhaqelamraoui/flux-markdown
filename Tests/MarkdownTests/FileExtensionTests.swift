@@ -390,6 +390,7 @@ final class FileExtensionTests: XCTestCase {
             "com.fluxmarkdown.mkdn",
             "com.fluxmarkdown.mkdown",
             "com.fluxmarkdown.mdwn",
+            "com.fluxmarkdown.tsv",
         ]
         for uti in requiredUTIs {
             XCTAssertTrue(appPlist.contains(uti),
@@ -413,6 +414,7 @@ final class FileExtensionTests: XCTestCase {
             ("test.mkdn",                 "mkdn"),
             ("test.mkdown",               "mkdown"),
             ("feature-validation.md",     "md"),
+            ("test.tsv",                   "tsv"),
         ]
 
         for entry in supportedExtensions {

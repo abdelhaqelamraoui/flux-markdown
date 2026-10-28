@@ -563,6 +563,10 @@ struct MarkdownWebView: NSViewRepresentable {
             options["contentsSide"] = AppearancePreference.shared.contentsSide.rawValue
             options["uiLanguage"] = AppearancePreference.shared.uiLanguage
             options["renderVersion"] = renderVersion.next()
+            if fileURL?.pathExtension.lowercased() == "tsv" {
+                options["format"] = "tsv"
+                options["isTruncated"] = false
+            }
 
             if !previousContent.isEmpty && previousContent != content {
                 options["prevContent"] = previousContent
@@ -974,7 +978,7 @@ struct MarkdownWebView: NSViewRepresentable {
             os_log("🔵 Opening local file: %{public}@ anchor: %{public}@ (href: %{public}@)",
                    log: logger, type: .default, targetURL.path, fragment ?? "(none)", href)
             
-            let markdownExtensions: Set<String> = ["md", "mdx", "markdown", "mdown", "mkd", "mkdn", "mkdown", "mdwn", "rmd", "qmd", "mdoc", "mdc", "mmd", "livemd"]
+            let markdownExtensions: Set<String> = ["md", "mdx", "markdown", "mdown", "mkd", "mkdn", "mkdown", "mdwn", "rmd", "qmd", "mdoc", "mdc", "mmd", "livemd", "tsv"]
             if markdownExtensions.contains(targetURL.pathExtension.lowercased()) {
                 let id = fragment.flatMap { $0.isEmpty ? nil : DocumentPositionStore.shared.set(.anchor($0), for: targetURL) }
                 NSDocumentController.shared.openDocument(withContentsOf: targetURL, display: true) { _, _, error in
@@ -998,7 +1002,7 @@ struct MarkdownWebView: NSViewRepresentable {
             if url.scheme == "http" || url.scheme == "https" {
                 if !NSWorkspace.shared.open(url) { showDestinationFailure(url) }
                 decisionHandler(.cancel)
-            } else if url.isFileURL && url.pathExtension == "md" {
+            } else if url.isFileURL && (url.pathExtension.lowercased() == "md" || url.pathExtension.lowercased() == "tsv") {
                  if !NSWorkspace.shared.open(url) { showDestinationFailure(url) }
                  decisionHandler(.cancel)
             } else {
