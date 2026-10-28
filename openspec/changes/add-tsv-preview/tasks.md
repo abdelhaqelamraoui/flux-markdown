@@ -12,8 +12,8 @@
 
 ## 3. Validation and delivery
 - [x] 3.1 Run renderer tests/typecheck/build and relevant native tests/app build.
-- [x] 3.2 Verify real WebKit, host-app UI, native tests and 20,000-cell performance; document the outstanding signed-install Finder acceptance separately.
+- [x] 3.2 Verify real WebKit, host-app UI, native tests and 20,000-cell performance; complete signed-install Finder acceptance below.
 - [x] 3.3 Update user docs, review diff and create Conventional Commits for completed work.
 
-## Release acceptance (not performed by this implementation task)
-- [ ] Install the signed release candidate and verify Finder Space preview and QuickLook-to-host handoff for TSV.
+## Signed-install acceptance
+- [x] Install a locally signed Release candidate; verify Finder Space TSV table, candidate identity, QuickLook-to-host handoff and search; restore the original installation and editor state.

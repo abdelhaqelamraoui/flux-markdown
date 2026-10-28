@@ -16,4 +16,4 @@
 - Affected specs: 新增 tsv-preview；与 add-file-format-support 共同维护文件类型声明，与 add-error-feedback 复用反馈机制。
 - Affected code: Sources/Markdown/Info.plist、Sources/MarkdownPreview/Info.plist、主应用文件打开/内容加载、PreviewViewController、Shared/BoundedFileReader、渲染选项与 web-renderer/src/index.ts、新 TSV 模块和样式、对应 Swift/Jest/WebKit 测试。
 - 技术设计与验收边界见 docs/design/TSV_PREVIEW.md。
-- 当前状态：实现已完成，本地测试/构建、真实 WebKit 和主应用查看验证通过；签名安装后的 Finder 验收留在发布检查清单。
+- 当前状态：实现已完成，本地测试/构建、真实 WebKit 和主应用查看验证通过；本地签名安装后的 Finder 空格预览、主应用交接与搜索验收也已通过。
