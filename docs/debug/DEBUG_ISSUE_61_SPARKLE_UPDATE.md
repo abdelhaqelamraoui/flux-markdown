@@ -146,3 +146,11 @@ This is a direct counterexample to **unconditional** failure caused by this pair
 - **Status: root cause not yet established.** No speculative product fix, dependency bump, release, issue reply, done label or closure performed.
 - Next required evidence: one affected macOS 26.4.1 attempt with the complete code-10 message and Updater/Autoupdate/launchd timeline. If on-demand startup delay is confirmed, test the upstream >=2.9.1 mechanism in a candidate, including old-version migration and a subsequent real update. If logs indicate rejection, crash or file replacement failure, follow that branch instead.
 - Fix acceptance remains pending: reproduce failure → single-variable candidate → successful real install/relaunch → reversal or independent affected-environment verification. Developer ID signing/notarization is a separate distribution improvement, not a demonstrated fix for this incident.
+
+### 2026-10-28 reporter assistance requested
+
+- User explicitly authorized posting findings and requesting reporter assistance.
+- Posted and read back the Chinese follow-up, mentioning @aFakeRobot: https://github.com/xykong/flux-markdown/issues/61#issuecomment-6463326757.
+- Shared exact-version successful-upgrade evidence, independent signature checks, source-level distinction between mismatch and rejection, ambiguous code 10, and the upstream progress-agent startup hypothesis.
+- Supplied a self-contained live-log command because the local collector commit is not yet published. Uses a private uniquely named desktop file, no sudo or upload; requested one attempt, time/timezone, versions, install location and reviewed/redacted relevant excerpts. Existing failure logs are acceptable; no downgrade requested.
+- Status: waiting for affected-machine evidence; issue remains open and not marked done. No claim of a confirmed fix or release.
