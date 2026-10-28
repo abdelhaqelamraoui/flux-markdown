@@ -7,6 +7,23 @@
         <language>zh-CN</language>
 
         <item>
+            <title>Version 1.41.635</title>
+            <link>https://github.com/xykong/flux-markdown/releases/tag/v1.41.635</link>
+            <sparkle:version>635</sparkle:version>
+            <sparkle:shortVersionString>1.41.635</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+            <pubDate>Wed, 28 Oct 2026 10:40:15 +0000</pubDate>
+            <enclosure
+                url="https://github.com/xykong/flux-markdown/releases/download/v1.41.635/FluxMarkdown.dmg"
+                sparkle:edSignature="4vTBfpxAwStcHgmZd9TH35J2KuGkQDWxeV6cN5vaTniJVCK1RaRaloNX11HGiiac8I+Plwh4Ytd8cLWPfa7SCg=="
+                length="37817978"
+                type="application/octet-stream" />
+            <description><![CDATA[
+                <h2>更新内容</h2><h3>Added</h3><ul><li><strong>TSV table previews</strong>: View <code>.tsv</code> files as tables in Finder Quick Look and FluxMarkdown, with source view, text selection, search handoff, themes and export support. Preserve empty cells and keep the first record as data.</li><li><strong>Bounded table viewing</strong>: Limit TSV previews to 500 KiB, 1,000 rows, 100 columns and 20,000 cells, with explicit truncation notices in previews and exports. UTF-8 and LF/CRLF/CR are supported; quotes, HTML and formulas remain literal text. Initial host-app opening still uses the system-provided full file buffer.</li></ul><h3>Fixed</h3><ul><li><strong>MacPorts installation</strong>: Use the Xcode PortGroup and preserve versioned source-archive paths for the MacPorts package.</li></ul><p><a href="https://github.com/xykong/flux-markdown/releases/tag/v1.41.635">查看完整更新日志</a></p>
+            ]]></description>
+        </item>
+        
+        <item>
             <title>Version 1.40.622</title>
             <link>https://github.com/xykong/flux-markdown/releases/tag/v1.40.622</link>
             <sparkle:version>622</sparkle:version>
